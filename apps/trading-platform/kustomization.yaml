@@ -4,3 +4,6 @@ resources:
   - platform-api.yaml
   - platform-api-router.yaml
   - platform-api-egress.yaml
+  - execution-v2-workload.yaml
+  - execution-v2-migration.yaml
+  - execution-v2-network-policy.yaml
