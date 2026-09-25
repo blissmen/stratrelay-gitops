@@ -24,8 +24,6 @@ spec:
         app.kubernetes.io/part-of: trading-platform
         app.kubernetes.io/component: api-router
     spec:
-      imagePullSecrets:
-        - name: ghcr-pull
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -36,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: router
-          image: ghcr.io/strat-relay/trading-platform-api-router@sha256:492622cb54d55de3b5355381fca124865f7c793e7cc1d5b3df8e367e48bc9f76
+          image: localhost:5001/trading-platform-api-router:main-9640d52
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
