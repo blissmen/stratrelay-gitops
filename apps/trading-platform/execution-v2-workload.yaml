@@ -30,6 +30,26 @@ spec:
         runAsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: migrate
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:db652ac67391a697f4547cec3ef8a4ed5088e51a6b94d1bef0d4f3022b210ee9
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, postgres.migrate]
+          envFrom:
+            - secretRef:
+                name: trading-runtime-endpoints
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 150m
+              memory: 256Mi
       containers:
         - name: runtime
           image: ghcr.io/strat-relay/trading-platform-runtime@sha256:db652ac67391a697f4547cec3ef8a4ed5088e51a6b94d1bef0d4f3022b210ee9
