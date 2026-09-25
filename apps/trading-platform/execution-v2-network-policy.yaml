@@ -53,38 +53,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: execution-v2-migration-egress
-  namespace: trading
-  labels:
-    app.kubernetes.io/part-of: trading-platform
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: execution-v2-migrations
-  policyTypes: [Egress]
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: trading
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: trading-postgres
-      ports: [{port: 5432, protocol: TCP}]
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - {port: 53, protocol: UDP}
-        - {port: 53, protocol: TCP}
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
   name: execution-v2-postgres-ingress
   namespace: trading
   labels:
@@ -99,9 +67,6 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: execution-v2-runtime
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: execution-v2-migrations
       ports: [{port: 5432, protocol: TCP}]
 ---
 apiVersion: networking.k8s.io/v1
@@ -122,3 +87,4 @@ spec:
             matchLabels:
               app.kubernetes.io/name: execution-v2-runtime
       ports: [{port: 4222, protocol: TCP}]
+---
