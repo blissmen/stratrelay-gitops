@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - platform-api.yaml
   - platform-api-router.yaml
+  - platform-api-egress.yaml
