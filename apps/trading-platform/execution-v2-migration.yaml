@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: execution-v2-schema-migrations
+  name: execution-v2-schema-migrations-20260925
   namespace: trading
   labels:
     app.kubernetes.io/name: execution-v2-migrations
