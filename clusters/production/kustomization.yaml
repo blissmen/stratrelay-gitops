@@ -4,3 +4,4 @@ resources:
   - ../../infrastructure/flux-web
   - ../../infrastructure/cloudflared-egress
   - ../../apps/trading-ops-console
+  - ../../apps/trading-platform
