@@ -6,7 +6,6 @@ metadata:
 spec:
   interval: 10m
   releaseName: flux-web
-  serviceAccountName: flux-web
   chartRef:
     kind: OCIRepository
     name: flux-web
