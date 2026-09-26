@@ -5,6 +5,10 @@ kind: Job
 metadata:
   name: trading-platform-schema-migrations
   namespace: trading
+  annotations:
+    # Jobs have immutable pod templates. Replace the completed migration Job
+    # when release promotion changes its runtime image.
+    kustomize.toolkit.fluxcd.io/force: enabled
   labels:
     app.kubernetes.io/name: trading-platform-schema-migrations
     app.kubernetes.io/component: schema-migration
