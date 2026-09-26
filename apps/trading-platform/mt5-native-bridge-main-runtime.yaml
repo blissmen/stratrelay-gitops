@@ -23,6 +23,10 @@ spec:
         app.kubernetes.io/part-of: trading-platform
     spec:
       automountServiceAccountToken: false
+      # orchestrator-shadow pulls the private ghcr.io trading-platform-runtime image (same as the
+      # other platform runtimes); without this the Recreate rollout fails with ImagePullBackOff.
+      imagePullSecrets:
+        - name: ghcr-pull
       securityContext:
         runAsNonRoot: true
         fsGroup: 101
