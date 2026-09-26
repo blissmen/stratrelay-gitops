@@ -24,41 +24,6 @@ spec:
       automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-pull
-      initContainers:
-        - name: postgres-migrate
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:6adf639861befa6290e3da1b75dd8ecae644ccc330eb6f93151afb610e7cadc4
-          imagePullPolicy: IfNotPresent
-          command: [sh, -c]
-          args:
-            - >-
-              export TRADING_POSTGRES_DSN="postgresql://${POSTGRES_ADMIN_USER}:${POSTGRES_ADMIN_PASSWORD}@trading-postgres.trading.svc.cluster.local:5432/trading_platform?sslmode=disable"
-              && exec python -m postgres.migrate
-          envFrom:
-            - secretRef:
-                name: trading-runtime-endpoints
-          env:
-            - name: POSTGRES_ADMIN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: trading-postgres-auth
-                  key: POSTGRES_ADMIN_USER
-            - name: POSTGRES_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: trading-postgres-auth
-                  key: POSTGRES_ADMIN_PASSWORD
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: [ALL]
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
