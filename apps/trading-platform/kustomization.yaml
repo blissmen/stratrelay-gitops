@@ -3,6 +3,8 @@ kind: Kustomization
 resources:
   - platform-api.yaml
   - platform-api-router.yaml
+  - platform-realtime-api.yaml
+  - platform-realtime-api-network.yaml
   - platform-api-egress.yaml
   - execution-v2-workload.yaml
   - execution-v2-network-policy.yaml
