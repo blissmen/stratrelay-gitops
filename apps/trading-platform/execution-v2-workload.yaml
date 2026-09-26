@@ -24,6 +24,26 @@ spec:
       automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-pull
+      initContainers:
+        - name: postgres-migrate
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:3b04ab9912c17ff137b65589af86fb667c20b1df4e9c26037aa5f0cb4c6f90ce
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, postgres.migrate]
+          envFrom:
+            - secretRef:
+                name: trading-runtime-endpoints
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -32,7 +52,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: runtime
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:db652ac67391a697f4547cec3ef8a4ed5088e51a6b94d1bef0d4f3022b210ee9
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:3b04ab9912c17ff137b65589af86fb667c20b1df4e9c26037aa5f0cb4c6f90ce
           imagePullPolicy: IfNotPresent
           command: [python, -m, execution_v2.runtime]
           envFrom:
