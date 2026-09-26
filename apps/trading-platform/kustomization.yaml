@@ -7,6 +7,8 @@ resources:
   - platform-realtime-api-network.yaml
   - mt5-native-bridge-main-runtime.yaml
   - mt5-native-bridge-main-runtime-network.yaml
+  - trading-platform-schema-migrations.yaml
+  - trading-platform-schema-migrations-network.yaml
   - platform-api-egress.yaml
   - execution-v2-workload.yaml
   - execution-v2-network-policy.yaml
