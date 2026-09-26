@@ -6,3 +6,5 @@ resources:
   - platform-api-egress.yaml
   - execution-v2-workload.yaml
   - execution-v2-network-policy.yaml
+  - runtimes.yaml
+  - runtimes-network.yaml
