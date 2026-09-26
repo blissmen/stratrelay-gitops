@@ -14,3 +14,4 @@ resources:
   - execution-v2-network-policy.yaml
   - runtimes.yaml
   - runtimes-network.yaml
+  - liquidity-live-runtime.yaml
