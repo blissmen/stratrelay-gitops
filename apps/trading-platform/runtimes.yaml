@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/part-of: trading-platform
 spec:
   replicas: 1
+  # The runtime owns a single durable JetStream consumer; overlapping old/new
+  # pods cause NATS to reject the new subscription as already bound.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: trade-management-runtime
