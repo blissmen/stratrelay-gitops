@@ -32,25 +32,6 @@ spec:
         fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-        - name: initialize-runtime-tree
-          image: localhost:5001/trading-platform-context-outcome@sha256:020987cea48677d13bf6c791d0e3314eae98a7cbcce4f5cf12ef4abfc5f6830d
-          imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - >-
-              cp /outcome-overlay/context_structure_retrace_outcome_projector.py /work/;
-              cp /outcome-overlay/strategy_report_format.py /work/
-          volumeMounts:
-            - name: runtime
-              mountPath: /work
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsUser: 101
-            runAsGroup: 101
-            capabilities:
-              drop: [ALL]
       containers:
         - name: orchestrator-shadow
           image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
@@ -59,10 +40,14 @@ spec:
             - sh
             - -c
             - rm -f /work/runtime/orchestration/pid && exec python3 signal_orchestrator.py primary-start --interval 15
-          workingDir: /work/primary-runtime-code
+          # Code comes from the release image; runtime state stays on the volume. Configuration comes
+          # from PostgreSQL (platform-tools #32), so no platform.json is mounted.
+          workingDir: /app
           env:
             - name: TRADING_PLATFORM_RUNTIME_DIR
               value: /work/runtime
+            - name: CONTEXT_RUNNER_STATE_DIR
+              value: /work
           envFrom:
             - secretRef:
                 name: trading-runtime-endpoints
@@ -73,14 +58,6 @@ spec:
           volumeMounts:
             - name: runtime
               mountPath: /work
-            - name: safe-platform-config
-              mountPath: /work/orchestration/config/platform.json
-              subPath: platform.json
-              readOnly: true
-            - name: safe-platform-config
-              mountPath: /work/primary-runtime-code/orchestration/config/platform.json
-              subPath: platform.json
-              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -95,7 +72,7 @@ spec:
             capabilities:
               drop: [ALL]
         - name: context-paper
-          image: localhost:5001/trading-platform-context-outcome@sha256:020987cea48677d13bf6c791d0e3314eae98a7cbcce4f5cf12ef4abfc5f6830d
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
           imagePullPolicy: IfNotPresent
           command:
             - python
@@ -118,7 +95,10 @@ spec:
                   key: TRADING_POSTGRES_DSN
             - name: ENTRY_OUTCOME_SIGNAL_CUTOFF_ID
               value: 931fe86e-c634-422b-89c1-cc65fd572d2c
-          workingDir: /work
+            # Runner code from the release image; state, ledger, heartbeat and frozen manifest on the volume.
+            - name: CONTEXT_RUNNER_STATE_DIR
+              value: /work
+          workingDir: /app
           volumeMounts:
             - name: runtime
               mountPath: /work
@@ -139,9 +119,3 @@ spec:
         - name: runtime
           persistentVolumeClaim:
             claimName: mt5-native-bridge-runtime
-        - name: safe-platform-config
-          configMap:
-            name: mt5-native-bridge-safe-platform-config
-            items:
-              - key: platform.json
-                path: platform.json
