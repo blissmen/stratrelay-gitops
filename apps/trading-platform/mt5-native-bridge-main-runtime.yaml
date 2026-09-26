@@ -53,7 +53,7 @@ spec:
               drop: [ALL]
       containers:
         - name: orchestrator-shadow
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:53481dc679fe528fae5753fa658e893fa48a03b1d14063472e00854073f6f707
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:02fa072953c614179bf77697160fc19bc1a930ed96b06fa3a2c81b77ed3bccd1
           imagePullPolicy: IfNotPresent
           command:
             - sh
