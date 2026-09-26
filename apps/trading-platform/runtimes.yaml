@@ -13,6 +13,7 @@ spec:
   # pods cause NATS to reject the new subscription as already bound.
   strategy:
     type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app.kubernetes.io/name: trade-management-runtime
