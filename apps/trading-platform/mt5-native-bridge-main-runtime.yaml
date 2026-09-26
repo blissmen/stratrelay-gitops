@@ -25,6 +25,7 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
+        fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       initContainers:
@@ -42,6 +43,8 @@ spec:
               mountPath: /work
           securityContext:
             allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
             capabilities:
               drop: [ALL]
       containers:
@@ -83,6 +86,8 @@ spec:
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
             capabilities:
               drop: [ALL]
         - name: context-paper
@@ -122,6 +127,8 @@ spec:
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
             capabilities:
               drop: [ALL]
       volumes:
