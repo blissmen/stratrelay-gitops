@@ -38,7 +38,7 @@ spec:
         # stopped. Read-only bridge; writes only the runner's state + ledger; the marker makes it a
         # no-op on every later start.
         - name: reconcile-context-orphans
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f2663496dc1305bf829e3dd4ed1929c47996c3eb5ed8b1b7399852d221654507
           imagePullPolicy: IfNotPresent
           workingDir: /app
           command:
@@ -71,7 +71,7 @@ spec:
               drop: [ALL]
       containers:
         - name: orchestrator-shadow
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:42de22635446edcd824e2b98e7b40640b978911d7315118acd1a1c1fced1bc7b
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f2663496dc1305bf829e3dd4ed1929c47996c3eb5ed8b1b7399852d221654507
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -109,7 +109,7 @@ spec:
             capabilities:
               drop: [ALL]
         - name: context-paper
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f2663496dc1305bf829e3dd4ed1929c47996c3eb5ed8b1b7399852d221654507
           imagePullPolicy: IfNotPresent
           command:
             - python
