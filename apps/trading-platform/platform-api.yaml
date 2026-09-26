@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:93f27d5cf33db5afa310469aab136dcb5c79a072677b038bb38899b5de08a496
+          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:5ac6bf86b27d392d784e353f0c71dc3d723522eb5922f509a43b1fbfb76d175b
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -62,6 +62,8 @@ spec:
                 configMapKeyRef:
                   name: trading-db-primary-prepared
                   key: EXECUTION_AUTHORITY_MODE
+            - name: V2_EXECUTION_BRIDGE_MODE
+              value: "real"
             - name: SIGNAL_DB_PRIMARY_ENABLED
               valueFrom:
                 configMapKeyRef:
