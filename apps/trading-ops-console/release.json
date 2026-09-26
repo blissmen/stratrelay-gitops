@@ -1,12 +1,12 @@
 {
   "repository": "blissmen/trading-ops-console",
-  "commit": "468568cf63ea416a4fa0df7c6b4a88af9b792082",
+  "commit": "1fdb5a9fb20689c98c54e2256cdca6fb26d2f9d7",
   "images": [
     {
       "name": "trading-ops-console",
-      "tag": "sha-468568cf63ea416a4fa0df7c6b4a88af9b792082",
-      "digest": "sha256:acd566641c90b32ac1128dccc0e1ac49efa887fdb5a30125aa2ca108b98aaa8f",
-      "reference": "ghcr.io/blissmen/trading-ops-console@sha256:acd566641c90b32ac1128dccc0e1ac49efa887fdb5a30125aa2ca108b98aaa8f"
+      "tag": "sha-1fdb5a9fb20689c98c54e2256cdca6fb26d2f9d7",
+      "digest": "sha256:244debe52a6b67d77dc5229a4f26ff598476cbbb49997c877a06262dcff82d6d",
+      "reference": "ghcr.io/blissmen/trading-ops-console@sha256:244debe52a6b67d77dc5229a4f26ff598476cbbb49997c877a06262dcff82d6d"
     }
   ]
 }
