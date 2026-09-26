@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mt5-native-bridge-main-runtime
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: mt5-native-bridge
+    app.kubernetes.io/component: main-runtime
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mt5-native-bridge
+      app.kubernetes.io/component: main-runtime
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mt5-native-bridge
+        app.kubernetes.io/component: main-runtime
+        app.kubernetes.io/part-of: trading-platform
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: initialize-runtime-tree
+          image: localhost:5001/trading-platform-context-outcome@sha256:020987cea48677d13bf6c791d0e3314eae98a7cbcce4f5cf12ef4abfc5f6830d
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              cp /outcome-overlay/context_structure_retrace_outcome_projector.py /work/;
+              cp /outcome-overlay/strategy_report_format.py /work/
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+      containers:
+        - name: orchestrator-shadow
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:2f1f010fedd07ccf9550bce7696a5b24fca6d8bc6f8efef7979f8333a4f3d474
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - rm -f /work/runtime/orchestration/pid && exec python3 signal_orchestrator.py primary-start --interval 15
+          workingDir: /work/primary-runtime-code
+          env:
+            - name: TRADING_PLATFORM_RUNTIME_DIR
+              value: /work/runtime
+          envFrom:
+            - secretRef:
+                name: trading-runtime-endpoints
+            - configMapRef:
+                name: trading-db-primary-prepared
+            - secretRef:
+                name: trading-signal-cutoff
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+            - name: safe-platform-config
+              mountPath: /work/orchestration/config/platform.json
+              subPath: platform.json
+              readOnly: true
+            - name: safe-platform-config
+              mountPath: /work/primary-runtime-code/orchestration/config/platform.json
+              subPath: platform.json
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 350m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+        - name: context-paper
+          image: localhost:5001/trading-platform-context-outcome@sha256:020987cea48677d13bf6c791d0e3314eae98a7cbcce4f5cf12ef4abfc5f6830d
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - context_structure_retrace_forward.py
+            - start
+            - --interval
+            - "15"
+            - --mcp-url
+            - http://192.168.1.166:22347/mcp
+            - --symbols
+            - XAUUSDm
+            - BTCUSDm
+            - USDJPYm
+            - EURUSDm
+          env:
+            - name: TRADING_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: trading-runtime-endpoints
+                  key: TRADING_POSTGRES_DSN
+            - name: ENTRY_OUTCOME_SIGNAL_CUTOFF_ID
+              value: 931fe86e-c634-422b-89c1-cc65fd572d2c
+          workingDir: /work
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+      volumes:
+        - name: runtime
+          persistentVolumeClaim:
+            claimName: mt5-native-bridge-runtime
+        - name: safe-platform-config
+          configMap:
+            name: mt5-native-bridge-safe-platform-config
+            items:
+              - key: platform.json
+                path: platform.json
