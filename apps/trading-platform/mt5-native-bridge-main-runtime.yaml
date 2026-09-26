@@ -32,6 +32,43 @@ spec:
         fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        # One-shot historical reconciliation of orphaned OPEN positions (platform-tools #33): replays
+        # the M5 bars the old runner skipped, through the runner's own exit rule, while the runner is
+        # stopped. Read-only bridge; writes only the runner's state + ledger; the marker makes it a
+        # no-op on every later start.
+        - name: reconcile-context-orphans
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command:
+            - python
+            - -m
+            - scripts.reconcile_context_orphans
+            - --mcp-url
+            - http://192.168.1.166:22347/mcp
+            - --apply
+            - --once-marker
+            - /work/.context_orphan_reconciliation_done
+          env:
+            - name: CONTEXT_RUNNER_STATE_DIR
+              value: /work
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
+            capabilities:
+              drop: [ALL]
       containers:
         - name: orchestrator-shadow
           image: ghcr.io/strat-relay/trading-platform-runtime@sha256:169e8646a0486c470a47c2f8dd4839ba9912109a4bacbc46155ee7ccd79a6bd7
