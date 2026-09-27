@@ -81,7 +81,7 @@ spec:
               rm -f /work/context_structure_retrace_forward.pid &&
               exec python context_structure_retrace_forward.py start --interval 15
               --mcp-url http://192.168.1.166:22347/mcp
-              --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
+              --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm ETHBTCm
           env:
             - name: TRADING_POSTGRES_DSN
               valueFrom:
