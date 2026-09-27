@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: trading-conservative
+  namespace: trading
+spec:
+  hard:
+    pods: "20"
+    limits.cpu: 4250m
+    limits.memory: 8160Mi
+    requests.cpu: 1
+    requests.memory: 2Gi

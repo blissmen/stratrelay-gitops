@@ -16,3 +16,4 @@ resources:
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
   - cloudflared.yaml
+  - resource-quota.yaml
