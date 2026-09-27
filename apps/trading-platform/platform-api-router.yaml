@@ -67,18 +67,10 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            # Temporary public-write lockdown (apps/trading-platform/router-nginx/nginx.conf).
-            - name: nginx-conf
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-              readOnly: true
       volumes:
         - name: tmp
           emptyDir:
             sizeLimit: 16Mi
-        - name: nginx-conf
-          configMap:
-            name: platform-api-router-nginx
 ---
 apiVersion: v1
 kind: Service
