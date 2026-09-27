@@ -15,4 +15,5 @@ resources:
   - runtimes.yaml
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
+  - trading-redis.yaml
   - cloudflared.yaml
