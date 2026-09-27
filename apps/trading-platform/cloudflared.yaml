@@ -7,7 +7,14 @@ metadata:
     app.kubernetes.io/name: cloudflared
     app.kubernetes.io/part-of: mt5-native-bridge
 spec:
-  replicas: 1
+  # Two connectors on one tunnel: when one loses its edge connections (packet loss on the host
+  # uplink), the other keeps serving. Surge first so a rollout never drops to zero connectors.
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: cloudflared
@@ -20,14 +27,18 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: cloudflared
-          image: cloudflare/cloudflared:latest
+          # Pinned (was :latest) to the build that was running: 2026.9.1.
+          image: cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4
           imagePullPolicy: IfNotPresent
           args:
             - tunnel
             - --no-autoupdate
             - run
+            # auto = QUIC (UDP 7844, allowed by cloudflared-egress) with automatic fallback to
+            # HTTP/2 over TCP. QUIC copes better with packet loss than one multiplexed TCP stream.
+            # Revert to "http2" if QUIC misbehaves on this uplink.
             - --protocol
-            - http2
+            - auto
             - --token
             - $(TUNNEL_TOKEN)
           env:
@@ -60,3 +71,13 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 6
+          # /ready fails while the connector holds no edge connection; restart one that stays
+          # disconnected for ~3 minutes instead of leaving it wedged.
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 9
