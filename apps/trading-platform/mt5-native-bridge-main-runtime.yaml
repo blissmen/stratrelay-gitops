@@ -75,18 +75,13 @@ spec:
           image: ghcr.io/strat-relay/trading-platform-runtime@sha256:6ba377a5f187a1981d06d5fba7e9fc5cde4c31307eee212b19d64859f5112e80
           imagePullPolicy: IfNotPresent
           command:
-            - python
-            - context_structure_retrace_forward.py
-            - start
-            - --interval
-            - "15"
-            - --mcp-url
-            - http://192.168.1.166:22347/mcp
-            - --symbols
-            - XAUUSDm
-            - BTCUSDm
-            - USDJPYm
-            - EURUSDm
+            - sh
+            - -c
+            - >-
+              rm -f /work/context_structure_retrace_forward.pid &&
+              exec python context_structure_retrace_forward.py start --interval 15
+              --mcp-url http://192.168.1.166:22347/mcp
+              --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
           env:
             - name: TRADING_POSTGRES_DSN
               valueFrom:
