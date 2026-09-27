@@ -15,9 +15,3 @@ resources:
   - runtimes.yaml
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
-# Temporary public-write lockdown for the API router (see router-nginx/nginx.conf).
-configMapGenerator:
-  - name: platform-api-router-nginx
-    namespace: trading
-    files:
-      - nginx.conf=router-nginx/nginx.conf
