@@ -48,6 +48,15 @@ spec:
               value: http://192.168.1.166:22347/mcp
             - name: P4_HEALTH_PORT
               value: "8080"
+            # Completed bars for structure-aware Trade Manager versions (TM-STRUCTURE-1) from the
+            # market-data cache; quotes are unchanged (TM_MARKET_DATA_SOURCE is not set).
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           ports:
             - name: http
               containerPort: 8080
