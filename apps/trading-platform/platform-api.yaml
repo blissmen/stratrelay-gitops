@@ -71,6 +71,17 @@ spec:
                   key: SIGNAL_DB_PRIMARY_ENABLED
             - name: PLATFORM_STRATEGY_CONFIG_PATH
               value: /etc/platform-config/platform.json
+            # Broker endpoints + TM live read the broker view (broker-view-populator.yaml) first;
+            # the bridge only when an entry is missing, older than 45 s, or Redis is unreachable.
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: BROKER_VIEW_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            - name: BROKER_VIEW_MAX_AGE_SECONDS
+              value: "45"
           volumeMounts:
             - name: platform-config
               mountPath: /etc/platform-config

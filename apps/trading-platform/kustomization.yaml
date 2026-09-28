@@ -17,4 +17,5 @@ resources:
   - liquidity-live-runtime.yaml
   - trading-redis.yaml
   - market-data-collector.yaml
+  - broker-view-populator.yaml
   - cloudflared.yaml
