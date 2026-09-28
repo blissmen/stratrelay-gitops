@@ -144,7 +144,8 @@ spec:
               - key: app.kubernetes.io/name
                 operator: In
                 values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
-                         liquidity-live-runtime, risk-state-collector, market-data-collector]
+                         liquidity-live-runtime, risk-state-collector, market-data-collector,
+                         broker-view-populator, platform-signals-api]
       ports:
         - {port: 6379, protocol: TCP}
   egress: []
@@ -163,7 +164,8 @@ spec:
       - key: app.kubernetes.io/name
         operator: In
         values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
-                 liquidity-live-runtime, risk-state-collector, market-data-collector]
+                 liquidity-live-runtime, risk-state-collector, market-data-collector,
+                 broker-view-populator, platform-signals-api]
   policyTypes: [Egress]
   egress:
     - to:
