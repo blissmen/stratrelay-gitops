@@ -1,0 +1,133 @@
+# Market-data collector (strat-relay/platform-tools market_data_cache/): the single owner of
+# market-data reads on the read bridge (22347). Completed bars (one snapshot per symbol per M5
+# close), symbol metadata and hot quotes go to trading-redis; the Context runner, the Liquidity
+# runtime and the Trade Manager read Redis instead of polling the bridge (MARKET_DATA_SOURCE=REDIS /
+# TM_MARKET_DATA_SOURCE=REDIS, switched separately). Read-only: no broker writes, no DB writes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-data-collector
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/component: market-data
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # one bridge reader at a time
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: market-data-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: market-data-collector
+        app.kubernetes.io/component: market-data
+        app.kubernetes.io/part-of: trading-platform
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: collector
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:6ef81432eeeaaebb40c2cf8aca286f794e04f1183d6878d3bd077cd5ff5b99bd
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "market_data_cache.service"]
+          envFrom:
+            - secretRef:
+                name: trading-runtime-endpoints
+            - configMapRef:
+                name: trading-db-primary-prepared
+          env:
+            - name: MARKET_DATA_BRIDGE_URL
+              value: http://192.168.1.166:22347/mcp
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            - name: MARKET_QUOTE_REFRESH_SECONDS
+              value: "2"
+            - name: MARKET_QUOTES_PER_PASS
+              value: "10"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 400m
+              memory: 384Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: market-data-collector-egress
+  namespace: trading
+  labels:
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: market-data-collector
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: trading
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: trading-postgres
+      ports:
+        - {port: 5432, protocol: TCP}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {port: 53, protocol: UDP}
+        - {port: 53, protocol: TCP}
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.166/32
+      ports:
+        - {port: 22347, protocol: TCP}
+---
+# PostgreSQL admits the collector (read-only queries: memberships, mappings, open trades).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: market-data-collector-postgres-ingress
+  namespace: trading
+  labels:
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: trading-postgres
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: market-data-collector
+      ports:
+        - {port: 5432, protocol: TCP}
