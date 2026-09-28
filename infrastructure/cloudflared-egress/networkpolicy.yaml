@@ -58,6 +58,16 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: trading
+          podSelector:
+            matchLabels:
+              app: trading-ops-console
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: cattle-system
           podSelector:
             matchLabels:
