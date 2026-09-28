@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: runtime
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0c3e0344a931983aaf0cfa3b13ad5b686449763c49b88f8cc7f138255877772a
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5b32f4d6e3d777573b1b22fc672854d0139c595a84e80b918553bc2993793d01
           imagePullPolicy: IfNotPresent
           command: [python, -m, trade_management.runtime]
           envFrom:
@@ -129,7 +129,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: relay
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0c3e0344a931983aaf0cfa3b13ad5b686449763c49b88f8cc7f138255877772a
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5b32f4d6e3d777573b1b22fc672854d0139c595a84e80b918553bc2993793d01
           imagePullPolicy: IfNotPresent
           command: [python, -m, scripts.signal_outbox_relay]
           envFrom:
