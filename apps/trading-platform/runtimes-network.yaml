@@ -10,7 +10,7 @@ spec:
     matchExpressions:
       - key: app.kubernetes.io/name
         operator: In
-        values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime]
+        values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, mt5-native-bridge]
   policyTypes: [Egress]
   egress:
     - to:
@@ -21,10 +21,11 @@ spec:
             matchExpressions:
               - key: app.kubernetes.io/name
                 operator: In
-                values: [trading-postgres, trading-nats]
+                values: [trading-postgres, trading-nats, trading-redis]
       ports:
         - {port: 5432, protocol: TCP}
         - {port: 4222, protocol: TCP}
+        - {port: 6379, protocol: TCP}
     - to:
         - namespaceSelector:
             matchLabels:
@@ -61,7 +62,7 @@ spec:
             matchExpressions:
               - key: app.kubernetes.io/name
                 operator: In
-                values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime]
+                values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, mt5-native-bridge]
       ports:
         - {port: 5432, protocol: TCP}
         - {port: 4222, protocol: TCP}

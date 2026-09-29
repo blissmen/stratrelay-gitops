@@ -39,7 +39,15 @@ spec:
           command:
             - sh
             - -c
-            - rm -f /work/runtime/orchestration/pid && exec python3 signal_orchestrator.py primary-start --interval 15
+            - >-
+              trap 'exit 143' TERM INT;
+              while true; do
+                rm -f /work/runtime/orchestration/pid;
+                python3 signal_orchestrator.py primary-start --interval 15;
+                rc=$?;
+                echo "signal orchestrator exited rc=$rc; retrying in 5s" >&2;
+                sleep 5;
+              done
           # Code comes from the release image; runtime state stays on the volume. Configuration comes
           # from PostgreSQL (platform-tools #32), so no platform.json is mounted.
           workingDir: /app
@@ -48,6 +56,15 @@ spec:
               value: /work/runtime
             - name: CONTEXT_RUNNER_STATE_DIR
               value: /work
+            - name: MARKET_DATA_SOURCE
+              value: REDIS
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           envFrom:
             - secretRef:
                 name: trading-runtime-endpoints
@@ -80,7 +97,6 @@ spec:
             - >-
               rm -f /work/context_structure_retrace_forward.pid &&
               exec python context_structure_retrace_forward.py start --interval 15
-              --mcp-url http://192.168.1.166:22347/mcp
               --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
           env:
             - name: TRADING_POSTGRES_DSN
@@ -93,6 +109,15 @@ spec:
             # Runner code from the release image; state, ledger, heartbeat and frozen manifest on the volume.
             - name: CONTEXT_RUNNER_STATE_DIR
               value: /work
+            - name: MARKET_DATA_SOURCE
+              value: REDIS
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           workingDir: /app
           volumeMounts:
             - name: runtime

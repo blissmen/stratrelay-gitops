@@ -53,10 +53,19 @@ spec:
           env:
             - name: LIQUIDITY_LIVE_RUNTIME_ENABLED
               value: "true"
-            - name: LIQUIDITY_LIVE_MCP_URL
-              value: http://192.168.1.166:22347/mcp
             - name: LIQUIDITY_LIVE_POLL_SECONDS
               value: "5"
+            - name: MARKET_DATA_SOURCE
+              value: REDIS
+            - name: MARKET_DATA_MAX_AGE_SECONDS
+              value: "330"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
