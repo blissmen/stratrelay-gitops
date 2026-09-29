@@ -55,7 +55,7 @@ spec:
               value: "true"
             # Compatibility for the currently deployed image; Redis mode does not call this URL.
             - name: LIQUIDITY_LIVE_MCP_URL
-              value: http://127.0.0.1:22347/mcp
+              value: http://192.168.1.166:22347/mcp
             - name: LIQUIDITY_LIVE_POLL_SECONDS
               value: "5"
             - name: MARKET_DATA_SOURCE
