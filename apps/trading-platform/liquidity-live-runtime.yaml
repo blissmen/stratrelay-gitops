@@ -53,8 +53,6 @@ spec:
           env:
             - name: LIQUIDITY_LIVE_RUNTIME_ENABLED
               value: "true"
-            - name: LIQUIDITY_LIVE_MCP_URL
-              value: http://127.0.0.1:22347/mcp
             - name: LIQUIDITY_LIVE_POLL_SECONDS
               value: "5"
             - name: MARKET_DATA_SOURCE
