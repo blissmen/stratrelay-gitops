@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: orchestrator-shadow
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:a39f845f647fa38913064fcdeacfb2add387831549fb6eeda3eb0ef3842270ed
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:85bfe81f52e62fd23da36268fb89a5fa311cff12ac135f7b391c341758b5fdfa
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -89,7 +89,7 @@ spec:
             capabilities:
               drop: [ALL]
         - name: context-paper
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:a39f845f647fa38913064fcdeacfb2add387831549fb6eeda3eb0ef3842270ed
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:85bfe81f52e62fd23da36268fb89a5fa311cff12ac135f7b391c341758b5fdfa
           imagePullPolicy: IfNotPresent
           command:
             - sh
