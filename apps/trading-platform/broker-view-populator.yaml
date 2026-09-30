@@ -37,7 +37,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: populator
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:c9f4bfe9e60e9c1a1138c3209bd0a41908f03f8974130c4324bed78d7f90397d
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:1790183984e30ac186f69848930fe88df72314a1edc8b220a19bd9c0cb4cae96
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "broker_view.service"]
           env:
