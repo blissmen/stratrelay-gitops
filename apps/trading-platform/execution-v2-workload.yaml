@@ -44,9 +44,9 @@ spec:
             - {name: EXECUTION_AUTHORITY_MODE, value: "DISABLED"}
             - {name: V2_EXECUTION_ACCOUNT_ID, value: "188428665"}
             - {name: V2_EXECUTION_BRIDGE_MODE, value: "real"}
-            - {name: V2_BRIDGE_FENCE_URL, value: "http://192.168.1.166:22348/mcp"}
+            - {name: V2_BRIDGE_FENCE_URL, value: "http://10.10.10.100:22348/mcp"}
             - {name: V2_BROKER_SYMBOL_MAP_JSON, value: '{"real:188428665":{"XAUUSD":"XAUUSDm","BTCUSD":"BTCUSDm","EURUSD":"EURUSDm","USDJPY":"USDJPYm"}}'}
-            - {name: V2_READ_BRIDGE_URL, value: "http://192.168.1.166:22347/mcp"}
+            - {name: V2_READ_BRIDGE_URL, value: "http://10.10.10.100:22347/mcp"}
             # Size each trade from the account's free margin (risk_per_trade x free margin), so
             # every open trade leaves less for the next (strat-relay/platform-tools#59).
             - {name: V2_RISK_SIZING_BASIS, value: "FREE_MARGIN"}
