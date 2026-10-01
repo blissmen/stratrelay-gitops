@@ -42,7 +42,7 @@ spec:
           command: ["python", "-m", "broker_view.service"]
           env:
             - name: BROKER_VIEW_BRIDGE_URL
-              value: http://192.168.1.166:22347/mcp
+              value: http://10.10.10.100:22347/mcp
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -93,6 +93,6 @@ spec:
         - {port: 53, protocol: TCP}
     - to:
         - ipBlock:
-            cidr: 192.168.1.166/32
+            cidr: 10.10.10.100/32
       ports:
         - {port: 22347, protocol: TCP}
