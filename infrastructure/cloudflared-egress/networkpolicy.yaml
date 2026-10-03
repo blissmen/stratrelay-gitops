@@ -68,6 +68,16 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: openwebui
+          podSelector:
+            matchLabels:
+              app: openwebui
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: cattle-system
           podSelector:
             matchLabels:
