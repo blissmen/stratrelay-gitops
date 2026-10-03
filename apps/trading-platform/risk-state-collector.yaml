@@ -41,6 +41,7 @@ spec:
           env:
             - {name: V2_EXECUTION_ACCOUNT_ID, value: "188428665"}
             - {name: V2_EXECUTION_BRIDGE_MODE, value: "real"}
+            - {name: V2_BROKER_SYMBOL_MAP_JSON, value: '{"real:188428665":{"XAUUSD":"XAUUSDm","BTCUSD":"BTCUSDm","EURUSD":"EURUSDm","USDJPY":"USDJPYm"}}'}
             - {name: V2_READ_BRIDGE_URL, value: "http://10.10.10.100:22347/mcp"}
             - name: REDIS_PASSWORD
               valueFrom:
