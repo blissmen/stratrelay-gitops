@@ -12,6 +12,8 @@ resources:
   - platform-api-egress.yaml
   - execution-v2-workload.yaml
   - execution-v2-network-policy.yaml
+  - risk-state-collector.yaml
+  - risk-state-collector-network.yaml
   - runtimes.yaml
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
