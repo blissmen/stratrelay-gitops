@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-terminal
+  namespace: openwebui
+  labels:
+    app.kubernetes.io/name: open-terminal
+    app.kubernetes.io/part-of: open-webui
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: open-terminal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: open-terminal
+        app.kubernetes.io/part-of: open-webui
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: open-terminal
+          image: ghcr.io/open-webui/open-terminal:v0.14.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OPEN_TERMINAL_API_KEY_FILE
+              value: /var/run/secrets/open-terminal/api-key
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /docs
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: workspace
+              mountPath: /home/user
+            - name: api-key
+              mountPath: /var/run/secrets/open-terminal
+              readOnly: true
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: open-terminal-workspace
+        - name: api-key
+          secret:
+            secretName: open-terminal-secret
+            defaultMode: 0440
+            items:
+              - key: OPEN_TERMINAL_API_KEY
+                path: api-key
