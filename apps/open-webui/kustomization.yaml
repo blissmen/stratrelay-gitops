@@ -5,5 +5,9 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+  - open-terminal-pvc.yaml
+  - open-terminal-deployment.yaml
+  - open-terminal-service.yaml
+  - open-terminal-networkpolicy.yaml
   - ingress.yaml
   - ingress-networkpolicy.yaml
