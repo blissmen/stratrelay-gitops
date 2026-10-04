@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: realtime
-          image: ghcr.io/strat-relay/trading-platform-realtime-api@sha256:8e10a6464e9848cb302c67500f1c1fe3a00e10d55c9d65b84f000f4bcbbfb8d7
+          image: ghcr.io/strat-relay/trading-platform-realtime-api@sha256:3f2fa802348b5fa536e132fcdad4ef07f05b91db23859aba9194005198b543f5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -37,7 +37,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0bd61c50dae1dedbc436f18210d31e8f5603a58a2f86fbc3a4c4edbf88e52875
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:2b785322cbaf22568d3c855251cc35d86c7128eeae10e12e90bf3f8a27a952cd
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "market_data_cache.service"]
           envFrom:
