@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: trading-ops-console
-  namespace: default
+  namespace: trading
   labels:
     app: trading-ops-console
 spec:
@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: trading-ops-console
-          image: ghcr.io/blissmen/trading-ops-console@sha256:e65f27e85ded4ffb9d3e456b00b08b9fe1e5dd30fd17f7fa6bad43a3d858356b
+          image: ghcr.io/blissmen/trading-ops-console@sha256:e399067bf962fb8a7be0a340513c8f99766c0005e63892a67fc12e7dfc26491e
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

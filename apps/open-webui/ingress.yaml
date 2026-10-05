@@ -1,20 +1,20 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: trading-ops-console-ingress-staging
-  namespace: trading
+  name: openwebui-ingress
+  namespace: openwebui
   labels:
-    app: trading-ops-console
+    app: openwebui
 spec:
   ingressClassName: traefik
   rules:
-    - host: console.stratrelay.app
+    - host: chat.stratrelay.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: trading-ops-console-service
+                name: openwebui
                 port:
                   name: http

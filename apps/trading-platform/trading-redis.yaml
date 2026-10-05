@@ -1,0 +1,179 @@
+# Redis for platform hot state (strat-relay/platform-tools #50 / #51):
+#   - execution risk snapshot + atomic risk reservations  (execution_v2/risk_state)
+#   - market-data cache: completed bars, metadata, quotes   (market_data_cache)
+# PostgreSQL stays the durable system of record; Redis is hot state only. Reservations must
+# survive restarts (an UNKNOWN reservation holds execution capacity until reconciliation), so AOF
+# persistence is on, and `noeviction` makes Redis refuse writes rather than silently drop them.
+#
+# One-time prerequisite (not stored in Git):
+#   kubectl -n trading create secret generic trading-redis-auth --from-literal=password="$(openssl rand -hex 24)"
+# Clients use redis://:<password>@trading-redis.trading.svc:6379/0 (RISK_REDIS_URL / MARKET_DATA_REDIS_URL).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: trading-redis
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: trading-redis
+    app.kubernetes.io/part-of: trading-platform
+    app.kubernetes.io/component: hot-state
+spec:
+  serviceName: trading-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: trading-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: trading-redis
+        app.kubernetes.io/part-of: trading-platform
+        app.kubernetes.io/component: hot-state
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+          args:
+            - --requirepass
+            - $(REDIS_PASSWORD)
+            - --dir
+            - /data
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - everysec
+            - --save
+            - ""
+            - --maxmemory
+            - 256mb
+            - --maxmemory-policy
+            - noeviction
+            - --port
+            - "6379"
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          readinessProbe:
+            tcpSocket:
+              port: redis
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: trading-redis
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trading-redis
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: trading-redis
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  selector:
+    app.kubernetes.io/name: trading-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+---
+# Only named platform workloads may reach Redis; Redis itself needs no egress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: trading-redis-network
+  namespace: trading
+  labels:
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: trading-redis
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
+                         liquidity-live-runtime, risk-state-collector, market-data-collector,
+                         broker-view-populator, platform-signals-api]
+      ports:
+        - {port: 6379, protocol: TCP}
+  egress: []
+---
+# Additive egress for the Redis clients (NetworkPolicies are unions; existing policies unchanged).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: trading-redis-client-egress
+  namespace: trading
+  labels:
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
+                 liquidity-live-runtime, risk-state-collector, market-data-collector,
+                 broker-view-populator, platform-signals-api]
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: trading
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: trading-redis
+      ports:
+        - {port: 6379, protocol: TCP}

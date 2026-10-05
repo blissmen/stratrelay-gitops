@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: runtime
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:02fa072953c614179bf77697160fc19bc1a930ed96b06fa3a2c81b77ed3bccd1
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0c5088ae67f3e65f8c63851571e86e58e077d504c147421448fe925692e09744
           imagePullPolicy: IfNotPresent
           command: [python, -m, trade_management.runtime]
           envFrom:
@@ -45,9 +45,18 @@ spec:
             - name: P4_OBSERVATION_INTERVAL_SECONDS
               value: "30"
             - name: P4_BRIDGE_MCP_URL
-              value: http://192.168.1.166:22347/mcp
+              value: http://10.10.10.100:22347/mcp
             - name: P4_HEALTH_PORT
               value: "8080"
+            # Completed bars for structure-aware Trade Manager versions (TM-STRUCTURE-1) from the
+            # market-data cache; quotes are unchanged (TM_MARKET_DATA_SOURCE is not set).
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           ports:
             - name: http
               containerPort: 8080
@@ -129,7 +138,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: relay
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:02fa072953c614179bf77697160fc19bc1a930ed96b06fa3a2c81b77ed3bccd1
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0c5088ae67f3e65f8c63851571e86e58e077d504c147421448fe925692e09744
           imagePullPolicy: IfNotPresent
           command: [python, -m, scripts.signal_outbox_relay]
           envFrom:

@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:aa046a1a719343635e0deac0b99719971f498699035121922db5b05642bfcc2a
+          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:8ea5077c4fcedc099451ceb0e3c47494b89599e187f88630b4d90f3fae00d7c2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -73,6 +73,17 @@ spec:
               value: /etc/platform-config/platform.json
             - name: CONTEXT_POST_EXIT_RESEARCH_LEDGER
               value: /work/context-research/context_structure_retrace_post_exit.jsonl
+            # Broker endpoints + TM live read the broker view (broker-view-populator.yaml) first;
+            # the bridge only when an entry is missing, older than 45 s, or Redis is unreachable.
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: BROKER_VIEW_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            - name: BROKER_VIEW_MAX_AGE_SECONDS
+              value: "45"
           volumeMounts:
             - name: platform-config
               mountPath: /etc/platform-config

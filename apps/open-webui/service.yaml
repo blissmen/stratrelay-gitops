@@ -1,14 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: trading-ops-console-service
-  namespace: trading
-  labels:
-    app: trading-ops-console
+  name: openwebui
+  namespace: openwebui
 spec:
   type: ClusterIP
   selector:
-    app: trading-ops-console
+    app: openwebui
   ports:
     - name: http
       port: 80

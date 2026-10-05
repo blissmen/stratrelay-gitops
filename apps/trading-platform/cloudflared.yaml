@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/part-of: mt5-native-bridge
+spec:
+  # Two connectors on one tunnel: when one loses its edge connections (packet loss on the host
+  # uplink), the other keeps serving. Surge first so a rollout never drops to zero connectors.
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared
+        app.kubernetes.io/part-of: mt5-native-bridge
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: cloudflared
+          # Pinned (was :latest) to the build that was running: 2026.9.1.
+          image: cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4
+          imagePullPolicy: IfNotPresent
+          args:
+            - tunnel
+            - --no-autoupdate
+            - run
+            # auto = QUIC (UDP 7844, allowed by cloudflared-egress) with automatic fallback to
+            # HTTP/2 over TCP. QUIC copes better with packet loss than one multiplexed TCP stream.
+            # Revert to "http2" if QUIC misbehaves on this uplink.
+            - --protocol
+            - auto
+            - --token
+            - $(TUNNEL_TOKEN)
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared-tunnel-token
+                  key: tunnel-token
+          ports:
+            - name: metrics
+              containerPort: 20241
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          # /ready fails while the connector holds no edge connection; restart one that stays
+          # disconnected for ~3 minutes instead of leaving it wedged.
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 9

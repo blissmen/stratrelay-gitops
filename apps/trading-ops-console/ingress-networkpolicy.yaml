@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: trading-ops-console-ingress
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: trading-ops-console
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: trading-ops-console
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudflared
+      ports:
+        - protocol: TCP
+          port: 80

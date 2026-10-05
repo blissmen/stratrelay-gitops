@@ -5,3 +5,4 @@ resources:
   - ../../infrastructure/cloudflared-egress
   - ../../apps/trading-ops-console
   - ../../apps/trading-platform
+  - ../../apps/open-webui
