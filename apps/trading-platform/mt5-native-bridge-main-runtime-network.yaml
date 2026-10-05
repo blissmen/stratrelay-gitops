@@ -45,6 +45,16 @@ spec:
       ports:
         - port: 22347
           protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: trading
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: trading-redis
+      ports:
+        - port: 6379
+          protocol: TCP
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

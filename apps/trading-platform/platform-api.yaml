@@ -71,6 +71,8 @@ spec:
                   key: SIGNAL_DB_PRIMARY_ENABLED
             - name: PLATFORM_STRATEGY_CONFIG_PATH
               value: /etc/platform-config/platform.json
+            - name: CONTEXT_POST_EXIT_RESEARCH_LEDGER
+              value: /work/context-research/context_structure_retrace_post_exit.jsonl
             # Broker endpoints + TM live read the broker view (broker-view-populator.yaml) first;
             # the bridge only when an entry is missing, older than 45 s, or Redis is unreachable.
             - name: REDIS_PASSWORD
@@ -85,6 +87,9 @@ spec:
           volumeMounts:
             - name: platform-config
               mountPath: /etc/platform-config
+              readOnly: true
+            - name: context-research
+              mountPath: /work/context-research
               readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
@@ -119,6 +124,9 @@ spec:
             items:
               - key: platform.json
                 path: platform.json
+        - name: context-research
+          persistentVolumeClaim:
+            claimName: mt5-native-bridge-runtime
 ---
 apiVersion: v1
 kind: Service

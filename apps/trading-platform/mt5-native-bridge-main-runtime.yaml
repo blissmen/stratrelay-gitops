@@ -135,6 +135,48 @@ spec:
             runAsGroup: 101
             capabilities:
               drop: [ALL]
+        - name: context-post-exit-observer
+          # Research-only observer. It shares the Context state PVC but has no bridge,
+          # PostgreSQL, execution, or broker credentials.
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:02fa072953c614179bf77697160fc19bc1a930ed96b06fa3a2c81b77ed3bccd1
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - research.context_structure_retrace_post_exit_ledger
+            - watch
+            - --interval
+            - "60"
+          env:
+            - name: CONTEXT_RUNNER_STATE_DIR
+              value: /work
+            - name: CONTEXT_POST_EXIT_LEDGER_DIR
+              value: /work
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+          workingDir: /app
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 150m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 101
+            runAsGroup: 101
+            capabilities:
+              drop: [ALL]
       volumes:
         - name: runtime
           persistentVolumeClaim:
