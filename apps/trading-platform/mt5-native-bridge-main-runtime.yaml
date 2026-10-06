@@ -138,7 +138,7 @@ spec:
         - name: context-post-exit-observer
           # Research-only observer. It shares the Context state PVC but has no bridge,
           # PostgreSQL, execution, or broker credentials.
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:02fa072953c614179bf77697160fc19bc1a930ed96b06fa3a2c81b77ed3bccd1
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0c5088ae67f3e65f8c63851571e86e58e077d504c147421448fe925692e09744
           imagePullPolicy: IfNotPresent
           command:
             - python
