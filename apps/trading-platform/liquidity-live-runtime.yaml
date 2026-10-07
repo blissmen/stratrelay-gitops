@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: runtime
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:91a1611e05311ae462a63e2cf0a70d61bad6d41b251696432d5f71e5a1a83ada
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:bec69889ca9c8fb352a33a66c09e719ac627c19fc6341df928a266d9f3054b4f
           imagePullPolicy: IfNotPresent
           command:
             - sh
