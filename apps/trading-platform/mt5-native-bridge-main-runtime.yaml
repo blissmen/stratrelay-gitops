@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: orchestrator-shadow
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:bec69889ca9c8fb352a33a66c09e719ac627c19fc6341df928a266d9f3054b4f
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:87b7ee1f1be757b1dc27e0acb78f512543c0981854fbec5aba3c56941a5b4ae4
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -89,7 +89,7 @@ spec:
             capabilities:
               drop: [ALL]
         - name: context-paper
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:bec69889ca9c8fb352a33a66c09e719ac627c19fc6341df928a266d9f3054b4f
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:87b7ee1f1be757b1dc27e0acb78f512543c0981854fbec5aba3c56941a5b4ae4
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -138,7 +138,7 @@ spec:
         - name: context-post-exit-observer
           # Research-only observer. It shares the Context state PVC but has no bridge,
           # PostgreSQL, execution, or broker credentials.
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:bec69889ca9c8fb352a33a66c09e719ac627c19fc6341df928a266d9f3054b4f
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:87b7ee1f1be757b1dc27e0acb78f512543c0981854fbec5aba3c56941a5b4ae4
           imagePullPolicy: IfNotPresent
           command:
             - python
