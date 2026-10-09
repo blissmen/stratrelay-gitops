@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: runtime
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:e881d4860aabb9662113a7b5ad56885129ae97e3f1ac3b2c9684d3d39224db48
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:3af9d2d9beda18f5acf74c61ba3ad29e59c9e45b4993a36a1f63383e55bc7e05
           imagePullPolicy: IfNotPresent
           command: [python, -m, execution_v2.runtime]
           envFrom:
