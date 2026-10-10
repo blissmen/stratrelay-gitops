@@ -36,7 +36,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: migrate
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0268b7f06c3bf787ec6aeb7b646ed0f1436a955d2901c59896d4ac537337eb9a
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:ce063b2b2efb7d5c001c62042401b20e4f0f995c723c4e49132931eb7de9a843
           imagePullPolicy: IfNotPresent
           command: [python, -m, postgres.migrate]
           envFrom:
