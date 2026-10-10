@@ -56,6 +56,8 @@ spec:
               value: /work/runtime
             - name: CONTEXT_RUNNER_STATE_DIR
               value: /work
+            - name: CONTEXT_V2_RUNNER_STATE_DIR
+              value: /work/context-v2
             - name: MARKET_DATA_SOURCE
               value: REDIS
             - name: REDIS_PASSWORD
@@ -109,6 +111,58 @@ spec:
             # Runner code from the release image; state, ledger, heartbeat and frozen manifest on the volume.
             - name: CONTEXT_RUNNER_STATE_DIR
               value: /work
+            - name: MARKET_DATA_SOURCE
+              value: REDIS
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trading-redis-auth
+                  key: password
+            - name: MARKET_DATA_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+          workingDir: /app
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
+            capabilities:
+              drop: [ALL]
+        - name: context-v2-research
+          # V2 is an independent research-only evaluator. It must not share V1's
+          # state, manifest, lock, or ledger even though both runners use the same
+          # runtime PVC and read-only market-data path.
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:eadf64f1989076bd5392855ed1cfe4775ad85f6e09455ec4adf03083f4193c4e
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              rm -f /work/context-v2/context_structure_retrace_v2_forward.pid &&
+              exec python context_structure_retrace_v2_forward.py start --interval 15
+              --mcp-url http://192.168.1.166:22347/mcp
+              --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
+          env:
+            - name: CONTEXT_V2_INSTANCE_ID
+              value: context-v2-research
+            - name: CONTEXT_V2_RUNNER_STATE_DIR
+              value: /work/context-v2
+            - name: TRADING_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: trading-runtime-endpoints
+                  key: TRADING_POSTGRES_DSN
+            - name: ENTRY_OUTCOME_SIGNAL_CUTOFF_ID
+              value: 931fe86e-c634-422b-89c1-cc65fd572d2c
             - name: MARKET_DATA_SOURCE
               value: REDIS
             - name: REDIS_PASSWORD
