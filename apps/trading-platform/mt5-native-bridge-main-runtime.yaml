@@ -67,9 +67,10 @@ spec:
                   key: password
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
-            # Explicitly gate any compatibility outcome path in this image.
+            # Phase A runs against schema 050. Enable the writer gate only
+            # after migrations 051-053 create the resolver control tables.
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
-              value: "true"
+              value: "false"
           envFrom:
             - secretRef:
                 name: trading-runtime-endpoints
@@ -124,7 +125,7 @@ spec:
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
-              value: "true"
+              value: "false"
           workingDir: /app
           volumeMounts:
             - name: runtime
