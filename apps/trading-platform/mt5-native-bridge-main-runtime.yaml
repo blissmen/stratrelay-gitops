@@ -67,6 +67,12 @@ spec:
                   key: password
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            # Phase D1: publication ownership is transferred only after the
+            # standalone Liquidity publisher is already MONITOR_ONLY.
+            - name: LIQUIDITY_LIVE_RUNTIME_MODE
+              value: "ORCHESTRATOR"
+            - name: LIQUIDITY_LIVE_ORCHESTRATOR_MODE
+              value: "true"
             # Phase C: migrations 051-053 are applied; enforce DB-backed
             # legacy writer authority while resolver primary remains off.
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
