@@ -7,8 +7,8 @@ resources:
   - platform-realtime-api-network.yaml
   - mt5-native-bridge-main-runtime.yaml
   - mt5-native-bridge-main-runtime-network.yaml
-  - trading-platform-schema-migrations.yaml
-  - trading-platform-schema-migrations-network.yaml
+  # Schema migrations are intentionally operator-controlled during the staged
+  # resolver rollout. The manual Job manifest is not part of Flux's active set.
   - platform-api-egress.yaml
   - execution-v2-workload.yaml
   - execution-v2-network-policy.yaml
@@ -20,4 +20,5 @@ resources:
   - trading-redis.yaml
   - market-data-collector.yaml
   - broker-view-populator.yaml
+  - unified-outcome-resolver.yaml
   - cloudflared.yaml

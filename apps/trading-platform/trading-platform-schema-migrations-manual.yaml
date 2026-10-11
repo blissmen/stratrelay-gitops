@@ -1,0 +1,46 @@
+# Operator-controlled only. This manifest is intentionally excluded from the
+# production Kustomization. Do not add it to apps/trading-platform/kustomization.yaml.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trading-platform-schema-migrations-051-053
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: trading-platform-schema-migrations
+    app.kubernetes.io/component: schema-migration
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: trading-platform-schema-migrations
+        app.kubernetes.io/component: schema-migration
+        app.kubernetes.io/part-of: trading-platform
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:9272700faa29a142a4a9aa851dc1fb867d9cfe65267bfb111cee9e625713cde8
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, postgres.migrate]
+          envFrom:
+            - secretRef:
+                name: trading-runtime-endpoints
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]

@@ -53,6 +53,12 @@ spec:
           env:
             - name: LIQUIDITY_LIVE_RUNTIME_ENABLED
               value: "true"
+            # Phase A keeps standalone publication active but explicitly keeps
+            # orchestrator-owned publication disabled until the handoff fence.
+            - name: LIQUIDITY_LIVE_ORCHESTRATOR_MODE
+              value: "false"
+            - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
+              value: "true"
             # Compatibility for the currently deployed image; Redis mode does not call this URL.
             - name: LIQUIDITY_LIVE_MCP_URL
               value: http://10.10.10.100:22347/mcp

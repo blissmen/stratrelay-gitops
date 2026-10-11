@@ -67,6 +67,9 @@ spec:
                   key: password
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            # Explicitly gate any compatibility outcome path in this image.
+            - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
+              value: "true"
           envFrom:
             - secretRef:
                 name: trading-runtime-endpoints
@@ -120,6 +123,8 @@ spec:
                   key: password
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
+            - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
+              value: "true"
           workingDir: /app
           volumeMounts:
             - name: runtime
