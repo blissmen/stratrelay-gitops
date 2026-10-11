@@ -1,6 +1,6 @@
 {
   "repository": "strat-relay/platform-tools",
-  "commit": "600e82bfdeb224035f4e7da4b2d8e89ede96d5d1",
+  "commit": "8334e58e89c76da06c5eb536e3e979a70c382cb0",
   "images": [
     {
       "name": "trading-platform-api-router",
@@ -22,9 +22,9 @@
     },
     {
       "name": "trading-platform-runtime",
-      "tag": "sha-600e82bfdeb224035f4e7da4b2d8e89ede96d5d1",
-      "digest": "sha256:061ec68429b93a70a73b2a5ca410dbb1a90d6b73dce88a734cdf5fe7a53845db",
-      "reference": "ghcr.io/strat-relay/trading-platform-runtime@sha256:061ec68429b93a70a73b2a5ca410dbb1a90d6b73dce88a734cdf5fe7a53845db"
+      "tag": "sha-8334e58e89c76da06c5eb536e3e979a70c382cb0",
+      "digest": "sha256:ae61ba5880b5bc2b83a695f89de0ee5e18618338392e164ec57253cf8f14ae23",
+      "reference": "ghcr.io/strat-relay/trading-platform-runtime@sha256:ae61ba5880b5bc2b83a695f89de0ee5e18618338392e164ec57253cf8f14ae23"
     }
   ]
 }
