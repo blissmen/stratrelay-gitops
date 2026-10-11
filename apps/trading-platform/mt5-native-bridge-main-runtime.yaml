@@ -67,10 +67,10 @@ spec:
                   key: password
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
-            # Phase A runs against schema 050. Enable the writer gate only
-            # after migrations 051-053 create the resolver control tables.
+            # Phase C: migrations 051-053 are applied; enforce DB-backed
+            # legacy writer authority while resolver primary remains off.
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
-              value: "false"
+              value: "true"
           envFrom:
             - secretRef:
                 name: trading-runtime-endpoints
@@ -125,7 +125,7 @@ spec:
             - name: MARKET_DATA_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
-              value: "false"
+              value: "true"
           workingDir: /app
           volumeMounts:
             - name: runtime
