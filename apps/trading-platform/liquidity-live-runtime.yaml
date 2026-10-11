@@ -53,8 +53,11 @@ spec:
           env:
             - name: LIQUIDITY_LIVE_RUNTIME_ENABLED
               value: "true"
-            # Phase A keeps standalone publication active but explicitly keeps
-            # orchestrator-owned publication disabled until the handoff fence.
+            # Phase D1: retain OPEN-outcome monitoring without canonical
+            # signal publication. The source release contains the explicit
+            # runtime-mode implementation.
+            - name: LIQUIDITY_LIVE_RUNTIME_MODE
+              value: "MONITOR_ONLY"
             - name: LIQUIDITY_LIVE_ORCHESTRATOR_MODE
               value: "false"
             # Phase C: migrations 051-053 are applied; enforce DB-backed
