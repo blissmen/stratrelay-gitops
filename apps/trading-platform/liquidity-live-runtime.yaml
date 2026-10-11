@@ -57,10 +57,10 @@ spec:
             # orchestrator-owned publication disabled until the handoff fence.
             - name: LIQUIDITY_LIVE_ORCHESTRATOR_MODE
               value: "false"
-            # Phase A runs against schema 050. Enable the writer gate only
-            # after migrations 051-053 create the resolver control tables.
+            # Phase C: migrations 051-053 are applied; enforce DB-backed
+            # legacy writer authority while standalone publication remains on.
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
-              value: "false"
+              value: "true"
             # Compatibility for the currently deployed image; Redis mode does not call this URL.
             - name: LIQUIDITY_LIVE_MCP_URL
               value: http://10.10.10.100:22347/mcp
