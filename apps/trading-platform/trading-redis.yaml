@@ -145,7 +145,7 @@ spec:
                 operator: In
                 values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
                          liquidity-live-runtime, risk-state-collector, market-data-collector,
-                         broker-view-populator, platform-signals-api]
+                         broker-view-populator, platform-signals-api, unified-outcome-resolver]
       ports:
         - {port: 6379, protocol: TCP}
   egress: []
@@ -165,7 +165,7 @@ spec:
         operator: In
         values: [execution-v2-runtime, trade-management-runtime, mt5-native-bridge,
                  liquidity-live-runtime, risk-state-collector, market-data-collector,
-                 broker-view-populator, platform-signals-api]
+                 broker-view-populator, platform-signals-api, unified-outcome-resolver]
   policyTypes: [Egress]
   egress:
     - to:
