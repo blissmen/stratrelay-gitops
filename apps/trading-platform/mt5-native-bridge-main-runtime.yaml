@@ -43,7 +43,7 @@ spec:
               trap 'exit 143' TERM INT;
               while true; do
                 rm -f /work/runtime/orchestration/pid;
-                python3 signal_orchestrator.py primary-start --interval 15;
+                python3 signal_orchestrator.py primary-start --interval 1;
                 rc=$?;
                 echo "signal orchestrator exited rc=$rc; retrying in 5s" >&2;
                 sleep 5;
@@ -108,7 +108,7 @@ spec:
             - -c
             - >-
               rm -f /work/context_structure_retrace_forward.pid &&
-              exec python context_structure_retrace_forward.py start --interval 15
+              exec python context_structure_retrace_forward.py start --interval 1
               --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
           env:
             - name: TRADING_POSTGRES_DSN
@@ -160,7 +160,7 @@ spec:
             - -c
             - >-
               rm -f /work/context-v2/context_structure_retrace_v2_forward.pid &&
-              exec python context_structure_retrace_v2_forward.py start --interval 15
+              exec python context_structure_retrace_v2_forward.py start --interval 1
               --mcp-url http://192.168.1.166:22347/mcp
               --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
           env:
