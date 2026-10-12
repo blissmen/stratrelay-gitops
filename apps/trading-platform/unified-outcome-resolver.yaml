@@ -44,9 +44,9 @@ spec:
                 name: trading-runtime-endpoints
           env:
             - name: OUTCOME_RESOLVER_ENABLED
-              value: "false"
+              value: "true"
             - name: OUTCOME_RESOLVER_PRIMARY
-              value: "false"
+              value: "true"
             - name: OUTCOME_RESOLVER_ENFORCE_WRITER_GATE
               value: "true"
             - name: OUTCOME_RESOLVER_HOLDER_ID
