@@ -1,30 +1,30 @@
 {
   "repository": "strat-relay/platform-tools",
-  "commit": "8b0bd8954748febe263b7a3aaeef51eaa98afb02",
+  "commit": "e3fd6d873ba34848b51f243d594964ae9f3d899d",
   "images": [
     {
       "name": "trading-platform-api-router",
-      "tag": "sha-8b0bd8954748febe263b7a3aaeef51eaa98afb02",
-      "digest": "sha256:023175680ab44400498864535c854fc6ca4a1b1ac7ae6094fec680fcabc34716",
-      "reference": "ghcr.io/strat-relay/trading-platform-api-router@sha256:023175680ab44400498864535c854fc6ca4a1b1ac7ae6094fec680fcabc34716"
+      "tag": "sha-e3fd6d873ba34848b51f243d594964ae9f3d899d",
+      "digest": "sha256:461fbd269551c1394c0beedbe271027e547edb288bd9a2462baa93ffe455a85a",
+      "reference": "ghcr.io/strat-relay/trading-platform-api-router@sha256:461fbd269551c1394c0beedbe271027e547edb288bd9a2462baa93ffe455a85a"
     },
     {
       "name": "trading-platform-control-api",
-      "tag": "sha-8b0bd8954748febe263b7a3aaeef51eaa98afb02",
-      "digest": "sha256:4cde0d57f518f6cf36f6b5895eb024f3eefb45f78ca401a2620c8b75147a9fa8",
-      "reference": "ghcr.io/strat-relay/trading-platform-control-api@sha256:4cde0d57f518f6cf36f6b5895eb024f3eefb45f78ca401a2620c8b75147a9fa8"
+      "tag": "sha-e3fd6d873ba34848b51f243d594964ae9f3d899d",
+      "digest": "sha256:132ae40f038be837806305ba970667f3edcd168dd36ed86d70bb89f0504919bd",
+      "reference": "ghcr.io/strat-relay/trading-platform-control-api@sha256:132ae40f038be837806305ba970667f3edcd168dd36ed86d70bb89f0504919bd"
     },
     {
       "name": "trading-platform-realtime-api",
-      "tag": "sha-8b0bd8954748febe263b7a3aaeef51eaa98afb02",
-      "digest": "sha256:92087b6e5f70791099ad2e8889a6129ada92186af148afdcdb77da39c828fb16",
-      "reference": "ghcr.io/strat-relay/trading-platform-realtime-api@sha256:92087b6e5f70791099ad2e8889a6129ada92186af148afdcdb77da39c828fb16"
+      "tag": "sha-e3fd6d873ba34848b51f243d594964ae9f3d899d",
+      "digest": "sha256:63ae73622ac9fe52c0ce2a94537ea04f8f9c71176811a207ab6f160ee1deffd9",
+      "reference": "ghcr.io/strat-relay/trading-platform-realtime-api@sha256:63ae73622ac9fe52c0ce2a94537ea04f8f9c71176811a207ab6f160ee1deffd9"
     },
     {
       "name": "trading-platform-runtime",
-      "tag": "sha-8b0bd8954748febe263b7a3aaeef51eaa98afb02",
-      "digest": "sha256:59519fb68804725c9eac509d8c6b15bb0979de8091312fc01ed26c8bbfa7ced5",
-      "reference": "ghcr.io/strat-relay/trading-platform-runtime@sha256:59519fb68804725c9eac509d8c6b15bb0979de8091312fc01ed26c8bbfa7ced5"
+      "tag": "sha-e3fd6d873ba34848b51f243d594964ae9f3d899d",
+      "digest": "sha256:7c1184be1f0c972cc5ff87d9e6c8872377cfa5353e23ba110cb6662e9b8d56a4",
+      "reference": "ghcr.io/strat-relay/trading-platform-runtime@sha256:7c1184be1f0c972cc5ff87d9e6c8872377cfa5353e23ba110cb6662e9b8d56a4"
     }
   ]
 }
