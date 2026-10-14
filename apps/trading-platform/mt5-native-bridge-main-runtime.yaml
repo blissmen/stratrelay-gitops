@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: orchestrator-shadow
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5fdc05ae9a91d9f27ae7acee980ef2ac24196e51dea969a585551f329c6c2102
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:36253679c71e3a32e6bd0d5242b4fabec7e37197f8c35ee97c295fff0051ca42
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -101,7 +101,7 @@ spec:
             capabilities:
               drop: [ALL]
         - name: context-paper
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5fdc05ae9a91d9f27ae7acee980ef2ac24196e51dea969a585551f329c6c2102
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:36253679c71e3a32e6bd0d5242b4fabec7e37197f8c35ee97c295fff0051ca42
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -153,7 +153,7 @@ spec:
           # V2 is an independent research-only evaluator. It must not share V1's
           # state, manifest, lock, or ledger even though both runners use the same
           # runtime PVC and read-only market-data path.
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5fdc05ae9a91d9f27ae7acee980ef2ac24196e51dea969a585551f329c6c2102
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:36253679c71e3a32e6bd0d5242b4fabec7e37197f8c35ee97c295fff0051ca42
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -204,7 +204,7 @@ spec:
         - name: context-post-exit-observer
           # Research-only observer. It shares the Context state PVC but has no bridge,
           # PostgreSQL, execution, or broker credentials.
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:5fdc05ae9a91d9f27ae7acee980ef2ac24196e51dea969a585551f329c6c2102
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:36253679c71e3a32e6bd0d5242b4fabec7e37197f8c35ee97c295fff0051ca42
           imagePullPolicy: IfNotPresent
           command:
             - python
