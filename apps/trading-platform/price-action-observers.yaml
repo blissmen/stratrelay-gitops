@@ -29,7 +29,7 @@ spec:
             - {name: PRICE_ACTION_MCP_URL, value: http://10.10.10.100:22347/mcp}
             - {name: PRICE_ACTION_POLL_SECONDS, value: "60"}
             - name: PRICE_ACTION_SYMBOL_MAP
-              value: '{"EURUSD":"EURUSDm","GBPUSD":"GBPUSDm","USDJPY":"USDJPYm","USDCHF":"USDCHFm","USDCAD":"USDCADm","AUDUSD":"AUDUSDm","NZDUSD":"NZDUSDm","EURJPY":"EURJPYm","GBPJPY":"GBPJPYm","EURGBP":"EURGBPm","AUDJPY":"AUDJPYm","CADJPY":"CADJPYm","CHFJPY":"CHFJPYm","GBPAUD":"GBPAUDm","GBPCAD":"GBPCADm"}'
+              value: '{"XAUUSD":"XAUUSDm","BTCUSD":"BTCUSDm","USDJPY":"USDJPYm"}'
             - {name: EXECUTION_AUTHORITY_MODE, value: DISABLED}
             - {name: SIGNAL_AUTHORITY_MODE, value: RESEARCH_ONLY}
             - {name: ORCHESTRATOR_MODE, value: "false"}
@@ -74,7 +74,7 @@ spec:
             - {name: PRICE_ACTION_MCP_URL, value: http://10.10.10.100:22347/mcp}
             - {name: PRICE_ACTION_POLL_SECONDS, value: "60"}
             - name: PRICE_ACTION_SYMBOL_MAP
-              value: '{"EURUSD":"EURUSDm","GBPUSD":"GBPUSDm","USDJPY":"USDJPYm","USDCHF":"USDCHFm","USDCAD":"USDCADm","AUDUSD":"AUDUSDm","NZDUSD":"NZDUSDm","EURJPY":"EURJPYm","GBPJPY":"GBPJPYm","EURGBP":"EURGBPm","AUDJPY":"AUDJPYm","CADJPY":"CADJPYm","CHFJPY":"CHFJPYm","GBPAUD":"GBPAUDm","GBPCAD":"GBPCADm"}'
+              value: '{"XAUUSD":"XAUUSDm","BTCUSD":"BTCUSDm","USDJPY":"USDJPYm"}'
             - {name: EXECUTION_AUTHORITY_MODE, value: DISABLED}
             - {name: SIGNAL_AUTHORITY_MODE, value: RESEARCH_ONLY}
             - {name: ORCHESTRATOR_MODE, value: "false"}
