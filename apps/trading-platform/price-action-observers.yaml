@@ -39,6 +39,7 @@ spec:
             requests: {cpu: 100m, memory: 256Mi}
             limits: {cpu: 500m, memory: 768Mi}
           readinessProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, initialDelaySeconds: 10, periodSeconds: 30, timeoutSeconds: 10}
+          startupProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, periodSeconds: 30, failureThreshold: 60, timeoutSeconds: 10}
           livenessProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, initialDelaySeconds: 30, periodSeconds: 60, timeoutSeconds: 10}
       volumes: [{name: tmp, emptyDir: {}}]
 ---
@@ -83,5 +84,6 @@ spec:
             requests: {cpu: 100m, memory: 256Mi}
             limits: {cpu: 500m, memory: 768Mi}
           readinessProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, initialDelaySeconds: 10, periodSeconds: 30, timeoutSeconds: 10}
+          startupProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, periodSeconds: 30, failureThreshold: 60, timeoutSeconds: 10}
           livenessProbe: {exec: {command: [python, -m, research.price_action_forward_runtime, health]}, initialDelaySeconds: 30, periodSeconds: 60, timeoutSeconds: 10}
       volumes: [{name: tmp, emptyDir: {}}]
