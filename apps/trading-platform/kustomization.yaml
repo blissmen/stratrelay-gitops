@@ -17,6 +17,10 @@ resources:
   - runtimes.yaml
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
+  - price-action-observers.yaml
+  # Live PostgreSQL is at migration 056; this additive job applies 057.
+  - trading-platform-schema-migrations.yaml
+  - trading-platform-schema-migrations-network.yaml
   - trading-redis.yaml
   - market-data-collector.yaml
   - broker-view-populator.yaml

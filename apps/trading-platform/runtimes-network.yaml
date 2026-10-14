@@ -10,7 +10,7 @@ spec:
     matchExpressions:
       - key: app.kubernetes.io/name
         operator: In
-        values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, mt5-native-bridge, unified-outcome-resolver]
+        values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, price-action-sr-retest-v1-observer, price-action-engulfing-continuation-v1-observer, mt5-native-bridge, unified-outcome-resolver]
   policyTypes: [Egress]
   egress:
     - to:
@@ -62,7 +62,7 @@ spec:
             matchExpressions:
               - key: app.kubernetes.io/name
                 operator: In
-                values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, mt5-native-bridge, unified-outcome-resolver]
+                values: [trade-management-runtime, signal-outbox-relay, liquidity-live-runtime, price-action-sr-retest-v1-observer, price-action-engulfing-continuation-v1-observer, mt5-native-bridge, unified-outcome-resolver]
       ports:
         - {port: 5432, protocol: TCP}
         - {port: 4222, protocol: TCP}
