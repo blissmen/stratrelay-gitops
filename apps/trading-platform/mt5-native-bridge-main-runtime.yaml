@@ -161,7 +161,7 @@ spec:
             - >-
               rm -f /work/context-v2/context_structure_retrace_v2_forward.pid &&
               exec python context_structure_retrace_v2_forward.py start --interval 1
-              --mcp-url http://192.168.1.166:22347/mcp
+              --mcp-url http://10.10.10.100:22347/mcp
               --symbols XAUUSDm BTCUSDm USDJPYm EURUSDm
           env:
             - name: CONTEXT_V2_INSTANCE_ID
