@@ -26,3 +26,7 @@ resources:
   - broker-view-populator.yaml
   - unified-outcome-resolver.yaml
   - cloudflared.yaml
+
+  # Staged research canary; activation is a separate reviewed change.
+  - strategy-library-canary.yaml
+  - strategy-library-canary-network.yaml
