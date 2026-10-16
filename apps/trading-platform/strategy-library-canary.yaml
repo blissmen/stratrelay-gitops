@@ -1,7 +1,8 @@
-# Staged only: replicas=0 and null T0 intentionally prevent activation.
-# Freeze a concrete T0 and make this ConfigMap immutable in the activation PR.
+# Frozen research observation canary. T0: 2026-10-16T18:15:00Z.
+# Roll back by scaling to zero; preserve manifest, state and outcome evidence.
 apiVersion: v1
 kind: ConfigMap
+immutable: true
 metadata:
   name: strategy-library-canary-v1-manifest
   namespace: trading
@@ -11,7 +12,7 @@ data:
       "schema": "library-forward-observation.v1",
       "execution_eligible": false,
       "run_id": "library-canary-20261016-v1",
-      "activation_time": null,
+      "activation_time": 1792174500,
       "keys": [
         "donchian_breakout",
         "ema_pullback",
@@ -35,7 +36,7 @@ metadata:
   namespace: trading
   labels: {app.kubernetes.io/name: strategy-library-canary-v1-observer, app.kubernetes.io/component: research-observer, stratrelay.app/status: research}
 spec:
-  replicas: 0
+  replicas: 1
   strategy: {type: Recreate}
   selector:
     matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}
