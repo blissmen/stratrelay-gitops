@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: strategy-library-canary-egress, namespace: trading}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: trading}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: trading-postgres}}
+      ports: [{port: 5432, protocol: TCP}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: trading}}
+          podSelector: {matchLabels: {app.kubernetes.io/name: trading-redis}}
+      ports: [{port: 6379, protocol: TCP}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: strategy-library-canary-postgres-ingress, namespace: trading}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: trading-postgres}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}}
+      ports: [{port: 5432, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: strategy-library-canary-redis-ingress, namespace: trading}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: trading-redis}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}}
+      ports: [{port: 6379, protocol: TCP}]
