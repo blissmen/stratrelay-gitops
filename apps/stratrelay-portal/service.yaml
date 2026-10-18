@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stratrelay-portal-service
+  namespace: trading
+  labels:
+    app: stratrelay-portal
+spec:
+  type: ClusterIP
+  selector:
+    app: stratrelay-portal
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
