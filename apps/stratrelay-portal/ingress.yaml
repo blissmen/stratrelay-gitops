@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stratrelay-portal-ingress
+  namespace: trading
+  labels:
+    app: stratrelay-portal
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: stratrelay.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stratrelay-portal-service
+                port:
+                  name: http
+    - host: www.stratrelay.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stratrelay-portal-service
+                port:
+                  name: http

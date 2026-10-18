@@ -6,3 +6,4 @@ resources:
   - ../../apps/trading-ops-console
   - ../../apps/trading-platform
   - ../../apps/open-webui
+  - ../../apps/stratrelay-portal

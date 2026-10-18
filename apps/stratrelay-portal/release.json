@@ -1,0 +1,12 @@
+{
+  "repository": "strat-relay/portal",
+  "commit": "",
+  "images": [
+    {
+      "name": "stratrelay-portal",
+      "tag": "",
+      "digest": "",
+      "reference": "ghcr.io/strat-relay/portal@sha256:placeholder"
+    }
+  ]
+}
