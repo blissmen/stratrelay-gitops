@@ -46,7 +46,7 @@ spec:
       securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0394e9910bf3a08fe0095976eb5834e5a7f053827ffb26d71372b71d67d73b21
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:abc9d90d3bd7be48a24a38018eb6ecea53d5e1a6a2db50b157407ad2465f70c3
           command: [python, -m, research.strategy_library_forward, run, --manifest, /config/run.json, --interval, "10"]
           envFrom: [{secretRef: {name: strategy-library-observer-db}}]
           env:
