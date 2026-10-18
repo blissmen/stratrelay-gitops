@@ -65,6 +65,18 @@ spec:
       ports:
         - protocol: TCP
           port: 80
+    # The public portal is a separate origin from the Trading Ops Console.
+    # Keep the tunnel's egress allow-list aligned with the stratrelay.app route.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: trading
+          podSelector:
+            matchLabels:
+              app: stratrelay-portal
+      ports:
+        - protocol: TCP
+          port: 80
     - to:
         - namespaceSelector:
             matchLabels:
