@@ -30,3 +30,4 @@ resources:
   # Staged research canary; activation is a separate reviewed change.
   - strategy-library-canary.yaml
   - strategy-library-canary-network.yaml
+  - ict-smc-forward-20261018-1845.yaml
