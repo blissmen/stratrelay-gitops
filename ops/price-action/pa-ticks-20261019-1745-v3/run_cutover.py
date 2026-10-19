@@ -123,5 +123,5 @@ if __name__ == '__main__':
         main()
     except Exception as exc:
         # Connection errors can contain sensitive endpoint data; do not echo them.
-        print(json.dumps({'status': 'BLOCKED', 'reason': str(exc) if isinstance(exc, ValueError) else type(exc).__name__, 'broker_writes': 0}))
+        print(json.dumps({'status': 'BLOCKED', 'reason': ('ModuleNotFoundError: ' + str(exc.name)) if isinstance(exc, ModuleNotFoundError) else (str(exc) if isinstance(exc, ValueError) else type(exc).__name__), 'broker_writes': 0}))
         raise SystemExit(1)

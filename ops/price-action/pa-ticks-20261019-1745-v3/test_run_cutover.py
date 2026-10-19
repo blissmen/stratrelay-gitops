@@ -45,7 +45,7 @@ class RunnerTests(unittest.TestCase):
         with self.assertRaises(ValueError):runner.reject_existing_evidence(Conn((1,)))
 
     def test_jobs_are_bounded_and_use_migration_credential_only(self):
-        jobs=[x for x in WORKLOAD['items'] if x['kind']=='Job']
+        jobs=[x for x in WORKLOAD['items'] if x['kind']=='Job' and x['metadata']['name'].endswith('-r2')]
         self.assertEqual(len(jobs),2)
         for j in jobs:
             self.assertEqual(j['spec']['backoffLimit'],0)
@@ -54,10 +54,27 @@ class RunnerTests(unittest.TestCase):
             self.assertFalse(pod['automountServiceAccountToken'])
             self.assertEqual(c['envFrom'],[{'secretRef':{'name':'trading-runtime-endpoints'}}])
             self.assertEqual(c['image'],RUN['image'])
+            self.assertIn({'name':'PYTHONPATH','value':'/app'},c['env'])
             self.assertNotIn('ttlSecondsAfterFinished',j['spec'])
-        data=next(x['data'] for x in WORKLOAD['items'] if x['kind']=='ConfigMap' and 'run_cutover.py' in x['data'])
+        data=next(x['data'] for x in WORKLOAD['items'] if x['kind']=='ConfigMap' and 'run_cutover.py' in x['data'] and x['metadata']['name'].endswith('-r2'))
         for f in ('run_cutover.py','preflight.py','register.sql','activate.sql','run.json'):
             self.assertEqual(data[f],(ROOT/f).read_text())
+
+    def test_observer_and_init_mounted_scripts_have_app_import_path(self):
+        for d in WORKLOAD['items']:
+            if d['kind'] != 'Deployment':
+                continue
+            pod = d['spec']['template']['spec']
+            for c in pod['containers'] + pod['initContainers']:
+                self.assertIn({'name':'PYTHONPATH','value':'/app'}, c['env'])
+            names = {v.get('configMap',{}).get('name') for v in pod['volumes']}
+            self.assertIn('pa-ticks-20261019-1745-v3-manifests-r2',names)
+
+    def test_module_diagnostics_expose_names_without_raw_connection_errors(self):
+        for f in ('run_cutover.py','preflight.py'):
+            source = (ROOT/f).read_text()
+            self.assertIn('str(exc.name)',source)
+            self.assertIn('isinstance(exc, ModuleNotFoundError)',source)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

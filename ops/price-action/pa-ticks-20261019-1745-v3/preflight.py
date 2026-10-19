@@ -81,5 +81,5 @@ if __name__ == '__main__':
         main()
     except Exception as exc:
         # Do not echo connection strings, credentials or database error details.
-        print('PA cutover preflight blocked: ' + (str(exc) if isinstance(exc, ValueError) else type(exc).__name__))
+        print('PA cutover preflight blocked: ' + (('ModuleNotFoundError: ' + str(exc.name)) if isinstance(exc, ModuleNotFoundError) else (str(exc) if isinstance(exc, ValueError) else type(exc).__name__)))
         raise SystemExit(1)

@@ -87,3 +87,19 @@ Offline verification:
 python3 ops/price-action/pa-ticks-20261019-1745-v3/verify_bundle.py
 python3 ops/price-action/pa-ticks-20261019-1745-v3/test_run_cutover.py
 ```
+
+## Mounted-script import repair (r2)
+
+The first Jobs ran `python /cutover/run_cutover.py`; the observer init ran
+`python /config/preflight.py`. Python then put the mounted directory on sys.path,
+not `/app`, so the platform's `postgres` package could not be imported. This was
+reproduced without making a database call. Set `PYTHONPATH=/app` on both observer
+containers/init containers and the replacement `-r2` Jobs. Keep the same run,
+T0, instance IDs, manifest contents, frozen parameters, image and safety gates.
+
+Immutable ConfigMaps receive `-r2` names with the same bound manifest data and
+only safer missing-module diagnostics. Failed original Jobs and their ConfigMaps
+remain as history. New Job names permit Kubernetes to execute the repaired entry
+commands; no manual restart is needed. Database and observer admission guards are
+unchanged. Logs now include a missing module's name, while other connection errors
+remain sanitized to exception class names.

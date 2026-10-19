@@ -83,7 +83,7 @@ class CutoverChecks(unittest.TestCase):
                          {'trading-postgres', 'trading-redis'})
         for p in policies:
             rule = p['spec']['ingress'][0]
-            expected = names + (['pa-tick-register-29ad478ca8', 'pa-tick-activate-29ad478ca8'] if p['spec']['podSelector']['matchLabels']['app.kubernetes.io/name'] == 'trading-postgres' else [])
+            expected = names + (['pa-tick-register-29ad478ca8', 'pa-tick-activate-29ad478ca8', 'pa-tick-register-29ad478ca8-r2', 'pa-tick-activate-29ad478ca8-r2'] if p['spec']['podSelector']['matchLabels']['app.kubernetes.io/name'] == 'trading-postgres' else [])
             self.assertEqual(sorted(rule['from'][0]['podSelector']['matchExpressions'][0]['values']), sorted(expected))
             self.assertEqual(len(rule['ports']), 1)
 
