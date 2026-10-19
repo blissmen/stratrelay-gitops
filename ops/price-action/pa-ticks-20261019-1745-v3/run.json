@@ -1,0 +1,21 @@
+{
+  "run_id": "pa-ticks-20261019-1745-v3",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18",
+  "activation_time": 1792431900,
+  "market_input_policy": "pa-provider-tick.v1",
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+  "instances": {
+    "sr_retest": {
+      "original_instance_id": "7f1d6e5a-5ab3-4b59-8d2f-0c6f9e3d0104",
+      "instance_id": "a18be906-f63b-5a3c-981b-36e8f3950c99",
+      "workload": "pa-tick-sr-29ad478ca8",
+      "manifest_hash": "e20b34eb5cf39e340497a1204822c626ab4d8fb85af82309cc9646b39e4192fe"
+    },
+    "engulfing_continuation": {
+      "original_instance_id": "7f1d6e5a-5ab3-4b59-8d2f-0c6f9e3d0204",
+      "instance_id": "c5d62982-e482-52c1-94b3-93cc0f06ad4d",
+      "workload": "pa-tick-engulf-29ad478ca8",
+      "manifest_hash": "8840fc1745aa4836c030f3a50e39e303c85ded9f0d24c6ac9139630244fd9f77"
+    }
+  }
+}
