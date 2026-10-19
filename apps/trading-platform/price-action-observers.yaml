@@ -5,7 +5,7 @@ metadata:
   namespace: trading
   labels: {app.kubernetes.io/name: price-action-sr-retest-v1-observer, app.kubernetes.io/component: research-observer, app.kubernetes.io/part-of: trading-platform, stratrelay.app/status: research}
 spec:
-  replicas: 1
+  replicas: 0
   strategy: {type: Recreate}
   selector: {matchLabels: {app.kubernetes.io/name: price-action-sr-retest-v1-observer}}
   template:
@@ -54,7 +54,7 @@ metadata:
   namespace: trading
   labels: {app.kubernetes.io/name: price-action-engulfing-continuation-v1-observer, app.kubernetes.io/component: research-observer, app.kubernetes.io/part-of: trading-platform, stratrelay.app/status: research}
 spec:
-  replicas: 1
+  replicas: 0
   strategy: {type: Recreate}
   selector: {matchLabels: {app.kubernetes.io/name: price-action-engulfing-continuation-v1-observer}}
   template:
