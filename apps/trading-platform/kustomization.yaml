@@ -31,3 +31,6 @@ resources:
   - strategy-library-canary.yaml
   - strategy-library-canary-network.yaml
   - ict-smc-forward-20261018-1845.yaml
+
+  # Isolated provider-tick PA replacements; restricted-credential/registration startup gates.
+  - price-action-corrected-20261019.json
