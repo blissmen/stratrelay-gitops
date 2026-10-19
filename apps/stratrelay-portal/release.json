@@ -1,12 +1,12 @@
 {
   "repository": "strat-relay/portal",
-  "commit": "d1fd30c10dc3b652c9ea122f7890a0b5764b30cb",
+  "commit": "81d92e151e6e6890ec01f6970da28a513d9e1339",
   "images": [
     {
       "name": "portal",
-      "tag": "sha-d1fd30c10dc3b652c9ea122f7890a0b5764b30cb",
-      "digest": "sha256:27371d58ed377c194a7052215e006315d730b303c19b6205fc4eefd5fd20baf3",
-      "reference": "ghcr.io/strat-relay/portal@sha256:27371d58ed377c194a7052215e006315d730b303c19b6205fc4eefd5fd20baf3"
+      "tag": "sha-81d92e151e6e6890ec01f6970da28a513d9e1339",
+      "digest": "sha256:2ba1ddeeb772821f7628d179c5c0d15e753a764592274f3c96fefa8f4432fc4a",
+      "reference": "ghcr.io/strat-relay/portal@sha256:2ba1ddeeb772821f7628d179c5c0d15e753a764592274f3c96fefa8f4432fc4a"
     }
   ]
 }
