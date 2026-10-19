@@ -9,8 +9,8 @@ data:
     {
       "schema": "library-forward-observation.v1",
       "execution_eligible": false,
-      "run_id": "ict-smc-forward-20261018-1845",
-      "activation_time": 1792349518,
+      "run_id": "ict-smc-forward-20261019-0226",
+      "activation_time": 1792377096,
       "keys": ["judas_swing@V2", "power_of_three@V1", "order_block_retracement@V2"],
       "symbols": {"XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm", "USDJPY": "USDJPYm"},
       "history": 320,
