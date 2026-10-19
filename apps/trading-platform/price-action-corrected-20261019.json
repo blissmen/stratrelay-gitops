@@ -1,0 +1,928 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "pa-ticks-20261019-1700-v1-manifests",
+        "namespace": "trading"
+      },
+      "data": {
+        "sr_retest.json": "{\n  \"activation\": {\n    \"reason\": \"manifest is frozen before any observer activation\",\n    \"status\": \"BLOCKED_PENDING_HEALTH_CHECK\"\n  },\n  \"availability_policy\": {\n    \"post_t0_missing\": \"record gap; do not fill\",\n    \"pre_t0\": \"warmup only; no new entries\",\n    \"reconstructed\": \"label as delayed/reconstructed; never call live\",\n    \"stale_or_forming\": \"reject\"\n  },\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"execution_isolation\": {\n    \"allowed_bridge_tools\": [\n      \"mt5_quote\",\n      \"mt5_rates\",\n      \"mt5_symbol_info\"\n    ],\n    \"broker_orders\": false,\n    \"execution_credentials\": false,\n    \"mode\": \"RESEARCH_READ_ONLY_LOCAL_PERSISTENCE\",\n    \"outbox\": false,\n    \"signal_publication\": false\n  },\n  \"freeze_status\": \"FROZEN_NOT_ACTIVATED\",\n  \"healthy_universe\": [],\n  \"instance_id\": \"9b6b913d-347d-5f90-b670-e6221a92b25c\",\n  \"instrument_mapping\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"USDJPY\": \"USDJPYm\",\n    \"XAUUSD\": \"XAUUSDm\"\n  },\n  \"manifest_hash\": \"9250b2090c7aa14ec2ff395d92b7accfdcb8eca201bde18ec1bd95134426e3ef\",\n  \"market_input_policy\": \"pa-provider-tick.v1\",\n  \"minimum_review_sample_per_strategy\": 100,\n  \"observer_version\": \"price-action-forward-observer-v1\",\n  \"outcome_policy\": {\n    \"costs\": \"gross/reference only; no spread, commission, slippage, or net P&L\",\n    \"max_hold\": \"none\",\n    \"policy_version\": \"price-action-research-outcome-policy-v1\",\n    \"resolver_version\": \"shared-research-outcome-resolver-v1\",\n    \"same_candle\": \"ambiguous without lower timeframe evidence\"\n  },\n  \"run_id\": \"pa-ticks-20261019-1700-v1\",\n  \"schema\": \"price-action-forward-observer-v1\",\n  \"source_hash\": \"31401662f297585cc235701927bcc6c267591fab89b46f383c519f902d58ce45\",\n  \"strategies\": {\n    \"engulfing_continuation\": {\n      \"dependency_manifest_hash\": \"5786003d7f6545dd24aedc02ed003eda172f278f850fae1845bac1a6edf1230f\",\n      \"evaluator_version\": \"price-action-engulfing-continuation-v1-evaluator-1\",\n      \"parameter_hash\": \"e39630114425a73aea70ea8768273cba4eb3fd834cef6593a1d84618004127a1\",\n      \"parameters\": {\n        \"allow_same_candle_interaction_confirmation\": false,\n        \"context_timeframe\": \"H1\",\n        \"entry_gap_cancel_ticks\": 8,\n        \"execution_timeframe\": \"M15\",\n        \"max_pullback_bars\": 6,\n        \"minimum_engulfing_body_ticks\": 4,\n        \"minimum_planned_r\": 1.5,\n        \"stop_buffer_ticks\": 2,\n        \"swing_left_bars\": 2,\n        \"swing_right_bars\": 2,\n        \"zone_max_age_context_bars\": 120,\n        \"zone_tolerance_ticks\": 8\n      },\n      \"strategy_version\": \"PRICE_ACTION_ENGULFING_CONTINUATION@V1\"\n    },\n    \"sr_retest\": {\n      \"dependency_manifest_hash\": \"8a8356159ee0c3407ee915ab0d5d1213e3ca2fa6979e42e9ebd385e01ab42c6a\",\n      \"evaluator_version\": \"price-action-sr-retest-v1-evaluator-1\",\n      \"parameter_hash\": \"572a9be2cc48bdbcf07004a832803e7cd3cc4e1ffa0e4e0b11d3de60a5789e90\",\n      \"parameters\": {\n        \"allow_retest_confirmation\": false,\n        \"break_buffer_ticks\": 1,\n        \"context_timeframe\": \"H1\",\n        \"entry_gap_cancel_ticks\": 8,\n        \"execution_timeframe\": \"M15\",\n        \"level_lookback_context_bars\": 80,\n        \"level_max_age_context_bars\": 120,\n        \"level_tolerance_ticks\": 8,\n        \"max_retest_bars\": 4,\n        \"minimum_planned_r\": 1.5,\n        \"rejection_close_location\": 0.65,\n        \"rejection_min_wick_body_ratio\": 1.5,\n        \"stop_buffer_ticks\": 2,\n        \"swing_left_bars\": 2,\n        \"swing_right_bars\": 2\n      },\n      \"strategy_version\": \"PRICE_ACTION_SUPPORT_RESISTANCE_RETEST@V1\"\n    }\n  },\n  \"t0\": \"2026-10-19T17:00:00Z\",\n  \"timeframes\": {\n    \"context\": \"H1\",\n    \"execution\": \"M15\"\n  },\n  \"timestamp_semantics\": \"UTC candle-open; completed-candle confirmation; contemporaneous opening evidence only\",\n  \"universe_requested\": [\n    \"XAUUSD\",\n    \"BTCUSD\",\n    \"USDJPY\"\n  ],\n  \"window_days\": 30\n}",
+        "engulfing_continuation.json": "{\n  \"activation\": {\n    \"reason\": \"manifest is frozen before any observer activation\",\n    \"status\": \"BLOCKED_PENDING_HEALTH_CHECK\"\n  },\n  \"availability_policy\": {\n    \"post_t0_missing\": \"record gap; do not fill\",\n    \"pre_t0\": \"warmup only; no new entries\",\n    \"reconstructed\": \"label as delayed/reconstructed; never call live\",\n    \"stale_or_forming\": \"reject\"\n  },\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"execution_isolation\": {\n    \"allowed_bridge_tools\": [\n      \"mt5_quote\",\n      \"mt5_rates\",\n      \"mt5_symbol_info\"\n    ],\n    \"broker_orders\": false,\n    \"execution_credentials\": false,\n    \"mode\": \"RESEARCH_READ_ONLY_LOCAL_PERSISTENCE\",\n    \"outbox\": false,\n    \"signal_publication\": false\n  },\n  \"freeze_status\": \"FROZEN_NOT_ACTIVATED\",\n  \"healthy_universe\": [],\n  \"instance_id\": \"d1fc279e-b8f0-5d48-a173-14a22fa3ded2\",\n  \"instrument_mapping\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"USDJPY\": \"USDJPYm\",\n    \"XAUUSD\": \"XAUUSDm\"\n  },\n  \"manifest_hash\": \"6d78c88ad62ca685f540c4f37c7554678c235c78ae97185b9190e74daf2dbd46\",\n  \"market_input_policy\": \"pa-provider-tick.v1\",\n  \"minimum_review_sample_per_strategy\": 100,\n  \"observer_version\": \"price-action-forward-observer-v1\",\n  \"outcome_policy\": {\n    \"costs\": \"gross/reference only; no spread, commission, slippage, or net P&L\",\n    \"max_hold\": \"none\",\n    \"policy_version\": \"price-action-research-outcome-policy-v1\",\n    \"resolver_version\": \"shared-research-outcome-resolver-v1\",\n    \"same_candle\": \"ambiguous without lower timeframe evidence\"\n  },\n  \"run_id\": \"pa-ticks-20261019-1700-v1\",\n  \"schema\": \"price-action-forward-observer-v1\",\n  \"source_hash\": \"31401662f297585cc235701927bcc6c267591fab89b46f383c519f902d58ce45\",\n  \"strategies\": {\n    \"engulfing_continuation\": {\n      \"dependency_manifest_hash\": \"5786003d7f6545dd24aedc02ed003eda172f278f850fae1845bac1a6edf1230f\",\n      \"evaluator_version\": \"price-action-engulfing-continuation-v1-evaluator-1\",\n      \"parameter_hash\": \"e39630114425a73aea70ea8768273cba4eb3fd834cef6593a1d84618004127a1\",\n      \"parameters\": {\n        \"allow_same_candle_interaction_confirmation\": false,\n        \"context_timeframe\": \"H1\",\n        \"entry_gap_cancel_ticks\": 8,\n        \"execution_timeframe\": \"M15\",\n        \"max_pullback_bars\": 6,\n        \"minimum_engulfing_body_ticks\": 4,\n        \"minimum_planned_r\": 1.5,\n        \"stop_buffer_ticks\": 2,\n        \"swing_left_bars\": 2,\n        \"swing_right_bars\": 2,\n        \"zone_max_age_context_bars\": 120,\n        \"zone_tolerance_ticks\": 8\n      },\n      \"strategy_version\": \"PRICE_ACTION_ENGULFING_CONTINUATION@V1\"\n    },\n    \"sr_retest\": {\n      \"dependency_manifest_hash\": \"8a8356159ee0c3407ee915ab0d5d1213e3ca2fa6979e42e9ebd385e01ab42c6a\",\n      \"evaluator_version\": \"price-action-sr-retest-v1-evaluator-1\",\n      \"parameter_hash\": \"572a9be2cc48bdbcf07004a832803e7cd3cc4e1ffa0e4e0b11d3de60a5789e90\",\n      \"parameters\": {\n        \"allow_retest_confirmation\": false,\n        \"break_buffer_ticks\": 1,\n        \"context_timeframe\": \"H1\",\n        \"entry_gap_cancel_ticks\": 8,\n        \"execution_timeframe\": \"M15\",\n        \"level_lookback_context_bars\": 80,\n        \"level_max_age_context_bars\": 120,\n        \"level_tolerance_ticks\": 8,\n        \"max_retest_bars\": 4,\n        \"minimum_planned_r\": 1.5,\n        \"rejection_close_location\": 0.65,\n        \"rejection_min_wick_body_ratio\": 1.5,\n        \"stop_buffer_ticks\": 2,\n        \"swing_left_bars\": 2,\n        \"swing_right_bars\": 2\n      },\n      \"strategy_version\": \"PRICE_ACTION_SUPPORT_RESISTANCE_RETEST@V1\"\n    }\n  },\n  \"t0\": \"2026-10-19T17:00:00Z\",\n  \"timeframes\": {\n    \"context\": \"H1\",\n    \"execution\": \"M15\"\n  },\n  \"timestamp_semantics\": \"UTC candle-open; completed-candle confirmation; contemporaneous opening evidence only\",\n  \"universe_requested\": [\n    \"XAUUSD\",\n    \"BTCUSD\",\n    \"USDJPY\"\n  ],\n  \"window_days\": 30\n}",
+        "preflight.py": "\"\"\"Read-only startup guard for this concrete PA observation cutover.\"\"\"\nimport json\nimport os\nfrom pathlib import Path\nimport time\n\nPOLICY = 'pa-provider-tick.v1'\nALLOWED = ('research.price_action_observer_state', 'research.price_action_observer_evaluation')\n\n\ndef require(value, reason):\n    if not value:\n        raise ValueError(reason)\n\n\ndef check(conn, manifest, key, instance, now=None):\n    require(manifest['instance_id'] == instance, 'manifest/instance mismatch')\n    require(manifest['market_input_policy'] == POLICY, 'input policy mismatch')\n    require(manifest['entry_mode'] == 'CONTEMPORANEOUS_CANDLE_OPEN', 'entry mode mismatch')\n    t0 = int(__import__('datetime').datetime.fromisoformat(manifest['t0'].replace('Z', '+00:00')).timestamp())\n    expected = manifest['strategies'][key]\n    with conn.cursor() as cur:\n        cur.execute('BEGIN READ ONLY')\n        cur.execute('SELECT rolsuper,rolcreaterole,rolcreatedb,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user')\n        require(not any(cur.fetchone()), 'observer role has administrative privileges')\n        cur.execute(\"\"\"SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace\n            WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'\n              AND c.relkind IN ('r','p','v','m','f')\n              AND (n.nspname||'.'||c.relname) <> ALL(%s)\n              AND has_table_privilege(current_user,c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')\"\"\", (list(ALLOWED),))\n        require(cur.fetchone()[0] == 0, 'observer role can write outside the two PA research tables')\n        cur.execute(\"\"\"SELECT bool_and(has_table_privilege(current_user,t,p)) FROM (VALUES\n            ('research.price_action_observer_state','SELECT'),\n            ('research.price_action_observer_state','INSERT'),\n            ('research.price_action_observer_state','UPDATE'),\n            ('research.price_action_observer_evaluation','SELECT'),\n            ('research.price_action_observer_evaluation','INSERT')) AS required(t,p)\"\"\")\n        require(cur.fetchone()[0] is True, 'required PA research privileges missing')\n        cur.execute(\"\"\"SELECT v.evaluator_key,v.version_label,v.lifecycle,p.parameter_set_id,p.fingerprint,\n            p.values,p.frozen,i.attributes,i.execution_mode,i.execution_eligible,i.instruments\n            FROM strategy_mgmt.strategy_instance_v2 i\n            JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id\n            JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id AND p.strategy_version_id=v.id\n            WHERE i.id=%s::uuid\"\"\", (instance,))\n        row = cur.fetchone()\n        require(row is not None, 'corrected instance registration missing')\n        evaluator, version, lifecycle, parameter, digest, values, frozen, attrs, mode, eligible, instruments = row\n        evaluator_keys = {'sr_retest': 'price_action_sr_retest_v1',\n                          'engulfing_continuation': 'price_action_engulfing_continuation_v1'}\n        require(evaluator == evaluator_keys[key] and version == 'V1' and lifecycle == 'FROZEN', 'version binding mismatch')\n        require(frozen and digest == expected['parameter_hash'] and values == expected['parameters'], 'frozen parameter mismatch')\n        require(attrs.get('parameter_set_id') == parameter, 'explicit parameter reference missing')\n        require(attrs.get('market_input_policy') == POLICY and attrs.get('corrected_run_id') == manifest['run_id'], 'run binding mismatch')\n        require(attrs.get('publication_activation_time') == t0 and attrs.get('manifest_hash') == manifest['manifest_hash'], 'T0/manifest binding mismatch')\n        require(attrs.get('forward_image') == os.environ['PA_EXPECTED_IMAGE'], 'runtime image binding mismatch')\n        require(attrs.get('broker_writes') is False and mode == 'OFF' and eligible is False, 'execution isolation mismatch')\n        require(not attrs.get('instance_id') and not attrs.get('legacy_instance_id'), 'legacy identity alias forbidden')\n        require(sorted(instruments) == sorted(manifest['universe_requested']), 'instrument scope mismatch')\n        cur.execute('SELECT state FROM research.price_action_observer_state WHERE instance_id=%s', (instance,))\n        state = cur.fetchone()\n        if state:\n            require(state[0].get('market_input_policy') == POLICY and state[0].get('t0') == manifest['t0'], 'incompatible checkpoint')\n        else:\n            require((time.time() if now is None else now) < t0, 'planned T0 passed before bootstrap; generate a new run')\n    conn.rollback()\n\n\ndef main():\n    from postgres.config import PostgresConfig\n    from postgres.db import connect\n    config = PostgresConfig.from_env()\n    config.require_explicit_target()\n    manifest = json.loads(Path(os.environ['PRICE_ACTION_MANIFEST_PATH']).read_text())\n    with connect(config) as conn:\n        check(conn, manifest, os.environ['PRICE_ACTION_STRATEGY'], os.environ['PRICE_ACTION_INSTANCE_ID'])\n    print('Corrected PA registration and research-only database privileges verified')\n\n\nif __name__ == '__main__':\n    try:\n        main()\n    except Exception as exc:\n        # Do not echo connection strings, credentials or database error details.\n        print('PA cutover preflight blocked: ' + (str(exc) if isinstance(exc, ValueError) else type(exc).__name__))\n        raise SystemExit(1)\n"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "pa-tick-sr-6106a8d9b1",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "pa-tick-sr-6106a8d9b1",
+          "app.kubernetes.io/component": "research-observer",
+          "app.kubernetes.io/part-of": "trading-platform",
+          "stratrelay.app/status": "research"
+        },
+        "annotations": {
+          "stratrelay.app/source-commit": "afb2da484022afce35bcbae6ce06639d9b015477",
+          "stratrelay.app/experiment-artifact": "immutable; exclude from bulk repinning",
+          "stratrelay.app/activation-boundary": "2026-10-19T17:00:00Z"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "pa-tick-sr-6106a8d9b1"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "pa-tick-sr-6106a8d9b1",
+              "app.kubernetes.io/component": "research-observer",
+              "app.kubernetes.io/part-of": "trading-platform",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "observer",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.price_action_forward_runtime",
+                  "run"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "price-action-corrected-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PRICE_ACTION_INSTANCE_ID",
+                    "value": "9b6b913d-347d-5f90-b670-e6221a92b25c"
+                  },
+                  {
+                    "name": "PRICE_ACTION_STRATEGY",
+                    "value": "sr_retest"
+                  },
+                  {
+                    "name": "PRICE_ACTION_MANIFEST_PATH",
+                    "value": "/config/sr_retest.json"
+                  },
+                  {
+                    "name": "PRICE_ACTION_ENTRY_MODE",
+                    "value": "CONTEMPORANEOUS_CANDLE_OPEN"
+                  },
+                  {
+                    "name": "PRICE_ACTION_POLL_SECONDS",
+                    "value": "10"
+                  },
+                  {
+                    "name": "PRICE_ACTION_SYMBOL_MAP",
+                    "value": "{\"XAUUSD\": \"XAUUSDm\", \"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\"}"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "ORCHESTRATOR_MODE",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PA_EXPECTED_IMAGE",
+                    "value": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  },
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 10
+                },
+                "startupProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "failureThreshold": 60,
+                  "timeoutSeconds": 10
+                },
+                "livenessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "initialDelaySeconds": 30,
+                  "periodSeconds": 60,
+                  "timeoutSeconds": 10
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              },
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "pa-ticks-20261019-1700-v1-manifests"
+                }
+              }
+            ],
+            "initContainers": [
+              {
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18",
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "price-action-corrected-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PRICE_ACTION_INSTANCE_ID",
+                    "value": "9b6b913d-347d-5f90-b670-e6221a92b25c"
+                  },
+                  {
+                    "name": "PRICE_ACTION_STRATEGY",
+                    "value": "sr_retest"
+                  },
+                  {
+                    "name": "PRICE_ACTION_MANIFEST_PATH",
+                    "value": "/config/sr_retest.json"
+                  },
+                  {
+                    "name": "PRICE_ACTION_ENTRY_MODE",
+                    "value": "CONTEMPORANEOUS_CANDLE_OPEN"
+                  },
+                  {
+                    "name": "PRICE_ACTION_POLL_SECONDS",
+                    "value": "10"
+                  },
+                  {
+                    "name": "PRICE_ACTION_SYMBOL_MAP",
+                    "value": "{\"XAUUSD\": \"XAUUSDm\", \"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\"}"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "ORCHESTRATOR_MODE",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PA_EXPECTED_IMAGE",
+                    "value": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi"
+                  }
+                },
+                "name": "verify-research-registration",
+                "command": [
+                  "python",
+                  "/config/preflight.py"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "pa-tick-sr-6106a8d9b1",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "pa-tick-sr-6106a8d9b1"
+          }
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "pa-tick-engulf-6106a8d9b1",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "pa-tick-engulf-6106a8d9b1",
+          "app.kubernetes.io/component": "research-observer",
+          "app.kubernetes.io/part-of": "trading-platform",
+          "stratrelay.app/status": "research"
+        },
+        "annotations": {
+          "stratrelay.app/source-commit": "afb2da484022afce35bcbae6ce06639d9b015477",
+          "stratrelay.app/experiment-artifact": "immutable; exclude from bulk repinning",
+          "stratrelay.app/activation-boundary": "2026-10-19T17:00:00Z"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "pa-tick-engulf-6106a8d9b1"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "pa-tick-engulf-6106a8d9b1",
+              "app.kubernetes.io/component": "research-observer",
+              "app.kubernetes.io/part-of": "trading-platform",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "observer",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.price_action_forward_runtime",
+                  "run"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "price-action-corrected-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PRICE_ACTION_INSTANCE_ID",
+                    "value": "d1fc279e-b8f0-5d48-a173-14a22fa3ded2"
+                  },
+                  {
+                    "name": "PRICE_ACTION_STRATEGY",
+                    "value": "engulfing_continuation"
+                  },
+                  {
+                    "name": "PRICE_ACTION_MANIFEST_PATH",
+                    "value": "/config/engulfing_continuation.json"
+                  },
+                  {
+                    "name": "PRICE_ACTION_ENTRY_MODE",
+                    "value": "CONTEMPORANEOUS_CANDLE_OPEN"
+                  },
+                  {
+                    "name": "PRICE_ACTION_POLL_SECONDS",
+                    "value": "10"
+                  },
+                  {
+                    "name": "PRICE_ACTION_SYMBOL_MAP",
+                    "value": "{\"XAUUSD\": \"XAUUSDm\", \"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\"}"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "ORCHESTRATOR_MODE",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PA_EXPECTED_IMAGE",
+                    "value": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  },
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 10
+                },
+                "startupProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "failureThreshold": 60,
+                  "timeoutSeconds": 10
+                },
+                "livenessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.price_action_forward_runtime",
+                      "health"
+                    ]
+                  },
+                  "initialDelaySeconds": 30,
+                  "periodSeconds": 60,
+                  "timeoutSeconds": 10
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              },
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "pa-ticks-20261019-1700-v1-manifests"
+                }
+              }
+            ],
+            "initContainers": [
+              {
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18",
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "price-action-corrected-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PRICE_ACTION_INSTANCE_ID",
+                    "value": "d1fc279e-b8f0-5d48-a173-14a22fa3ded2"
+                  },
+                  {
+                    "name": "PRICE_ACTION_STRATEGY",
+                    "value": "engulfing_continuation"
+                  },
+                  {
+                    "name": "PRICE_ACTION_MANIFEST_PATH",
+                    "value": "/config/engulfing_continuation.json"
+                  },
+                  {
+                    "name": "PRICE_ACTION_ENTRY_MODE",
+                    "value": "CONTEMPORANEOUS_CANDLE_OPEN"
+                  },
+                  {
+                    "name": "PRICE_ACTION_POLL_SECONDS",
+                    "value": "10"
+                  },
+                  {
+                    "name": "PRICE_ACTION_SYMBOL_MAP",
+                    "value": "{\"XAUUSD\": \"XAUUSDm\", \"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\"}"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "ORCHESTRATOR_MODE",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PA_EXPECTED_IMAGE",
+                    "value": "ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi"
+                  }
+                },
+                "name": "verify-research-registration",
+                "command": [
+                  "python",
+                  "/config/preflight.py"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "pa-tick-engulf-6106a8d9b1",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "pa-tick-engulf-6106a8d9b1"
+          }
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "pa-ticks-6106a8d9b1-trading-postgres-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-postgres"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "pa-tick-sr-6106a8d9b1",
+                        "pa-tick-engulf-6106a8d9b1"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "pa-ticks-6106a8d9b1-trading-redis-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-redis"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "pa-tick-sr-6106a8d9b1",
+                        "pa-tick-engulf-6106a8d9b1"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
