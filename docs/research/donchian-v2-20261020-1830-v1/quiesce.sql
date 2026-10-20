@@ -1,0 +1,1 @@
+BEGIN; UPDATE strategy_mgmt.strategy_instance_v2 SET online=false,updated_at=now() WHERE id='47493bab-d8f7-5a0a-942e-11867612307a'::uuid AND attributes->>'orchestrator_run_id'='donchian-v2-20261020-1830-v1'; COMMIT;
