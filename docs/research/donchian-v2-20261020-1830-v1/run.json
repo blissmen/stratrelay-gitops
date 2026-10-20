@@ -1,0 +1,19 @@
+{
+  "schema": "library-forward-observation.v1",
+  "execution_eligible": false,
+  "run_id": "donchian-v2-20261020-1830-v1",
+  "activation_time": 1792521000,
+  "keys": [
+    "donchian_breakout@V2"
+  ],
+  "symbols": {
+    "BTCUSD": "BTCUSDm",
+    "XAUUSD": "XAUUSDm",
+    "USDJPY": "USDJPYm"
+  },
+  "history": 320,
+  "max_age_seconds": 330,
+  "prospective_max_delay": 120,
+  "max_retained_bars": 10000,
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN"
+}

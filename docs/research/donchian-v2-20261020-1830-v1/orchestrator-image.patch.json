@@ -1,0 +1,20 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "mt5-native-bridge-main-runtime",
+    "namespace": "trading"
+  },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "orchestrator-shadow",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:19b2f7661922176edab958ad0db3115b490822019adb71daedb73e6d7ccf89e0"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,353 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "donchian-v2-20261020-1830-v1-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"donchian-v2-20261020-1830-v1\",\n  \"activation_time\": 1792521000,\n  \"keys\": [\n    \"donchian_breakout@V2\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"XAUUSD\": \"XAUUSDm\",\n    \"USDJPY\": \"USDJPYm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\"\n}"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "donchian-breakout-v2-observer",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "donchian-breakout-v2-observer",
+          "app.kubernetes.io/component": "research-observer",
+          "stratrelay.app/status": "research"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "donchian-breakout-v2-observer"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "donchian-breakout-v2-observer",
+              "app.kubernetes.io/component": "research-observer",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "observer",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:19b2f7661922176edab958ad0db3115b490822019adb71daedb73e6d7ccf89e0",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.strategy_library_forward",
+                  "run",
+                  "--manifest",
+                  "/config/run.json",
+                  "--interval",
+                  "10"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "strategy-library-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.strategy_library_forward",
+                      "health",
+                      "--manifest",
+                      "/config/run.json"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                },
+                "startupProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-c",
+                      "import time; from postgres.db import connect; from research.strategy_library_forward import RunConfig; c=RunConfig.load('/config/run.json'); conn=connect(); cur=conn.cursor(); cur.execute(\"SELECT (state->'health'->>'observed_at')::double precision FROM research.strategy_library_forward_state WHERE run_id=%s\",(c.run_id,)); r=cur.fetchone(); conn.rollback(); conn.close(); raise SystemExit(0 if r and 0<=time.time()-r[0]<=900 else 1)"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 40
+                },
+                "livenessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-c",
+                      "import time; from postgres.db import connect; from research.strategy_library_forward import RunConfig; c=RunConfig.load('/config/run.json'); conn=connect(); cur=conn.cursor(); cur.execute(\"SELECT (state->'health'->>'observed_at')::double precision FROM research.strategy_library_forward_state WHERE run_id=%s\",(c.run_id,)); r=cur.fetchone(); conn.rollback(); conn.close(); raise SystemExit(0 if r and 0<=time.time()-r[0]<=900 else 1)"
+                    ]
+                  },
+                  "periodSeconds": 60,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "donchian-v2-20261020-1830-v1-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
+            ],
+            "initContainers": [
+              {
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:19b2f7661922176edab958ad0db3115b490822019adb71daedb73e6d7ccf89e0",
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "strategy-library-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "name": "verify-research-registration",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.donchian_v2_forward",
+                  "verify",
+                  "--manifest",
+                  "/config/run.json"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "donchian-breakout-v2-observer-egress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "donchian-breakout-v2-observer"
+          }
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "trading"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
