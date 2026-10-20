@@ -2,7 +2,7 @@
 # market-data reads on the read bridge (22347). Completed bars (one snapshot per symbol per M5
 # close), symbol metadata and hot quotes go to trading-redis; the Context runner, the Liquidity
 # runtime and the Trade Manager read Redis instead of polling the bridge (MARKET_DATA_SOURCE=REDIS /
-# TM_MARKET_DATA_SOURCE=REDIS, switched separately). Read-only: no broker writes, no DB writes.
+# TM_MARKET_DATA_SOURCE=REDIS, switched separately). Broker access stays read-only. Completed bars are archived before Redis advances.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,7 +37,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:790585a50615f03475ee1e6b2aeae91d762f85e3a737295bd07a2b37c8865df7
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:9fff39399dac397ed1554f664a2d0b528172f68512bf9ee769064cfd15aa4b8f
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "market_data_cache.service"]
           envFrom:
@@ -46,6 +46,8 @@ spec:
             - configMapRef:
                 name: trading-db-primary-prepared
           env:
+            - name: MARKET_DATA_ARCHIVE_ENABLED
+              value: "true"
             - name: MARKET_DATA_BRIDGE_URL
               value: http://10.10.10.100:22347/mcp
             - name: REDIS_PASSWORD
