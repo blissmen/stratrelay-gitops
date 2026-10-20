@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:87328a82d1024e882ef2bf4ee7bd928695625422be9d2a3b0a0dc3970db9ae18
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:9fff39399dac397ed1554f664a2d0b528172f68512bf9ee769064cfd15aa4b8f
           imagePullPolicy: IfNotPresent
           command: [python, -m, execution_v2.risk_state.collector_service]
           envFrom:
