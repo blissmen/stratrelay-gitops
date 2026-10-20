@@ -39,5 +39,5 @@ resources:
   - price-action-corrected-20261019-1745.json
 
   # Isolated Donchian V2; immutable run and registration/activation startup gate.
-  - donchian-v2-20261020-1830-v1.json
+  - donchian-v2-20261020-2111-v1.json
   - donchian-v2-network.json
