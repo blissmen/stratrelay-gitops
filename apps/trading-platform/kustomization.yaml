@@ -40,3 +40,4 @@ resources:
 
   # Isolated Donchian V2; immutable run and registration/activation startup gate.
   - donchian-v2-20261020-1830-v1.json
+  - donchian-v2-network.json
