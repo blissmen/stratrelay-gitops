@@ -22,6 +22,20 @@ async def probe():
     result={'mode':os.environ.get('STRATEGY_EVENT_MODE','POLL'),
             'runtime_id':os.environ.get('STRATEGY_EVENT_RUNTIME_ID'),
             'market_data_source':os.environ.get('MARKET_DATA_SOURCE')}
+    from pathlib import Path
+    import hashlib
+    module=Path('/app/infrastructure/messaging/runtime_events.py')
+    if module.is_file():
+        code=module.read_bytes()
+        result['wakeup_log_contract']={'sha256':hashlib.sha256(code).hexdigest(),
+            'event_literal_present':b'strategy_cycle_woken' in code}
+    if runtime=='signal-orchestrator':
+        try:
+            path=Path(os.environ.get('TRADING_PLATFORM_RUNTIME_DIR','/work/runtime'))/'orchestration'/'heartbeat.json'
+            heartbeat=json.loads(path.read_text())
+            result['orchestrator_heartbeat']={k:heartbeat.get(k) for k in ('timestamp','status','mode','cycle_elapsed_s','interval_s','signals_seen')}
+        except Exception as exc:
+            result['heartbeat_error_type']=type(exc).__name__
     if runtime is not None:
         import nats
         nc=None
@@ -44,13 +58,54 @@ except Exception as exc:print(json.dumps({'error_type':type(exc).__name__}))
 '''
 
 
+def parsed_log(line):
+    stamp,payload=line.split(' ',1)
+    timestamp=datetime.datetime.fromisoformat(stamp.replace('Z','+00:00')).timestamp()
+    payload=payload.lstrip()
+    style='JSON'
+    for level in ('INFO','WARNING','ERROR','DEBUG'):
+        prefix=level+':stratrelay.strategy_audit:'
+        if payload.startswith(prefix):
+            payload=payload[len(prefix):]
+            style='STRATEGY_AUDIT_LOGGER'
+            break
+    obj=json.loads(payload)
+    if not isinstance(obj,dict):raise ValueError('NON_OBJECT_LOG')
+    return stamp,timestamp,obj,style
+
+
+def log_diagnostics(raw, started):
+    counts={'lines':len(raw.splitlines()),'parsed_json':0,'unparsed':0,'before_container_start':0,
+            'wakeup_events':0,'known_cycle_events':0,'other_events':0,'styles':{}}
+    rows=[]
+    known={'orchestrator_cycle_scheduled','runner_cycle_started','runner_cycle_scheduled',
+           'open_outcomes_backfilled','open_entries_monitored','monitor_only_cycle_completed',
+           'runner_heartbeat','tick_failed'}
+    fields=('event','runner','status','timestamp','elapsed_ms','cycle_elapsed_ms','configured_interval_ms',
+            'next_cycle_delay_ms','count','terminal_count','runner_consecutive_failures')
+    for line in raw.splitlines():
+        try:stamp,timestamp,obj,style=parsed_log(line)
+        except (ValueError,TypeError,AttributeError):
+            counts['unparsed']+=1
+            continue
+        counts['parsed_json']+=1
+        counts['styles'][style]=counts['styles'].get(style,0)+1
+        if timestamp<started:
+            counts['before_container_start']+=1
+            continue
+        if obj.get('event')=='strategy_cycle_woken':counts['wakeup_events']+=1
+        elif obj.get('event') in known:
+            counts['known_cycle_events']+=1
+            rows.append({'log_timestamp':stamp,**{k:obj[k] for k in fields if k in obj}})
+        else:counts['other_events']+=1
+    return {'capture':counts,'cycle_evidence':rows[-30:]}
+
+
 def wakeup_rows(raw, runtime, started):
     rows = []
     for line in raw.splitlines():
         try:
-            stamp, payload = line.split(' ',1)
-            timestamp = datetime.datetime.fromisoformat(stamp.replace('Z','+00:00')).timestamp()
-            obj = json.loads(payload)
+            stamp,timestamp,obj,_=parsed_log(line)
             if timestamp < started or obj.get('runtime_id') != runtime:
                 continue
             if obj.get('event') not in ('strategy_cycle_woken','strategy_event_subscription_failed','strategy_nats_error'):
@@ -122,6 +177,7 @@ def report(kubeconfig, context='rancher'):
             target['probe'] = probe
             if runtime is not None:
                 raw = call(['logs',p['metadata']['name'],'-c',container,'--timestamps=true','--since=120s','--tail=2000'],raw=True)
+                target['log_diagnostics']=log_diagnostics(raw,started)
                 rows = wakeup_rows(raw,runtime,started)
                 target['wakeup_evidence'] = rows
                 target['event_wakeup_observed'] = consumer_observed(probe,rows,runtime,started,key == 'authority')

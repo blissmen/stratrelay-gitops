@@ -334,3 +334,45 @@ opt-in; audit frozen corrected PA/library/ICT-SMC/Donchian artifacts and use fre
 run bindings where required. Do not bulk repin those images or reset checkpoints.
 Rollback these three consumer patches to restore their prior scheduling modes;
 retain stream/durables, credentials, evidence and historical identities.
+
+## Pending consumer evidence and frozen observer readiness diagnostics
+
+The operator's 2026-10-22T21:29:04Z consumer report showed event mode and valid
+NATS consumer configuration with 140/140 orchestrator deliveries acknowledged,
+144/144 Liquidity deliveries acknowledged, no pending/redelivered messages,
+expected ready images, zero container restarts and one canonical LISTEN backend.
+It contained no matching current-container EVENT wakeup log rows. This proves
+receiver-thread delivery and canonical LISTEN presence; evaluator-cycle wakeup
+and signal latency remain unconfirmed. Do not equate ACK with evaluation commit.
+
+The consumer audit now reports capture counts, recognized JSON/logging formats,
+allowlisted cycle-phase/timing events, the event-module digest/log contract, and
+the orchestrator's filtered persisted heartbeat. It recognizes the known
+stratrelay.strategy_audit logging prefix without returning raw log lines or
+unknown event payloads. It retains the EVENT wakeup requirement and does not
+turn ACKs alone into successful evaluator evidence. A parser/capture issue and a
+blocked/slow business loop are hypotheses until these diagnostics are collected.
+
+The ICT/SMC, original library canary and Donchian V2 screenshot separately showed
+Running/NotReady on their unchanged frozen images. Run the read-only observer
+audit without repinning, resetting checkpoints or relaxing readiness:
+
+```bash
+python3 scripts/strategy_observer_readiness_audit.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher \
+  --output "$HOME/Downloads/stratrelay-observer-readiness.json"
+```
+
+It reads the frozen run's persisted health projection and compares its binding
+using the current frozen image. It records per-stream statuses, exception types
+and static reason classifications, plus Redis state/quote-age/bar-count metadata.
+Unknown exception messages, raw health objects, credentials, prices and market
+bars are not exported. No evaluator is run; the probe never calls run_once,
+process, ledger.save, bridge APIs, cache writes or broker APIs. Config/DB/cache
+failures are exception-type-only and remain explicit missing evidence. The
+READ_ONLY_DIAGNOSTICS status means collection, not a healthy runtime verdict.
+
+A blocked instrument can affect the run-wide readiness predicate; determine the
+specific persisted reasons and cache state before changing that predicate. No
+market-closure, data-gap, artifact conflict or deployment cause is proven solely
+by the screenshot. These diagnostic changes alter no workload or strategy code.

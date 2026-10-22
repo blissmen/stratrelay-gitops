@@ -72,6 +72,22 @@ class ConsumerActivationTests(unittest.TestCase):
         self.assertNotIn('password',json.dumps(rows))
         self.assertNotIn('never-output',json.dumps(rows))
 
+    def test_prefixed_cycle_diagnostics_keep_known_fields_and_do_not_invent_wakeups(self):
+        runtime,_,row=self.fixture()
+        cycle={'event':'orchestrator_cycle_scheduled','runner':'signal-orchestrator','cycle_elapsed_ms':9000,'password':'private'}
+        raw='\n'.join(['1970-01-01T00:16:00Z INFO:stratrelay.strategy_audit:'+json.dumps(cycle),
+                       '1970-01-01T00:16:00Z '+json.dumps(row),'unexpected private line'])
+        diag=audit.log_diagnostics(raw,900)
+        self.assertEqual(diag['capture']['lines'],3)
+        self.assertEqual(diag['capture']['known_cycle_events'],1)
+        self.assertEqual(diag['capture']['wakeup_events'],1)
+        self.assertEqual(diag['capture']['unparsed'],1)
+        self.assertEqual(diag['cycle_evidence'][0]['cycle_elapsed_ms'],9000)
+        self.assertNotIn('private',json.dumps(diag))
+        self.assertEqual(len(audit.wakeup_rows(raw,runtime,900)),1)
+        prefixed='1970-01-01T00:16:00Z INFO:stratrelay.strategy_audit:'+json.dumps(row)
+        self.assertEqual(len(audit.wakeup_rows(prefixed,runtime,900)),1)
+
     def test_listener_query_is_read_only_and_ip_is_not_sql(self):
         sql = audit.listener_sql('10.42.0.3')
         self.assertIn('BEGIN READ ONLY',sql)
