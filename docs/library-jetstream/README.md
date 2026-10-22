@@ -6,7 +6,7 @@ verified on the cluster.** This is the original three-strategy library canary
 It does not migrate Context V1/V2, corrected PA, ICT/SMC or Donchian V2 observers.
 No strategy rule, frozen parameter or historical evidence is rewritten.
 
-Local validation: 16 manifest, redaction and cutover-gate tests passed. YAML,
+Local validation: 17 manifest, redaction and cutover-gate tests passed. YAML,
 embedded Python compilation and diff checks passed. No cluster, real credential,
 NetworkPolicy or live NATS verification has been performed from this environment.
 
@@ -86,10 +86,18 @@ credential out, or prompts interactively. Failures are classified without raw
 credential-helper/server error output. The 04:00 UTC inventory verified NATS
 2.10.29 and the trading-nats-auth reference, but the original DB probe failed;
 migration, role and grant evidence remains unconfirmed.
+The 04:09 UTC report classified a database-name failure. The original probe
+incorrectly hardcoded `trading`. It now connects to the pod's configured
+POSTGRES_DB, independently parses collector/orchestrator connection targets
+without connecting or printing credentials, and compares database names.
+The draft manifests still contain the unverified `LIBRARY_EVENT_DATABASE=trading`
+placeholder. Replace it with the verified application database before merge;
+do not create an empty database named trading to satisfy the old assumption.
 
 ## Credential contracts
 
-All DSNs must explicitly target the verified `trading` primary, include a bounded
+All DSNs must explicitly target the application primary verified by the
+infrastructure report (database name not yet verified), include a bounded
 connect timeout, and use distinct non-superuser, non-owner roles. Audit effective
 privileges, including inherited role membership; no broker tables/writes or DDL
 rights for transport processes. The collector keeps its existing read path and

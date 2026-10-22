@@ -100,6 +100,8 @@ class ManifestTests(unittest.TestCase):
                 data=json.dumps({'items':[pod('trading-postgres','postgres:17'),pod('trading-nats','nats:2.10')]})
             elif 'psql' in ' '.join(cmd):
                 self.assertIn('default_transaction_read_only=on',' '.join(cmd))
+                self.assertIn('${POSTGRES_DB:?',' '.join(cmd))
+                self.assertNotIn('-d trading',' '.join(cmd))
                 self.assertTrue(cmd[-1].startswith('SELECT'))
                 data='{"database":"trading","primary":true}'
             else:data='nats-server: v2.10.25 MUST_NOT_ESCAPE'
@@ -108,6 +110,12 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(result['status'],'INVENTORIED_NOT_ACTIVATED')
         self.assertEqual(result['nats_pods'][0]['server_version'],'2.10.25')
         self.assertNotIn('MUST_NOT_ESCAPE',json.dumps(result))
+
+    def test_target_parser_only_prints_nonsecret_connection_fields(self):
+        module=load('library_target_parser',ROOT/'scripts/library_jetstream_infrastructure.py')
+        self.assertIn("['dbname','host','port']",module.TARGET_CODE)
+        self.assertNotIn('password',module.TARGET_CODE.lower())
+        self.assertNotIn('connect(',module.TARGET_CODE)
 
     def test_postgres_failure_is_classified_without_printing_private_details(self):
         module=load('library_infrastructure_errors',ROOT/'scripts/library_jetstream_infrastructure.py')

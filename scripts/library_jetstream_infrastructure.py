@@ -16,14 +16,27 @@ SQL = """SELECT json_build_object(
  'owners', (SELECT json_agg(json_build_object('schema',schemaname,'table',tablename,'owner',tableowner))
     FROM pg_tables WHERE (schemaname='research' AND (tablename LIKE 'library_stream_%'
         OR tablename LIKE 'market_event_%' OR tablename LIKE 'strategy_library_forward_%'))),
- 'original_instances', (SELECT json_agg(json_build_object('id',id,'online',online,
+ 'managed_catalog', to_regclass('strategy_mgmt.strategy_instance_v2') IS NOT NULL
+);"""
+
+INSTANCE_SQL="""SELECT json_agg(json_build_object('id',id,'online',online,
        'execution_mode',execution_mode,'execution_eligible',execution_eligible,
        'run_id',attributes->>'orchestrator_run_id','publication_transport',attributes->>'publication_transport'))
     FROM strategy_mgmt.strategy_instance_v2 WHERE id IN (
        'fea3769c-c3f2-52f5-8ae2-f0be9d12abeb'::uuid,
        '1c6d1d50-8850-5b2a-b500-d9df0c51fe78'::uuid,
-       'f8dcf44a-9b37-5f97-b766-318f71e9848f'::uuid))
-);"""
+       'f8dcf44a-9b37-5f97-b766-318f71e9848f'::uuid);"""
+
+TARGET_CODE="""import json
+from postgres.config import PostgresConfig
+from psycopg.conninfo import conninfo_to_dict
+try:
+    k=PostgresConfig.from_env().connect_kwargs()
+    if 'conninfo' in k:k=conninfo_to_dict(k['conninfo'])
+    print(json.dumps({key:k.get(key) for key in ['dbname','host','port']}))
+except Exception as exc:
+    print(json.dumps({'error_type':type(exc).__name__}))
+"""
 
 
 def diagnostic(stderr):
@@ -71,16 +84,32 @@ def inventory(kubeconfig,context):
                    'PGUSER="$POSTGRES_USER"; PGPASSWORD="$POSTGRES_PASSWORD"; export PGUSER PGPASSWORD; '
                    'elif [ -z "${PGUSER:-}" ]; then PGUSER=postgres; export PGUSER; fi; '
                    'exec env PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000" '
-                   'psql -X -qAt -w -v ON_ERROR_STOP=1 -d trading -c "$1"')
+                   'psql -X -qAt -w -v ON_ERROR_STOP=1 -d "${POSTGRES_DB:?POSTGRES_DB must be configured}" -c "$1"')
             result['postgres_pod']={'name':name,'container':c,
                 'environment_names':sorted(e['name'] for e in containers[0].get('env',[])),
                 'credential_secret_refs':sorted({e['valueFrom']['secretKeyRef']['name']
                     for e in containers[0].get('env',[]) if 'secretKeyRef' in e.get('valueFrom',{})})}
             value=run(['exec',name,'-c',c,'--','sh','-c',shell,'--',SQL],
                       'read-only PostgreSQL prerequisites')
-            if value:result['postgres']=json.loads(value)
+            if value:
+                result['postgres']=json.loads(value)
+                if result['postgres'].get('managed_catalog'):
+                    instances=run(['exec',name,'-c',c,'--','sh','-c',shell,'--',INSTANCE_SQL],
+                                  'read-only original managed instances')
+                    if instances:result['postgres']['original_instances']=json.loads(instances)
         else:result['errors'].append({'operation':'PostgreSQL selection','reason':'SELECT_CONTAINER_EXPLICITLY'})
     else:result['errors'].append({'operation':'PostgreSQL selection','reason':'EXPECTED_ONE_RUNNING_PRIMARY_POD'})
+    result['application_db_targets']=[]
+    for app,container in [('market-data-collector','collector'),
+                          ('mt5-native-bridge','orchestrator-shadow')]:
+        for pod in target(app):
+            if not any(c['name']==container for c in pod['spec']['containers']):continue
+            value=run(['exec',pod['metadata']['name'],'-c',container,'--','python','-c',TARGET_CODE],
+                      'parse connection target '+container)
+            if value:result['application_db_targets'].append({'container':container,**json.loads(value)})
+    db=result.get('postgres',{}).get('database')
+    result['database_names_match']=bool(db and len(result['application_db_targets'])==2 and all(
+        target.get('dbname')==db for target in result['application_db_targets']))
     nats=target('trading-nats')
     result['nats_pods']=[]
     for pod in nats:
