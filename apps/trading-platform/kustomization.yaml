@@ -41,3 +41,9 @@ resources:
   # Isolated Donchian V2; immutable run and registration/activation startup gate.
   - donchian-v2-20261020-2111-v1.json
   - donchian-v2-network.json
+
+  - library-jetstream.yaml
+
+  - library-jetstream-network.yaml
+
+  - library-jetstream-rbac.yaml

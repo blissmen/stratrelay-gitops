@@ -1,0 +1,830 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: library-events-library-js-20261022-0600-v1
+  namespace: trading
+immutable: true
+data:
+  run.json: |
+    {
+      "schema": "library-forward-observation.v1",
+      "execution_eligible": false,
+      "run_id": "library-js-20261022-0600-v1",
+      "activation_time": 1792648800,
+      "keys": [
+        "donchian_breakout",
+        "ema_pullback",
+        "fvg_retracement"
+      ],
+      "symbols": {
+        "BTCUSD": "BTCUSDm",
+        "XAUUSD": "XAUUSDm",
+        "USDJPY": "USDJPYm"
+      },
+      "history": 320,
+      "max_age_seconds": 330,
+      "prospective_max_delay": 120,
+      "max_retained_bars": 10000,
+      "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+      "entry_quote_max_age_seconds": 5,
+      "transport": "JETSTREAM"
+    }
+  release.json: |
+    {"image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa", "commit": "2c333a98fa59c711dc167ab2834966ab879a7cfb"}
+  activation.sql: |
+    BEGIN; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(hashtext('library-event-cutover'));
+    DO $time$ BEGIN IF extract(epoch from clock_timestamp()) >= 1792648800 THEN RAISE EXCEPTION 'T0 elapsed: prepare fresh future event run'; END IF; END $time$;
+    DO $fresh$ BEGIN IF EXISTS (SELECT 1 FROM research.strategy_library_forward_state WHERE run_id='library-js-20261022-0600-v1') THEN RAISE EXCEPTION 'Run already exists: inspect state; never overwrite'; END IF; END $fresh$;
+    DO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='fea3769c-c3f2-52f5-8ae2-f0be9d12abeb'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V1' AND v.evaluator_key='library.donchian_breakout@V1' AND p.frozen AND p.fingerprint='477eae93ee755f09dd974d7c52b95fcf9363d69aa7af508d3978199fd8c9ab0a' AND p.values='{"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "Breakout", "fast": 20, "hypothesis": "Completed close crosses prior 20-bar channel; signal candle excluded from its own range.", "key": "donchian_breakout", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "channel_break", "name": "Donchian Breakout", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='BREAKOUT_DONCHIAN_BREAKOUT' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{"forward_entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN", "forward_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa", "orchestrator_run_id": "library-js-20261022-0600-v1", "publication_activation_time": 1792648800, "publication_mode": "ORCHESTRATOR_RESEARCH_ONLY", "publication_transport": "JETSTREAM", "research_only": true, "signal_publication": true}'::jsonb,updated_at=now() WHERE id='fea3769c-c3f2-52f5-8ae2-f0be9d12abeb'::uuid;
+    DO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='1c6d1d50-8850-5b2a-b500-d9df0c51fe78'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V1' AND v.evaluator_key='library.ema_pullback@V1' AND p.frozen AND p.fingerprint='e3183b7bc463be53267ecf040b5694b23fd3e1e2f6d94e086304eab5ed7801a7' AND p.values='{"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "Trend Following", "fast": 20, "hypothesis": "EMA20 above/below EMA50 on completed prior M15; current candle touches EMA20 and confirms in trend direction.", "key": "ema_pullback", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "ema_pullback", "name": "EMA Pullback", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_PULLBACK' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{"forward_entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN", "forward_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa", "orchestrator_run_id": "library-js-20261022-0600-v1", "publication_activation_time": 1792648800, "publication_mode": "ORCHESTRATOR_RESEARCH_ONLY", "publication_transport": "JETSTREAM", "research_only": true, "signal_publication": true}'::jsonb,updated_at=now() WHERE id='1c6d1d50-8850-5b2a-b500-d9df0c51fe78'::uuid;
+    DO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='f8dcf44a-9b37-5f97-b766-318f71e9848f'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V1' AND v.evaluator_key='library.fvg_retracement@V1' AND p.frozen AND p.fingerprint='ab185500095a1f175995a39dfd212fb5e99a38c454e3f819fb6d515e63f4eed9' AND p.values='{"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "SMC", "fast": 20, "hypothesis": "H1 structural bias and displacement; three-bar wick FVG becomes knowable at third close; later uninvalidated-zone rejection.", "key": "fvg_retracement", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "fvg", "name": "FVG Retracement", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='SMC_FVG_RETRACEMENT' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{"forward_entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN", "forward_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa", "orchestrator_run_id": "library-js-20261022-0600-v1", "publication_activation_time": 1792648800, "publication_mode": "ORCHESTRATOR_RESEARCH_ONLY", "publication_transport": "JETSTREAM", "research_only": true, "signal_publication": true}'::jsonb,updated_at=now() WHERE id='f8dcf44a-9b37-5f97-b766-318f71e9848f'::uuid;
+    INSERT INTO research.strategy_library_forward_state(run_id,state) VALUES ('library-js-20261022-0600-v1','{"activation_attestation": {"activation_time": 1792648800, "binding": "aa63a53e6410fd6eb0f162f7371b15f8aa660ea6e3a75f299cf962806f9a482d", "execution_eligible": false, "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa", "run_id": "library-js-20261022-0600-v1", "schema": "library-event-stream.v1", "transport": "JETSTREAM"}, "binding": "aa63a53e6410fd6eb0f162f7371b15f8aa660ea6e3a75f299cf962806f9a482d", "manifest": {"artifact": "06b0dda22f7c72fc9d0f3d33c243f229eaec9a09c802323c437314354e24e508", "config": {"activation_time": 1792648800, "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN", "entry_quote_max_age_seconds": 5, "history": 320, "keys": ["donchian_breakout", "ema_pullback", "fvg_retracement"], "max_age_seconds": 330, "max_retained_bars": 10000, "prospective_max_delay": 120, "run_id": "library-js-20261022-0600-v1", "symbols": {"BTCUSD": "BTCUSDm", "USDJPY": "USDJPYm", "XAUUSD": "XAUUSDm"}, "transport": "JETSTREAM"}, "definitions": {"donchian_breakout": {"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "Breakout", "fast": 20, "hypothesis": "Completed close crosses prior 20-bar channel; signal candle excluded from its own range.", "key": "donchian_breakout", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "channel_break", "name": "Donchian Breakout", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}, "ema_pullback": {"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "Trend Following", "fast": 20, "hypothesis": "EMA20 above/below EMA50 on completed prior M15; current candle touches EMA20 and confirms in trend direction.", "key": "ema_pullback", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "ema_pullback", "name": "EMA Pullback", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}, "fvg_retracement": {"atr_multiple": 1.2, "atr_period": 14, "buffer_atr": 0.1, "context": "H1", "entry_policy": "NEXT_OPEN_RECONSTRUCTED", "execution": "M15", "execution_eligible": false, "family": "SMC", "fast": 20, "hypothesis": "H1 structural bias and displacement; three-bar wick FVG becomes knowable at third close; later uninvalidated-zone rejection.", "key": "fvg_retracement", "lifecycle": "RESEARCH", "lookback": 20, "max_entry_gap_atr": 0.25, "min_r": 1.0, "mode": "fvg", "name": "FVG Retracement", "range_end": 60, "range_start": 0, "session_tz": "UTC", "setup_bars": 8, "slow": 50, "symbols": [], "target_policy": "FIXED_R", "target_r": 2.0, "tolerance_atr": 0.15, "trade_end": 240, "trade_start": 60, "version": "V1"}}}, "streams": {}}'::jsonb); COMMIT;
+  quiesce.sql: |
+    BEGIN;
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=false,updated_at=now() WHERE id='fea3769c-c3f2-52f5-8ae2-f0be9d12abeb'::uuid AND attributes->>'orchestrator_run_id'='library-js-20261022-0600-v1';
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=false,updated_at=now() WHERE id='1c6d1d50-8850-5b2a-b500-d9df0c51fe78'::uuid AND attributes->>'orchestrator_run_id'='library-js-20261022-0600-v1';
+    UPDATE strategy_mgmt.strategy_instance_v2 SET online=false,updated_at=now() WHERE id='f8dcf44a-9b37-5f97-b766-318f71e9848f'::uuid AND attributes->>'orchestrator_run_id'='library-js-20261022-0600-v1';
+    COMMIT;
+  activate.py: |
+    """Fail-closed, one-transaction research run cutover; no broker operations."""
+    import json
+    import os
+    from pathlib import Path
+    import ssl
+    import time
+    import urllib.request
+    from research.library_event_store import open_connection
+    from research.strategy_library_forward import RunConfig
+    from research.strategy_library_registration import registration
+
+
+    def kube(path):
+        token=Path('/var/run/secrets/kubernetes.io/serviceaccount/token').read_text().strip()
+        host=os.environ['KUBERNETES_SERVICE_HOST']
+        port=os.environ['KUBERNETES_SERVICE_PORT_HTTPS']
+        req=urllib.request.Request('https://'+host+':'+port+path,
+            headers={'Authorization':'Bearer '+token})
+        ctx=ssl.create_default_context(cafile='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
+        with urllib.request.urlopen(req,context=ctx,timeout=10) as response:
+            return json.load(response)
+
+
+    def activate():
+        cfg=RunConfig.load('/config/run.json')
+        if cfg.activation_time-time.time()<120:
+            raise ValueError('T0 has insufficient remaining margin; prepare a fresh run')
+        prefix='/apis/apps/v1/namespaces/trading/deployments/'
+        old=kube(prefix+'strategy-library-canary-v1-observer')
+        if old['spec'].get('replicas',1)!=0 or old.get('status',{}).get('replicas',0)!=0:
+            raise ValueError('old polling observer has not stopped')
+        pods=kube('/api/v1/namespaces/trading/pods?labelSelector=app.kubernetes.io%2Fname%3Dstrategy-library-canary-v1-observer')
+        if any(p.get('status',{}).get('phase') not in ['Succeeded','Failed'] for p in pods['items']):
+            raise ValueError('old polling pod still present, including terminating pods')
+        # Image is bound by the activation attestation embedded in the SQL/manifest bundle.
+        image=json.loads(Path('/config/release.json').read_text())['image']
+        for deployment,container in [('mt5-native-bridge-main-runtime','orchestrator-shadow'),
+                                      ('market-data-collector','collector')]:
+            d=kube(prefix+deployment)
+            status=d.get('status',{})
+            if (status.get('observedGeneration',0)<d['metadata']['generation']
+                    or status.get('updatedReplicas',0)!=1 or status.get('readyReplicas',0)!=1
+                    or status.get('replicas',0)!=1):
+                raise ValueError('prerequisite deployment has not completed its rollout: '+deployment)
+            c=next(c for c in d['spec']['template']['spec']['containers'] if c['name']==container)
+            if c['image']!=image:
+                raise ValueError('prerequisite image lacks reviewed source: '+deployment)
+            if deployment=='market-data-collector':
+                env={e['name']:e.get('value') for e in c.get('env',[])}
+                if env.get('MARKET_DATA_EVENT_MODE')!='JETSTREAM_OUTBOX':
+                    raise ValueError('collector emission not configured')
+        job=kube('/apis/batch/v1/namespaces/trading/jobs/library-event-provision-streams-'+cfg.run_id)
+        if job.get('status',{}).get('succeeded')!=1:
+            raise ValueError('bounded stream provisioning has not succeeded')
+        with open_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT state FROM research.strategy_library_forward_state WHERE run_id=%s',(cfg.run_id,))
+                if cur.fetchone():
+                    raise ValueError('run already exists; verify it rather than repeat activation')
+                conn.rollback()
+                sql=Path('/config/activation.sql').read_text()
+                quiesce=[]
+                for key in cfg.keys:
+                    r=registration(key)
+                    cur.execute('''SELECT attributes->>'orchestrator_run_id', execution_mode,execution_eligible
+                        FROM strategy_mgmt.strategy_instance_v2 WHERE id=%s''',(r['instance_id'],))
+                    if cur.fetchone()!=('library-canary-20261016-v1','OFF',False):
+                        raise ValueError('expected original OFF/ineligible run binding missing: '+key)
+                    cur.execute('''SELECT canonical_instrument FROM strategy.instrument_membership
+                        WHERE strategy_instance_id=%s AND strategy_id=%s AND state='ACTIVE' ''',
+                        (r['instance_id'],r['strategy_id']))
+                    if {x[0] for x in cur.fetchall()}!=set(cfg.symbols):
+                        raise ValueError('active universe differs from frozen manifest: '+key)
+                    # SQL uses planner-escaped deterministic UUIDs only, no credential interpolation.
+                    quiesce.append("DO $source$ BEGIN UPDATE strategy_mgmt.strategy_instance_v2 SET online=false,updated_at=now() "
+                        "WHERE id='"+r['instance_id']+"'::uuid AND attributes->>'orchestrator_run_id'='library-canary-20261016-v1' "
+                        "AND execution_mode='OFF' AND NOT execution_eligible; "
+                        "IF NOT FOUND THEN RAISE EXCEPTION 'Original run binding changed: abort cutover'; END IF; END $source$;")
+                conn.rollback()
+                sql=sql.replace('BEGIN;', 'BEGIN;\n'+'\n'.join(quiesce),1)
+                cur.execute(sql)
+            conn.commit()
+        print(json.dumps({'status':'ACTIVATED_RESEARCH_ONLY','run_id':cfg.run_id,'broker_writes':0}))
+
+
+    if __name__=='__main__':
+        try:activate()
+        except Exception as exc:
+            # Driver errors can contain connection details: never dump raw errors/tracebacks.
+            print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__,
+                'reason':str(exc) if isinstance(exc,ValueError) else 'Inspect prerequisite status; credentials redacted',
+                'broker_writes':0}),flush=True)
+            raise SystemExit(1)
+  gate.py: |
+    """Read-only init gate shared by the three event workloads."""
+    import json
+    from pathlib import Path
+    from research.library_event_store import open_connection, SCHEMA
+    from research.strategy_library_forward import RunConfig, ForwardObserver
+
+
+    def gate():
+        cfg=RunConfig.load('/config/run.json')
+        with open_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT state FROM research.strategy_library_forward_state WHERE run_id=%s',(cfg.run_id,))
+                row=cur.fetchone()
+            if not row:
+                raise ValueError('activation has not committed')
+            state=row[0]
+            observer=ForwardObserver(cfg)
+            observer.restore(state)
+            expected={'schema':SCHEMA,'run_id':cfg.run_id,'binding':observer.binding,
+                'activation_time':cfg.activation_time,'transport':'JETSTREAM','execution_eligible':False,
+                'image':json.loads(Path('/config/release.json').read_text())['image']}
+            if any(state.get('activation_attestation',{}).get(k)!=v for k,v in expected.items()):
+                raise ValueError('activation attestation mismatch')
+        print(json.dumps({'status':'RESEARCH_ACTIVATION_VERIFIED','run_id':cfg.run_id,'broker_writes':0}))
+
+
+    if __name__=='__main__':
+        try:gate()
+        except Exception as exc:
+            print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__,'broker_writes':0}))
+            raise SystemExit(1)
+  health.py: |
+    """Readiness: durable subscriptions and activation, never broker connectivity."""
+    import asyncio
+    import os
+    import sys
+    import time
+    import nats
+    from research.library_event_service import check_streams
+    from research.library_event_store import open_connection
+    from research.strategy_library_forward import RunConfig
+
+
+    async def health(role):
+        cfg=RunConfig.load('/config/run.json')
+        nc=await nats.connect(os.environ['NATS_URL'],user=os.environ.get('P2_NATS_USER'),
+            password=os.environ.get('P2_NATS_PASSWORD'),connect_timeout=3,max_reconnect_attempts=0)
+        try:
+            js=nc.jetstream()
+            await check_streams(js)
+            if role in ['observer','orchestrator']:
+                stream='MARKET_EVIDENCE' if role=='observer' else 'LIBRARY_RESEARCH'
+                info=await js.consumer_info(stream,role+'-'+cfg.run_id)
+                if info.num_ack_pending>1:raise ValueError('consumer configuration drift')
+            with open_connection() as conn:
+                with conn.cursor() as cur:
+                    if role=='observer':
+                        cur.execute('SELECT state FROM research.strategy_library_forward_state WHERE run_id=%s',(cfg.run_id,))
+                        state=cur.fetchone()[0]
+                        providers=state.get('health',{}).get('providers',{})
+                        # BTC is the always-open canary heartbeat; closed FX/metal feeds
+                        # do not make the process unready just because the market is shut.
+                        btc=providers.get('BTCUSDm',{})
+                        if not btc or not 0<=time.time()-btc.get('observed_at',0)<180:
+                            raise ValueError('no recent BTC market event persisted')
+                    elif role=='relay':
+                        cur.execute('SELECT extract(epoch from clock_timestamp()-min(created_at)) FROM research.library_stream_outbox WHERE published_at IS NULL')
+                        age=cur.fetchone()[0]
+                        if age is not None and age>30:raise ValueError('outbox relay backlog')
+        finally:await nc.close()
+
+
+    if __name__=='__main__':
+        try:asyncio.run(health(sys.argv[1]))
+        except Exception:raise SystemExit(1)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-event-relay
+  namespace: trading
+  labels: &id001
+    app.kubernetes.io/name: library-event-relay
+    stratrelay.app/library-events: 'true'
+    stratrelay.app/status: research
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: library-event-relay
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: relay
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - -m
+        - research.library_event_service
+        - relay
+        envFrom:
+        - secretRef:
+            name: library-event-relay
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - /config/health.py
+            - relay
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 3
+      volumes:
+      - name: manifest
+        configMap:
+          name: library-events-library-js-20261022-0600-v1
+      - name: tmp
+        emptyDir: {}
+      initContainers:
+      - name: verify-activation
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - /config/gate.py
+        envFrom:
+        - secretRef:
+            name: library-event-relay
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-event-observer
+  namespace: trading
+  labels: &id001
+    app.kubernetes.io/name: library-event-observer
+    stratrelay.app/library-events: 'true'
+    stratrelay.app/status: research
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: library-event-observer
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: observer
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - -m
+        - research.library_event_service
+        - observer
+        - --manifest
+        - /config/run.json
+        envFrom:
+        - secretRef:
+            name: library-event-observer
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - /config/health.py
+            - observer
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 3
+      volumes:
+      - name: manifest
+        configMap:
+          name: library-events-library-js-20261022-0600-v1
+      - name: tmp
+        emptyDir: {}
+      initContainers:
+      - name: verify-activation
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - /config/gate.py
+        envFrom:
+        - secretRef:
+            name: library-event-observer
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-event-orchestrator
+  namespace: trading
+  labels: &id001
+    app.kubernetes.io/name: library-event-orchestrator
+    stratrelay.app/library-events: 'true'
+    stratrelay.app/status: research
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: library-event-orchestrator
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: orchestrator
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - -m
+        - research.library_event_service
+        - orchestrator
+        - --manifest
+        - /config/run.json
+        envFrom:
+        - secretRef:
+            name: library-event-orchestrator
+        - secretRef:
+            name: trading-signal-cutoff
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - /config/health.py
+            - orchestrator
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 3
+      volumes:
+      - name: manifest
+        configMap:
+          name: library-events-library-js-20261022-0600-v1
+      - name: tmp
+        emptyDir: {}
+      initContainers:
+      - name: verify-activation
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - /config/gate.py
+        envFrom:
+        - secretRef:
+            name: library-event-orchestrator
+        - secretRef:
+            name: trading-signal-cutoff
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: library-event-provision-streams-library-js-20261022-0600-v1
+  namespace: trading
+  labels: &id001
+    app.kubernetes.io/name: library-event-provision-streams
+    stratrelay.app/library-events: 'true'
+    stratrelay.app/status: research
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: provision-streams
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - -m
+        - research.library_event_service
+        - provision-streams
+        envFrom:
+        - secretRef:
+            name: library-event-provision-streams
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: manifest
+        configMap:
+          name: library-events-library-js-20261022-0600-v1
+      - name: tmp
+        emptyDir: {}
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: library-event-activate-library-js-20261022-0600-v1
+  namespace: trading
+  labels: &id001
+    app.kubernetes.io/name: library-event-activate
+    stratrelay.app/library-events: 'true'
+    stratrelay.app/status: research
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: true
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: activate
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa
+        command:
+        - python
+        - /config/activate.py
+        envFrom:
+        - secretRef:
+            name: library-event-activate
+        env:
+        - name: LIBRARY_EVENT_TRANSPORT
+          value: JETSTREAM
+        - name: LIBRARY_EVENT_DATABASE
+          value: trading
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        - name: PYTHONPATH
+          value: /app
+        - name: SIGNAL_AUTHORITY_MODE
+          value: DB_PRIMARY
+        - name: SIGNAL_DB_PRIMARY_ENABLED
+          value: 'true'
+        - name: SIGNAL_JETSTREAM_PRIMARY_ENABLED
+          value: 'true'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 768Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: manifest
+        configMap:
+          name: library-events-library-js-20261022-0600-v1
+      - name: tmp
+        emptyDir: {}
+      restartPolicy: Never
+      serviceAccountName: library-event-cutover-reader
