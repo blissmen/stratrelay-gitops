@@ -47,7 +47,7 @@ spec:
                 name: trading-db-primary-prepared
           env:
             - {name: MARKET_DATA_EVENT_MODE, value: JETSTREAM_OUTBOX}
-            - {name: LIBRARY_EVENT_DATABASE, value: trading}
+            - {name: LIBRARY_EVENT_DATABASE, value: trading_platform}
             - name: LIBRARY_EVENT_DSN
               valueFrom:
                 secretKeyRef: {name: library-event-collector, key: LIBRARY_EVENT_DSN}

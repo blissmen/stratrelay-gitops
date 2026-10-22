@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / 'apps/trading-platform'
 KEYS = ['donchian_breakout', 'ema_pullback', 'fvg_retracement']
 OLD_RUN = 'library-canary-20261016-v1'
+DATABASE = 'trading_platform'
 ROLES = ['relay', 'observer', 'orchestrator']
 SECURITY = {'allowPrivilegeEscalation': False, 'readOnlyRootFilesystem': True,
             'capabilities': {'drop': ['ALL']}}
@@ -39,6 +40,7 @@ def generate(run_id, activation_time):
         raise ValueError('Review new release source before regenerating the frozen cutover')
     image = next(x['reference'] for x in release['images'] if x['name']=='trading-platform-runtime')
     bundle = plan(run_id, activation_time, image, KEYS)
+    bundle['readiness']['database']=DATABASE
     name = 'library-events-' + run_id
     if len(name) > 63:
         raise ValueError('run ID too long for Kubernetes resources')
@@ -58,7 +60,7 @@ def generate(run_id, activation_time):
                   'stratrelay.app/library-events': 'true', 'stratrelay.app/status': 'research'}
         secret = 'library-event-'+role
         env = [{'name': k, 'value': v} for k,v in {
-            'LIBRARY_EVENT_TRANSPORT': 'JETSTREAM', 'LIBRARY_EVENT_DATABASE': 'trading',
+            'LIBRARY_EVENT_TRANSPORT': 'JETSTREAM', 'LIBRARY_EVENT_DATABASE': DATABASE,
             'EXECUTION_AUTHORITY_MODE': 'DISABLED', 'PGCONNECT_TIMEOUT': '10',
             'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONUNBUFFERED': '1',
             'PYTHONPATH': '/app',
@@ -134,10 +136,12 @@ def generate(run_id, activation_time):
     if 'name: MARKET_DATA_EVENT_MODE' not in collector:
         collector=collector.replace('          env:\n','          env:\n'+
             '            - {name: MARKET_DATA_EVENT_MODE, value: JETSTREAM_OUTBOX}\n'+
-            '            - {name: LIBRARY_EVENT_DATABASE, value: trading}\n'+
+            '            - {name: LIBRARY_EVENT_DATABASE, value: '+DATABASE+'}\n'+
             '            - name: LIBRARY_EVENT_DSN\n'+
             '              valueFrom:\n'+
             '                secretKeyRef: {name: library-event-collector, key: LIBRARY_EVENT_DSN}\n',1)
+    collector=collector.replace('{name: LIBRARY_EVENT_DATABASE, value: trading}',
+        '{name: LIBRARY_EVENT_DATABASE, value: '+DATABASE+'}')
     collector=collector.replace('Read-only: no broker writes, no DB writes.',
         'No broker writes. Event mode adds durable research evidence/outbox writes.')
     (APP/'market-data-collector.yaml').write_text(collector)

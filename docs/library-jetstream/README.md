@@ -90,14 +90,18 @@ The 04:09 UTC report classified a database-name failure. The original probe
 incorrectly hardcoded `trading`. It now connects to the pod's configured
 POSTGRES_DB, independently parses collector/orchestrator connection targets
 without connecting or printing credentials, and compares database names.
-The draft manifests still contain the unverified `LIBRARY_EVENT_DATABASE=trading`
-placeholder. Replace it with the verified application database before merge;
-do not create an empty database named trading to satisfy the old assumption.
+The operator subsequently reports that the redacted activation-evidence report
+verifies primary database `trading_platform`, migration 070 and original managed
+bindings. The generator, collector and all event Job/Deployment containers now
+explicitly set `LIBRARY_EVENT_DATABASE=trading_platform`; this overrides the
+platform module's generic default. Six missing Secrets, scoped NATS credentials
+and unverified live stream configuration remain blockers. The full evidence
+report is still needed to review role capabilities and the NATS provisioning path.
 
 ## Credential contracts
 
-All DSNs must explicitly target the application primary verified by the
-infrastructure report (database name not yet verified), include a bounded
+All DSNs must explicitly target the verified application primary database
+`trading_platform`, include a bounded
 connect timeout, and use distinct non-superuser, non-owner roles. Audit effective
 privileges, including inherited role membership; no broker tables/writes or DDL
 rights for transport processes. The collector keeps its existing read path and

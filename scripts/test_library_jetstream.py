@@ -42,6 +42,7 @@ class ManifestTests(unittest.TestCase):
                 self.assertEqual(c['image'],image)
                 env={v['name']:v.get('value') for v in c['env']}
                 self.assertEqual(env['EXECUTION_AUTHORITY_MODE'],'DISABLED')
+                self.assertEqual(env['LIBRARY_EVENT_DATABASE'],'trading_platform')
                 self.assertEqual(env['PYTHONPATH'],'/app')
                 self.assertTrue(c['securityContext']['readOnlyRootFilesystem'])
                 self.assertFalse(c['securityContext']['allowPrivilegeEscalation'])
@@ -65,6 +66,7 @@ class ManifestTests(unittest.TestCase):
         env={e['name']:e for e in collector['spec']['template']['spec']['containers'][0]['env']}
         self.assertEqual(env['MARKET_DATA_EVENT_MODE']['value'],'JETSTREAM_OUTBOX')
         self.assertEqual(env['LIBRARY_EVENT_DSN']['valueFrom']['secretKeyRef']['name'],'library-event-collector')
+        self.assertEqual(env['LIBRARY_EVENT_DATABASE']['value'],'trading_platform')
 
     def test_no_credentials_in_resources(self):
         for f in ['library-jetstream.yaml','library-jetstream-network.yaml','library-jetstream-rbac.yaml']:
@@ -103,7 +105,7 @@ class ManifestTests(unittest.TestCase):
                 self.assertIn('${POSTGRES_DB:?',' '.join(cmd))
                 self.assertNotIn('-d trading',' '.join(cmd))
                 self.assertTrue(cmd[-1].startswith('SELECT'))
-                data='{"database":"trading","primary":true}'
+                data='{"database":"trading_platform","primary":true}'
             else:data='nats-server: v2.10.25 MUST_NOT_ESCAPE'
             return SimpleNamespace(returncode=0,stdout=data,stderr='')
         with patch.object(module.subprocess,'run',side_effect=fake):result=module.inventory('/fake','rancher')

@@ -19,5 +19,6 @@
     "old run consumers quiesced",
     "existing frozen research registrations and memberships",
     "future T0 activation transaction"
-  ]
+  ],
+  "database": "trading_platform"
 }
