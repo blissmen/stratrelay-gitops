@@ -118,3 +118,4 @@ spec:
           configMap: {name: strategy-library-canary-v1-manifest}
         - name: tmp
           emptyDir: {}
+# stratrelay-release: frozen
