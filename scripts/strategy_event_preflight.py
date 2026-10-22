@@ -58,6 +58,44 @@ SELECT json_build_object(
 SQL
 '''
 
+# Small, independent audit: no signal/outbox scans can suppress migration evidence.
+INFRA_DATABASE_SCRIPT = r'''set +x
+test -n "${POSTGRES_USER:-}" && test -n "${POSTGRES_PASSWORD:-}" || exit 4
+export PGPASSWORD="$POSTGRES_PASSWORD"
+export PGCONNECT_TIMEOUT=5
+export PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=5000 -c lock_timeout=2000'
+exec psql -X -qAt -w -h 127.0.0.1 -p 5432 -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d trading_platform <<'SQL'
+SELECT json_build_object(
+ 'database',current_database(),'role',current_user,'primary',NOT pg_is_in_recovery(),
+ 'migrations',COALESCE((SELECT json_agg(json_build_object('version',version,'filename',filename,'checksum_sha256',checksum_sha256))
+   FROM platform.schema_migrations WHERE version IN ('072','073','074')),'[]'::json),
+ 'ready_outbox',to_regclass('platform.strategy_runtime_outbox') IS NOT NULL,
+ 'canonical_notify_trigger',EXISTS(SELECT 1 FROM pg_trigger t WHERE t.tgname='canonical_outbox_notify'
+   AND t.tgrelid=to_regclass('platform.outbox_events') AND NOT t.tgisinternal AND t.tgenabled='O'),
+ 'event_roles',COALESCE((SELECT json_agg(json_build_object('role',rolname,'superuser',rolsuper,
+   'can_login',rolcanlogin,'bypass_rls',rolbypassrls)) FROM pg_roles WHERE rolname LIKE 'strategy_event_%'),'[]'::json));
+SQL
+'''
+
+
+def nats_configuration(workload):
+    """Return only flag names and configuration references, never arguments or env values."""
+    spec = workload.get('spec', {}).get('template', {}).get('spec', {})
+    return {
+        'containers': [{'name': c['name'], 'image': c.get('image'),
+                        'flags': sorted({arg.split('=', 1)[0] for arg in c.get('args', []) + c.get('command', [])
+                                         if re.fullmatch(r'--?[a-zA-Z][a-zA-Z0-9_-]*(=.*)?', arg)}),
+                        'env_names': sorted(e['name'] for e in c.get('env', [])),
+                        'secret_refs': sorted({e['secretRef']['name'] for e in c.get('envFrom', []) if 'secretRef' in e}
+                            | {e['valueFrom']['secretKeyRef']['name'] for e in c.get('env', [])
+                               if 'secretKeyRef' in e.get('valueFrom', {})})}
+                       for c in spec.get('containers', [])],
+        'configuration_volumes': [{'name': v['name'],
+                                  **({'configmap': v['configMap']['name']} if 'configMap' in v else {}),
+                                  **({'secret': v['secret']['secretName']} if 'secret' in v else {})}
+                                 for v in spec.get('volumes', []) if 'configMap' in v or 'secret' in v]}
+
+
 RUNTIME_SCRIPT = r'''import json,os
 keys=('STRATEGY_EVENT_MODE','STRATEGY_EVENT_RUNTIME_ID','STRATEGY_EVENT_DATABASE',
       'MARKET_DATA_SOURCE','MARKET_DATA_EVENT_MODE','EXECUTION_AUTHORITY_MODE')
@@ -136,11 +174,13 @@ def migration_checks(database):
     return checks
 
 
-def report(kubeconfig, context='rancher', signal_id=None):
+def report(kubeconfig, context='rancher', signal_id=None, infrastructure_only=False):
     if signal_id is not None and not re.fullmatch(r'SIG_[a-zA-Z0-9_-]{1,64}', signal_id):
         raise ValueError('invalid signal ID')
+    if infrastructure_only and signal_id:
+        raise ValueError('infrastructure audit cannot include a signal trace')
     base = ['kubectl', '--kubeconfig', kubeconfig, '--context', context, '-n', 'trading', '--request-timeout=15s']
-    result = {'schema': 'strategy-event-preflight.v1', 'read_only': True, 'broker_writes': 0,
+    result = {'schema': 'strategy-event-preflight.v2', 'audit_scope': 'INFRASTRUCTURE' if infrastructure_only else 'FULL', 'read_only': True, 'broker_writes': 0,
               'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
               'context': context, 'namespace': 'trading', 'target_source': SOURCE, 'target_image': IMAGE,
               'kubeconfig_exists': Path(kubeconfig).is_file(), 'errors': [], 'secrets': {}, 'deployments': [], 'pods': [],
@@ -195,6 +235,9 @@ def report(kubeconfig, context='rancher', signal_id=None):
                             'workload location inventory', raw=True)
         result['workload_locations'] = inventory.splitlines() if inventory is not None else None
         return result
+    if infrastructure_only:
+        nats = command(['get', 'statefulset', 'trading-nats', '-o', 'json'], 'NATS configuration references')
+        result['nats_configuration'] = nats_configuration(nats) if nats is not None else None
     for name, keys in SECRETS.items():
         obj = command(['get', 'secret', name, '-o', 'json'], 'Secret key metadata: '+name)
         result['secrets'][name] = {'accessible': obj is not None,
@@ -222,7 +265,7 @@ def report(kubeconfig, context='rancher', signal_id=None):
                             'image_id': c.get('imageID'),
                             'waiting_reason': c.get('state', {}).get('waiting', {}).get('reason')}
                            for c in statuses]})
-        if p.get('status', {}).get('phase') == 'Running':
+        if not infrastructure_only and p.get('status', {}).get('phase') == 'Running':
             result['pods'][-1]['runtime_env'] = {}
             for c in p['spec'].get('containers', []):
                 if not any(s.get('ready') and s['name'] == c['name'] for s in statuses):
@@ -236,7 +279,7 @@ def report(kubeconfig, context='rancher', signal_id=None):
     if len(dbs) == 1:
         p = dbs[0]
         result['database'] = command(['exec', p['metadata']['name'], '-c', p['spec']['containers'][0]['name'],
-                                      '--', 'sh', '-c', DATABASE_SCRIPT.replace('__SIGNAL_ID__', signal_id or '')],
+                                      '--', 'sh', '-c', INFRA_DATABASE_SCRIPT if infrastructure_only else DATABASE_SCRIPT.replace('__SIGNAL_ID__', signal_id or '')],
                                      'read-only database audit')
     else:
         result['errors'].append({'operation': 'database discovery', 'reason': 'UNIQUE_RUNNING_PRIMARY_POD_NOT_FOUND'})
@@ -277,9 +320,11 @@ def main():
     parser.add_argument('--context', default='rancher')
     parser.add_argument('--output', required=True)
     parser.add_argument('--signal-id')
+    parser.add_argument('--infrastructure-only', action='store_true',
+                        help='Bounded migration/stream/configuration audit without signal scans or runtime environment probes')
     args = parser.parse_args()
     try:
-        result = report(args.kubeconfig, args.context, args.signal_id)
+        result = report(args.kubeconfig, args.context, args.signal_id, args.infrastructure_only)
     except Exception as exc:
         result = {'status': 'BLOCKED', 'error_type': type(exc).__name__, 'read_only': True, 'broker_writes': 0}
     Path(args.output).write_text(json.dumps(result, indent=2)+'\n')
