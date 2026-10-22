@@ -54,11 +54,11 @@ The optional probes run against existing containers, without creating workloads:
   credentials are used only for this read-only inspection, not assigned to any
   new runtime role.
 
-Secret presence and stream INFO do not prove scoped ACLs or new run bindings.
+Secret presence and stream INFO do not prove global account permissions or new run bindings.
 The report always leaves those as unverified review gates and never declares
 activation approved. Commands failing access produce redacted error categories.
 If the approved audit mechanism uses different Secret names, reconcile the map
-before activation; do not alias global credentials to satisfy the check.
+before activation. Use the shared NATS account described below; do not copy credentials into per-runner Secrets.
 
 ## Activation sequence
 
@@ -68,12 +68,16 @@ before activation; do not alias global credentials to satisfy the check.
    later Kojo routing migration is 073 with identical SQL; canonical notification
    migration is 074. Compare filename AND checksum. Do not rewrite ledger history
    or replay an already applied migration to make the numbers match.
-3. Provision/audit the dedicated database roles and distinct scoped NATS users
-   through the approved credential mechanism. No new runtime may borrow the
-   existing global NATS credential or a PostgreSQL admin credential. PA/library
-   evidence roles need INSERT on the scheduling outbox inside their existing
-   transaction, not broker/catalog privileges. File-backed Context producers and
-   collector hint writer need dedicated STRATEGY_EVENT_DSN connections.
+3. Use one shared NATS account with global publish/subscribe permissions, as
+   explicitly authorized by the user. Reference `trading-nats-auth` keys
+   `NATS_USER`/`NATS_PASSWORD` as `P2_NATS_USER`/`P2_NATS_PASSWORD` in each client.
+   Use the in-cluster `trading-nats` service URL. Do not create separate NATS
+   users or duplicate per-strategy NATS Secrets. Verify actual permissions before
+   activation; Secret metadata alone does not prove them. Database credentials
+   remain separate: collector, relay and file-backed Context connections need
+   their STRATEGY_EVENT_DSN bindings; PA/library evidence roles need INSERT on
+   the scheduling outbox within their existing transaction. No runtime receives
+   PostgreSQL admin or broker credentials through this change.
 4. Review both sides of NetworkPolicy for every existing runner, not only the new
    relay. The staged policy covers only the new labeled relay/provisioner; it does
    not grant NATS access to observer pods automatically.
@@ -129,24 +133,25 @@ were not found. NATS metadata includes flag names, environment key names and
 Secret/ConfigMap references only. No argument values or configuration contents
 are returned, and stream INFO remains a read-only request.
 
-Credential provisioning must follow the actual NATS authentication configuration:
-command-line single-user authentication cannot provide distinct scoped users by
-adding Kubernetes Secrets alone. In that case prepare a separate reviewed NATS
-configuration change, including continuity for existing clients, before creating
-new runtime bindings. Do not replace shared authentication opportunistically.
+## Shared NATS account policy
 
-The credential plan must distinguish these principals:
+The user has authorized one global NATS user instead of separate scoped users.
+The staged relay and stream provisioner therefore reference the existing shared
+`trading-nats-auth` Secret directly. Existing server authentication and credentials
+are not rotated or rewritten by this change. Once live permissions are verified,
+all event consumers use the same binding pattern. Global means unrestricted NATS
+publish/subscribe access within that account, including JetStream API subjects;
+it does not mean PostgreSQL superuser, Kubernetes cluster-admin or broker access.
 
-| Principal | Required scope | Excluded scope |
-| --- | --- | --- |
-| Collector and file-backed Context hint writers | Dedicated DB connection; INSERT scheduling hints | Strategy evidence, execution, broker credentials |
-| PA/library writers | Their existing evidence transaction plus INSERT scheduling hints | Admin/catalog/broker writes |
-| Event relay | Scheduling outbox delivery/pruning; publish only the two runtime hint subject families | Trading/execution subjects and stream administration |
-| Runtime consumers | Own durable consumer and allowed cache/evidence subjects; necessary JetStream reply permissions | Other consumers, stream mutation, trading publications |
-| Stream provisioner | Exact STRATEGY_RUNTIME inspection/provisioning operations | Runtime execution and broker access |
+Remaining database bindings are `strategy-event-collector-db`,
+`strategy-event-relay`, `strategy-event-context-v1` and
+`strategy-event-context-v2`, each containing STRATEGY_EVENT_DSN. PA/library
+observers keep their existing evidence DB identities and need the scheduling
+outbox grant audited. The preflight no longer demands twelve per-client NATS
+credential Secrets or an audit of per-client scoped ACLs.
 
-These are scope requirements, not verified grants. Audit SQL privileges and NATS
-allow/deny behavior before activation, including consumer creation, pull, ACK and
-reply subjects required by the client. Existing global service credentials are
-not a substitute for the new scoped principals. Preserve frozen run identities
-and keep the old immutable-library cutover paused throughout this audit.
+All existing activation gates still apply: database privilege verification,
+actual shared NATS permissions, stream provisioning, both NetworkPolicy sides,
+artifact/checkpoint bindings, and post-T0 timing evidence. Preserve frozen runs
+and keep the older immutable-library cutover paused. The relay remains replicas
+zero, provisioning Job suspended, and the staged bundle outside Flux resources.

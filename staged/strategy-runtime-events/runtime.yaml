@@ -36,6 +36,11 @@ spec:
           envFrom:
             - secretRef: {name: strategy-event-relay}
           env:
+            - {name: NATS_URL, value: 'nats://trading-nats.trading.svc.cluster.local:4222'}
+            - name: P2_NATS_USER
+              valueFrom: {secretKeyRef: {name: trading-nats-auth, key: NATS_USER}}
+            - name: P2_NATS_PASSWORD
+              valueFrom: {secretKeyRef: {name: trading-nats-auth, key: NATS_PASSWORD}}
             - {name: STRATEGY_EVENT_DATABASE, value: trading_platform}
             - {name: EXECUTION_AUTHORITY_MODE, value: DISABLED}
           securityContext:
@@ -73,8 +78,12 @@ spec:
         - name: provision
           image: 'ghcr.io/strat-relay/trading-platform-runtime@sha256:f7b4ea91af4e5c6866bdceaa0e1f10ade9c340d7e070ea110c65fa11865ee872'
           command: [python, -m, infrastructure.messaging.runtime_event_service, provision]
-          envFrom:
-            - secretRef: {name: strategy-event-provision-streams}
+          env:
+            - {name: NATS_URL, value: 'nats://trading-nats.trading.svc.cluster.local:4222'}
+            - name: P2_NATS_USER
+              valueFrom: {secretKeyRef: {name: trading-nats-auth, key: NATS_USER}}
+            - name: P2_NATS_PASSWORD
+              valueFrom: {secretKeyRef: {name: trading-nats-auth, key: NATS_PASSWORD}}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
