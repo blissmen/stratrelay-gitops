@@ -1,0 +1,40 @@
+{
+  "schema": "stratrelay-frozen-research-images.v1",
+  "workloads": [
+    {
+      "path": "apps/trading-platform/ict-smc-forward-20261018-1845.yaml",
+      "run_id": "ict-smc-forward-20261019-0226",
+      "binding": "d7b4aaca5a90b8c36af548746b7161f3f64fb2a4ab4d34c0642418254b6fb873",
+      "artifact": "9b5c739b88a6cbdaafb80ea37c4cfecc9554d67e272d1190b5c04984900cbaaf",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:e94661478c91cb03766b131d8938100f8dd7fa872232983768c72a07031462ac"
+      ]
+    },
+    {
+      "path": "apps/trading-platform/strategy-library-canary.yaml",
+      "run_id": "library-canary-20261016-v1",
+      "binding": "6a524ff107c6769304333c2f1a5af47a3ba548ab9127703f947a70ea593bdfac",
+      "artifact": "a4a229b5439af01f5772095615c3b4d0618bdc2ecf96880ff37896f7bd15339a",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:beaf80a9a1d01fc17633bf55588c37b120ade5dd79e64dbfc8d4b83f81feb5bd"
+      ]
+    },
+    {
+      "path": "apps/trading-platform/donchian-v2-20261020-2111-v1.json",
+      "run_id": "donchian-v2-20261020-2111-v1",
+      "binding": "33df59c2cae890f21acd57bae6f62c9ee71b09534a7ac72a6cc84f28161c29f9",
+      "artifact": "70f98cb978a0b0d1d2f8c95934eb78228c03ce33d157aaeb07a4a9d37857ffc3",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:19b2f7661922176edab958ad0db3115b490822019adb71daedb73e6d7ccf89e0"
+      ]
+    },
+    {
+      "path": "apps/trading-platform/library-jetstream.yaml",
+      "run_id": "library-js-20261022-0600-v1",
+      "status": "PAUSED_NOT_ACTIVATED",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa"
+      ]
+    }
+  ]
+}

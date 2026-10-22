@@ -46,7 +46,7 @@ spec:
       securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:d16a5eb5c9b22402c6ae9b2b9d9f04cb3d7320c69ef445ab2422d18e55294758
+          image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:e94661478c91cb03766b131d8938100f8dd7fa872232983768c72a07031462ac"
           command: [python, -m, research.strategy_library_forward, run, --manifest, /config/run.json, --interval, "10"]
           envFrom: [{secretRef: {name: strategy-library-observer-db}}]
           env:
@@ -124,3 +124,5 @@ spec:
   ingress:
     - from: [{podSelector: {matchLabels: {app.kubernetes.io/name: ict-smc-forward-v1-observer}}}]
       ports: [{port: 6379, protocol: TCP}]
+# stratrelay-release: frozen
+# Checkpoint-bound run: change image only after proving the saved binding matches.
