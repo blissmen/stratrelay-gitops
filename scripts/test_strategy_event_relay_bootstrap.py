@@ -129,18 +129,46 @@ class RelayBootstrapTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             audit.role_sql("password'; DROP TABLE strategy.entry_signals;--")
 
-    def test_activation_bundle_stays_outside_flux_and_only_starts_relay(self):
+    def test_active_bundle_only_starts_the_verified_relay(self):
         root = Path(__file__).resolve().parents[1]
         active = yaml.safe_load((root/'apps/trading-platform/kustomization.yaml').read_text())
-        self.assertFalse(any('strategy-runtime-event' in r for r in active['resources']))
-        prepared = root/'staged/strategy-runtime-event-relay-activation'
+        self.assertIn('strategy-runtime-event-relay', active['resources'])
+        self.assertFalse(any('staged/strategy-runtime-events' in r for r in active['resources']))
+        prepared = root/'apps/trading-platform/strategy-runtime-event-relay'
         obj = yaml.safe_load((prepared/'runtime.yaml').read_text())
         self.assertEqual(obj['spec']['replicas'], 1)
         containers = obj['spec']['template']['spec']['containers']
+        init = obj['spec']['template']['spec']['initContainers']
+        self.assertEqual(len(init), 1)
+        self.assertEqual(init[0]['name'], 'verify-relay-prerequisites')
+        self.assertIn('RELAY_PREREQUISITES_VERIFIED', init[0]['command'][-1])
+        compile(init[0]['command'][-1], '<relay-prerequisites>', 'exec')
+        self.assertNotIn('serve(\'provision\')', init[0]['command'][-1])
+        self.assertEqual(init[0]['envFrom'], containers[0]['envFrom'])
+        self.assertEqual(init[0]['env'], containers[0]['env'])
         self.assertEqual(len(containers), 1)
         self.assertEqual(containers[0]['command'][-1], 'relay')
         self.assertTrue(any(e.get('name') == 'EXECUTION_AUTHORITY_MODE' and e.get('value') == 'DISABLED'
                             for e in containers[0]['env']))
+
+    def test_active_resource_graph_enrolls_relay_once_and_no_stream_provision_job(self):
+        root = Path(__file__).resolve().parents[1]
+        def resources(directory):
+            config = yaml.safe_load((directory/'kustomization.yaml').read_text())
+            for name in config['resources']:
+                path = directory/name
+                if path.is_dir():
+                    yield from resources(path)
+                else:
+                    yield from (d for d in yaml.safe_load_all(path.read_text()) if d)
+        objects = list(resources(root/'apps/trading-platform'))
+        relays = [o for o in objects if o['kind'] == 'Deployment' and o['metadata']['name'] == 'strategy-runtime-event-relay']
+        self.assertEqual(len(relays), 1)
+        self.assertFalse(any(o['kind'] == 'Job' and o['metadata']['name'].startswith('strategy-runtime-events-provision') for o in objects))
+        policies = [o for o in objects if o['kind'] == 'NetworkPolicy' and o['metadata']['name'].startswith('strategy-runtime-events-')]
+        self.assertEqual(len(policies), 3)
+        ports = {p['port'] for o in policies for rule in o['spec'].get('egress', [])+o['spec'].get('ingress', []) for p in rule.get('ports', [])}
+        self.assertEqual(ports, {53, 5432, 4222})
 
 
 if __name__ == '__main__':
