@@ -16,14 +16,13 @@ MIGRATIONS = {
     '073': ('073_kojo_v3_execution_routing.sql', 'd3096e402f8391acbf9d7fd2d6ccb4442cc5b97bf3d3157a2ddf7cc66762a0b7'),
     '074': ('074_canonical_outbox_notifications.sql', '330e4c3cd8194eeffad3998bba661cb5132ae8aff9addad352a8df175c09fcf6'),
 }
-NATS_KEYS = ['NATS_URL', 'P2_NATS_USER', 'P2_NATS_PASSWORD']
+# User-authorized shared NATS account. DB credentials remain separate.
 SECRETS = {
+    'trading-nats-auth': ['NATS_USER', 'NATS_PASSWORD'],
     'strategy-event-collector-db': ['STRATEGY_EVENT_DSN'],
-    'strategy-event-relay': ['STRATEGY_EVENT_DSN', *NATS_KEYS],
-    'strategy-event-provision-streams': NATS_KEYS,
-    **{'strategy-event-'+name: [*NATS_KEYS, *(['STRATEGY_EVENT_DSN'] if name.startswith('context-') else [])]
-       for name in ('authority', 'context-v1', 'context-v2', 'liquidity', 'pa-sr', 'pa-engulf',
-                    'library-canary', 'ict-smc', 'donchian-v2')},
+    'strategy-event-relay': ['STRATEGY_EVENT_DSN'],
+    'strategy-event-context-v1': ['STRATEGY_EVENT_DSN'],
+    'strategy-event-context-v2': ['STRATEGY_EVENT_DSN'],
 }
 SAFE_ENV = {'STRATEGY_EVENT_MODE', 'STRATEGY_EVENT_RUNTIME_ID', 'STRATEGY_EVENT_DATABASE',
             'STRATEGY_EVENT_RECONCILE_SECONDS', 'MARKET_DATA_SOURCE', 'MARKET_DATA_EVENT_MODE',
@@ -184,7 +183,7 @@ def report(kubeconfig, context='rancher', signal_id=None, infrastructure_only=Fa
               'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
               'context': context, 'namespace': 'trading', 'target_source': SOURCE, 'target_image': IMAGE,
               'kubeconfig_exists': Path(kubeconfig).is_file(), 'errors': [], 'secrets': {}, 'deployments': [], 'pods': [],
-              'unverified': ['scoped NATS allow/deny ACL audit', 'dedicated DB role privilege audit',
+              'unverified': ['shared NATS account global permissions and runtime binding verification', 'dedicated DB role privilege audit',
                              'frozen observer artifact/checkpoint cutover bindings', 'post-T0 end-to-end latency trace']}
 
     def command(args, label, *, raw=False):

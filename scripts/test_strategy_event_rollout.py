@@ -29,6 +29,23 @@ class StrategyEventRolloutTests(unittest.TestCase):
                 self.assertEqual(c['command'][:3], ['python', '-m', 'infrastructure.messaging.runtime_event_service'])
                 self.assertIn(c['command'][-1], ('relay', 'provision'))
 
+    def test_event_services_share_one_existing_nats_credential(self):
+        root = Path(__file__).resolve().parents[1]
+        docs = list(yaml.safe_load_all((root/'staged/strategy-runtime-events/runtime.yaml').read_text()))
+        for obj in docs:
+            container = obj['spec']['template']['spec']['containers'][0]
+            env = {e['name']: e for e in container['env']}
+            for field, key in [('P2_NATS_USER', 'NATS_USER'), ('P2_NATS_PASSWORD', 'NATS_PASSWORD')]:
+                self.assertEqual(env[field]['valueFrom']['secretKeyRef'],
+                                 {'name': 'trading-nats-auth', 'key': key})
+            self.assertEqual(env['NATS_URL']['value'], 'nats://trading-nats.trading.svc.cluster.local:4222')
+        self.assertEqual(audit.SECRETS['trading-nats-auth'], ['NATS_USER', 'NATS_PASSWORD'])
+        for name, keys in audit.SECRETS.items():
+            if name != 'trading-nats-auth':
+                self.assertEqual(keys, ['STRATEGY_EVENT_DSN'])
+        self.assertNotIn('strategy-event-provision-streams', audit.SECRETS)
+        self.assertNotIn('strategy-event-authority', audit.SECRETS)
+
     def test_network_has_no_bridge_execution_or_broad_ip_permission(self):
         root = Path(__file__).resolve().parents[1]
         docs = list(yaml.safe_load_all((root/'staged/strategy-runtime-events/network.yaml').read_text()))
