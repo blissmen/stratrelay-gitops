@@ -280,3 +280,57 @@ delivery proves neither strategy consumption nor canonical signal latency or
 broker execution. Continue with consumer opt-in only after this evidence is
 reviewed. Roll back the collector hint writer by removing its Kustomize patch,
 preserving credentials, stream, hint rows and all historical evidence.
+
+## Existing consumer activation after cache-hint delivery
+
+Operator evidence at 2026-10-22T21:14:34Z showed healthy collector event mode,
+zero pending writer symbols/errors, expected ready collector/relay images and
+zero restarts, and 50/50 sampled hint rows published. Maximum sampled row-created
+to published interval was 95.926 ms. This is producer-to-relay evidence only;
+it is not a strategy decision-to-publication latency measurement.
+
+Three transport-only patches opt in existing services:
+
+| Existing container | Event path | Preserved behavior |
+| --- | --- | --- |
+| orchestrator-shadow | Shared cache/evidence NATS hints; stable runtime signal-orchestrator | One existing primary authority, current lifecycle/instance policy/cutoff and publication ownership |
+| liquidity-live-runtime/runtime | Cache NATS hints; stable runtime liquidity-live-runtime | MONITOR_ONLY; standalone canonical publication stays off |
+| signal-outbox-relay/relay | PostgreSQL LISTEN canonical_outbox_events with recovery scans | Existing DB leases, event contracts, publication deduplication and execution policies |
+
+All three use the single trading-nats-auth credential. Existing DB/NATS/DNS
+NetworkPolicies already permit these pod labels on both connection sides, so
+no network policy or DB role grant is added. Event flags are container-scoped;
+Context V1/V2 remain in their current polling modes. The shared main pod uses
+Recreate, so its Context and post-exit sidecars restart with the orchestrator,
+retaining their settings and persisted state. No second orchestrator workload,
+new strategy identity, source rule, broker policy or execution mode is created.
+
+Canonical outbox event mode uses PostgreSQL commit notifications, rather than a
+second NATS wakeup consumer. Its existing NATS publisher still publishes the
+same canonical events. No stream provisioning or auth rotation is performed by
+the GitOps patches. The separate older immutable-library event route stays off.
+
+After Flux applies these patches, run:
+
+```bash
+python3 scripts/strategy_event_consumer_audit.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher \
+  --output "$HOME/Downloads/stratrelay-event-consumer-rollout.json"
+```
+
+CONSUMER_WAKEUPS_AND_CANONICAL_LISTENER_OBSERVED requires actual event-mode flags,
+expected ready image, current-container EVENT wakeup logs with valid event IDs,
+and the expected NATS consumer filters/NEW delivery/explicit ACK/acknowledged
+messages for orchestrator and Liquidity. It also requires an idle PostgreSQL
+LISTEN backend from the current canonical relay pod and confirmed event mode.
+The audit is read-only: INFO requests only, no consumer creation, subscription,
+test message, test signal or historical mutation. It returns allowlisted log
+fields, never raw logs/credentials, and leaves all_strategy_consumption_verified
+and canonical_signal_latency_verified false. A real post-rollout canonical
+signal trace is still required to establish latency improvement.
+
+Remaining work: bind Context V1/V2 hint-writer credentials before their event
+opt-in; audit frozen corrected PA/library/ICT-SMC/Donchian artifacts and use fresh
+run bindings where required. Do not bulk repin those images or reset checkpoints.
+Rollback these three consumer patches to restore their prior scheduling modes;
+retain stream/durables, credentials, evidence and historical identities.

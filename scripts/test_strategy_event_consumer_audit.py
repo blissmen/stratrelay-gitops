@@ -1,0 +1,134 @@
+import json
+from pathlib import Path
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+import yaml
+import strategy_event_consumer_audit as audit
+
+
+class ConsumerActivationTests(unittest.TestCase):
+    def test_patches_only_change_transport_on_the_three_intended_containers(self):
+        root = Path(__file__).resolve().parents[1]/'apps/trading-platform'
+        active = yaml.safe_load((root/'kustomization.yaml').read_text())
+        names = [p['path'] for p in active['patches']]
+        cases = [('authority','mt5-native-bridge-main-runtime','orchestrator-shadow','signal-orchestrator'),
+                 ('liquidity','liquidity-live-runtime','runtime','liquidity-live-runtime'),
+                 ('canonical-relay','signal-outbox-relay','relay',None)]
+        for key,deployment,container,runtime in cases:
+            filename = 'strategy-event-'+key+'.patch.yaml'
+            self.assertIn(filename,names)
+            obj = yaml.safe_load((root/filename).read_text())
+            self.assertEqual(obj['metadata'],{'name':deployment,'namespace':'trading'})
+            self.assertEqual(set(obj['spec']),{'template'})
+            spec = obj['spec']['template']['spec']
+            self.assertEqual(set(spec),{'containers'})
+            self.assertEqual(len(spec['containers']),1)
+            c = spec['containers'][0]
+            self.assertEqual(set(c),{'name','env'})
+            self.assertEqual(c['name'],container)
+            env = {e['name']:e for e in c['env']}
+            expected = {'STRATEGY_EVENT_MODE','NATS_URL','P2_NATS_USER','P2_NATS_PASSWORD'}
+            if runtime:expected |= {'STRATEGY_EVENT_RUNTIME_ID','STRATEGY_EVENT_RECONCILE_SECONDS'}
+            self.assertEqual(set(env),expected)
+            self.assertEqual(env['STRATEGY_EVENT_MODE']['value'],'JETSTREAM')
+            if runtime:self.assertEqual(env['STRATEGY_EVENT_RUNTIME_ID']['value'],runtime)
+            for name,key_name in [('P2_NATS_USER','NATS_USER'),('P2_NATS_PASSWORD','NATS_PASSWORD')]:
+                self.assertEqual(env[name]['valueFrom']['secretKeyRef'],{'name':'trading-nats-auth','key':key_name})
+
+    def fixture(self):
+        runtime = 'signal-orchestrator'
+        probe = {'mode':'JETSTREAM','runtime_id':runtime,'market_data_source':'REDIS',
+                 'consumer':{'durable':'wakeup-'+runtime+'-strategy_runtime',
+                    'filters':['runtime.market.cache.ready.v1.*','runtime.strategy.evidence.ready.v1.*'],
+                    'ack_policy':'explicit','deliver_policy':'new','max_ack_pending':64,'delivered':10,'acknowledged':9}}
+        row = {'event':'strategy_cycle_woken','runtime_id':runtime,'reason':'EVENT','event_id':'a'*64,'event_received_at':950}
+        return runtime,probe,row
+
+    def test_only_current_real_event_wakeup_and_valid_durable_prove_consumption(self):
+        runtime,probe,row = self.fixture()
+        self.assertTrue(audit.consumer_observed(probe,[row],runtime,900,True))
+        for key,value in [('reason','RECONCILIATION'),('event_id','bad'),('event_received_at',800)]:
+            changed = {**row,key:value}
+            self.assertFalse(audit.consumer_observed(probe,[changed],runtime,900,True))
+        self.assertFalse(audit.consumer_observed(probe,[],runtime,900,True))
+        probe['mode'] = 'POLL'
+        self.assertFalse(audit.consumer_observed(probe,[row],runtime,900,True))
+        probe['mode'] = 'JETSTREAM'
+        probe['consumer']['filters'] = ['>']
+        self.assertFalse(audit.consumer_observed(probe,[row],runtime,900,True))
+
+    def test_log_redaction_and_post_restart_boundary(self):
+        runtime,_,row = self.fixture()
+        row['password'] = 'never-output'
+        raw = '\n'.join([
+            '1970-01-01T00:16:00Z '+json.dumps(row),
+            '1970-01-01T00:14:00Z '+json.dumps(row),
+            '1970-01-01T00:16:00Z '+json.dumps({'event':'unknown','password':'never-output'}),
+            'password=never-output'])
+        rows = audit.wakeup_rows(raw,runtime,900)
+        self.assertEqual(len(rows),1)
+        self.assertNotIn('password',json.dumps(rows))
+        self.assertNotIn('never-output',json.dumps(rows))
+
+    def test_listener_query_is_read_only_and_ip_is_not_sql(self):
+        sql = audit.listener_sql('10.42.0.3')
+        self.assertIn('BEGIN READ ONLY',sql)
+        self.assertIn("client_addr=inet '10.42.0.3'",sql)
+        self.assertNotIn('query)',sql)
+        with self.assertRaises(ValueError):audit.listener_sql("10.42.0.3'; DROP TABLE x;--")
+        compile(audit.PROBE,'<consumer-probe>','exec')
+        self.assertNotIn('.publish(',audit.PROBE)
+        self.assertNotIn('pull_subscribe',audit.PROBE)
+
+    def test_full_report_proves_only_activated_wakeups_and_listener(self):
+        commands = []
+        def run(args,input=None,**kwargs):
+            commands.append((args,input))
+            if 'namespace' in args:
+                value = {'metadata':{'uid':audit.NAMESPACE_UID}}
+            elif 'pods' in args:
+                items = []
+                for i,(label,container,runtime) in enumerate(audit.TARGETS.values(),1):
+                    items.append({'metadata':{'name':label+'-pod','labels':{'app.kubernetes.io/name':label}},
+                        'status':{'phase':'Running','podIP':'10.42.0.'+str(i),
+                            'containerStatuses':[{'name':container,'ready':True,'restartCount':0,'imageID':audit.IMAGE,
+                                'state':{'running':{'startedAt':'1970-01-01T00:15:00Z'}}}]}})
+                items.append({'metadata':{'name':'postgres-0','labels':{'app.kubernetes.io/name':'trading-postgres'}},
+                              'status':{'phase':'Running'},'spec':{'containers':[{'name':'postgres'}]}})
+                value = {'items':items}
+            elif args[-1] == audit.PROBE:
+                runtime = json.loads(input)['runtime']
+                if runtime:
+                    _,value,_ = self.fixture()
+                    value['runtime_id'] = runtime
+                    value['consumer']['durable'] = 'wakeup-'+runtime+'-strategy_runtime'
+                    if runtime != 'signal-orchestrator':value['consumer']['filters']=['runtime.market.cache.ready.v1.*']
+                else:value={'mode':'JETSTREAM'}
+            elif 'logs' in args:
+                runtime = 'signal-orchestrator' if 'orchestrator-shadow' in args else 'liquidity-live-runtime'
+                _,_,row = self.fixture()
+                row['runtime_id'] = runtime
+                return SimpleNamespace(returncode=0,stdout='1970-01-01T00:16:00Z '+json.dumps(row),stderr='')
+            else:
+                self.assertIn('default_transaction_read_only=on',args[-1])
+                self.assertEqual(input,audit.listener_sql('10.42.0.3'))
+                value={'database':'trading_platform','primary':True,'listener_backends':1}
+            return SimpleNamespace(returncode=0,stdout=json.dumps(value),stderr='')
+        with patch('subprocess.run',side_effect=run):result = audit.report('/test')
+        self.assertEqual(result['status'],'CONSUMER_WAKEUPS_AND_CANONICAL_LISTENER_OBSERVED')
+        self.assertFalse(result['all_strategy_consumption_verified'])
+        self.assertFalse(result['canonical_signal_latency_verified'])
+        self.assertFalse(any(any(word in args for word in ('create','apply','delete','patch')) for args,_ in commands))
+
+    def test_external_errors_are_redacted(self):
+        with patch('subprocess.run',return_value=SimpleNamespace(returncode=1,stdout='',stderr='password=private')):
+            result = audit.report('/test')
+        self.assertEqual(result['status'],'UNVERIFIED')
+        self.assertNotIn('private',json.dumps(result))
+        self.assertFalse(result['all_strategy_consumption_verified'])
+        self.assertFalse(result['canonical_signal_latency_verified'])
+
+
+if __name__ == '__main__':unittest.main()

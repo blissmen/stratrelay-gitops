@@ -54,3 +54,6 @@ resources:
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
   - path: strategy-event-collector.patch.yaml
+  - path: strategy-event-authority.patch.yaml
+  - path: strategy-event-liquidity.patch.yaml
+  - path: strategy-event-canonical-relay.patch.yaml
