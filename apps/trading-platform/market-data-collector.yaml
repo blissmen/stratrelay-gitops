@@ -2,7 +2,8 @@
 # market-data reads on the read bridge (22347). Completed bars (one snapshot per symbol per M5
 # close), symbol metadata and hot quotes go to trading-redis; the Context runner, the Liquidity
 # runtime and the Trade Manager read Redis instead of polling the bridge (MARKET_DATA_SOURCE=REDIS /
-# TM_MARKET_DATA_SOURCE=REDIS, switched separately). No broker writes. Event mode adds durable research evidence/outbox writes.
+# TM_MARKET_DATA_SOURCE=REDIS, switched separately). Research event emission is paused
+# until dedicated credentials are provisioned. No broker writes.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,11 +47,7 @@ spec:
             - configMapRef:
                 name: trading-db-primary-prepared
           env:
-            - {name: MARKET_DATA_EVENT_MODE, value: JETSTREAM_OUTBOX}
-            - {name: LIBRARY_EVENT_DATABASE, value: trading_platform}
-            - name: LIBRARY_EVENT_DSN
-              valueFrom:
-                secretKeyRef: {name: library-event-collector, key: LIBRARY_EVENT_DSN}
+            - {name: MARKET_DATA_EVENT_MODE, value: 'OFF'}
             - name: MARKET_DATA_BRIDGE_URL
               value: http://10.10.10.100:22347/mcp
             - name: REDIS_PASSWORD

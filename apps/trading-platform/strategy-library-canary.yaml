@@ -36,7 +36,7 @@ metadata:
   namespace: trading
   labels: {app.kubernetes.io/name: strategy-library-canary-v1-observer, app.kubernetes.io/component: research-observer, stratrelay.app/status: research}
 spec:
-  replicas: 0
+  replicas: 1
   strategy: {type: Recreate}
   selector:
     matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}
@@ -47,6 +47,33 @@ spec:
       automountServiceAccountToken: false
       imagePullSecrets: [{name: ghcr-pull}]
       securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      initContainers:
+        - name: verify-no-event-cutover
+          image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:beaf80a9a1d01fc17633bf55588c37b120ade5dd79e64dbfc8d4b83f81feb5bd"
+          command:
+            - python
+            - -c
+            - |
+              import json
+              from postgres.db import connect
+              with connect() as conn:
+                  with conn.cursor() as cur:
+                      cur.execute("SELECT EXISTS (SELECT 1 FROM research.strategy_library_forward_state WHERE run_id=%s OR (state->'activation_attestation'->>'transport'='JETSTREAM' AND state->'config'->'keys' ?| ARRAY['donchian_breakout','ema_pullback','fvg_retracement']))", ('library-js-20261022-0600-v1',))
+                      blocked = cur.fetchone()[0]
+                  conn.rollback()
+              print(json.dumps({'status':'BLOCKED_EVENT_RUN_EXISTS' if blocked else 'ORIGINAL_RUN_RECOVERY_ALLOWED','broker_writes':0}))
+              raise SystemExit(1 if blocked else 0)
+          envFrom:
+            - secretRef: {name: strategy-library-observer-db}
+          env:
+            - {name: PYTHONPATH, value: /app}
+            - {name: PGCONNECT_TIMEOUT, value: '10'}
+            - {name: PGOPTIONS, value: '-c default_transaction_read_only=on -c statement_timeout=10000'}
+            - {name: EXECUTION_AUTHORITY_MODE, value: DISABLED}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {cpu: 100m, memory: 128Mi}
       containers:
         - name: observer
           # Quoted pin is deliberately outside bulk release repinning: frozen experiment artifact.
