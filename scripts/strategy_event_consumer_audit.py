@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 from strategy_event_preflight import IMAGE
 from strategy_event_relay_bootstrap import ADMIN_COMMAND, NAMESPACE_UID
@@ -58,9 +59,19 @@ except Exception as exc:print(json.dumps({'error_type':type(exc).__name__}))
 '''
 
 
+def parse_timestamp(stamp):
+    # Python 3.9/3.10 fromisoformat does not accept Kubernetes nanosecond precision.
+    # Normalize to six digits; retain the original stamp in exported log evidence.
+    match=re.fullmatch(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})',stamp)
+    if not match:raise ValueError('INVALID_RFC3339_TIMESTAMP')
+    whole,fraction,zone=match.groups()
+    normalized=whole+('.'+fraction.ljust(6,'0')[:6] if fraction else '')+('+00:00' if zone=='Z' else zone)
+    return datetime.datetime.fromisoformat(normalized).timestamp()
+
+
 def parsed_log(line):
     stamp,payload=line.split(' ',1)
-    timestamp=datetime.datetime.fromisoformat(stamp.replace('Z','+00:00')).timestamp()
+    timestamp=parse_timestamp(stamp)
     payload=payload.lstrip()
     style='JSON'
     for level in ('INFO','WARNING','ERROR','DEBUG'):
@@ -147,7 +158,8 @@ COMMIT;
 def report(kubeconfig, context='rancher'):
     base = ['kubectl','--kubeconfig',kubeconfig,'--context',context,'-n','trading','--request-timeout=15s']
     result = {'status':'UNVERIFIED','read_only':True,'broker_writes':0,
-              'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'targets':{},
+              'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'audit_python':sys.version.split()[0],
+              'timestamp_parser':'rfc3339-microsecond-normalized.v1','targets':{},
               'all_strategy_consumption_verified':False,'canonical_signal_latency_verified':False}
     stage = 'cluster identity'
     def call(args,payload=None,raw=False):
@@ -171,7 +183,7 @@ def report(kubeconfig, context='rancher'):
             result['targets'][key] = target
             if not state.get('ready') or state.get('imageID') != IMAGE:
                 raise ValueError('TARGET_NOT_READY_OR_IMAGE_MISMATCH')
-            started = datetime.datetime.fromisoformat(state['state']['running']['startedAt'].replace('Z','+00:00')).timestamp()
+            started = parse_timestamp(state['state']['running']['startedAt'])
             target['started_at'] = state['state']['running']['startedAt']
             probe = call(['exec','-i',p['metadata']['name'],'-c',container,'--','python','-c',PROBE],json.dumps({'runtime':runtime}))
             target['probe'] = probe
