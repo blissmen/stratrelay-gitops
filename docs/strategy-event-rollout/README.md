@@ -376,3 +376,45 @@ A blocked instrument can affect the run-wide readiness predicate; determine the
 specific persisted reasons and cache state before changing that predicate. No
 market-closure, data-gap, artifact conflict or deployment cause is proven solely
 by the screenshot. These diagnostic changes alter no workload or strategy code.
+
+
+## Whole-system scheduling cutover
+
+The Context patch enrolls `context-paper` and `context-v2-research` in the shared
+STRATEGY_RUNTIME scheduler. Both use the existing, operator-verified
+`strategy-event-collector-db` INSERT-only scheduling credential and the shared
+`trading-nats-auth` account. No additional NATS user or database administrator
+binding is introduced. Existing trading DSNs, identities, parameters, volumes,
+cutoffs and execution flags remain untouched. The main Deployment uses Recreate,
+so applying this patch briefly restarts its other containers as well.
+
+The shared hint-writer role is intentionally reusable: its INSERT grant is not
+restricted to the collector runtime ID. It can insert scheduling references and
+SELECT event_id for ON CONFLICT, but cannot read evidence payloads, update/delete
+outbox rows or create broker execution intents. The earlier proposed separate
+Context hint credentials are superseded by this existing verified binding.
+
+| Runtime | Activation path | Verification still required |
+| --- | --- | --- |
+| Collector | Active cache hint writer | Continued fresh Redis state |
+| Scheduling relay | Active STRATEGY_RUNTIME publisher | Publish acceptance |
+| Signal authority, in-process Kojo and Liquidity | Authority JETSTREAM patch | Current EVENT cycles; subscription timeout repair release |
+| Standalone Liquidity monitor | Liquidity JETSTREAM patch | Current EVENT cycles; MONITOR_ONLY preserved |
+| Canonical signal relay | PostgreSQL LISTEN | Current listener plus real signal trace |
+| Context V1 and V2 | Context JETSTREAM patch in this change | Per-container EVENT cycles and durable hint publication |
+| Corrected PA S/R and Engulfing | Fresh checkpoint-bound observer cutover | Released image, current source bindings, future T0, isolated registration and health |
+| Frozen library canary, ICT/SMC, Donchian V2 | Fresh research run and instance bindings | Released artifact identity, future T0, validated OFF/ineligible registration and matching orchestrator binding |
+| Paused older immutable-library pipeline | Remains paused | Separate input/stream prerequisites; do not create a second canonical publisher |
+
+The last four paths are not activated by adding environment flags to frozen
+images. Preserve their historical states and pending outcome evidence. Run the
+existing read-only consumer audit after Flux applies the Context patch. Its
+success gate now includes both Context containers; ACK counters alone cannot
+satisfy it. It still does not certify full strategy coverage or signal latency.
+
+The source transport repair reports the failing operation and distinguishes an
+idle fetch from uncertain ACK confirmation. A single ACK timeout retains the
+accepted wakeup and leaves durable redelivery available; three consecutive ACK
+confirmation failures remain fatal. The observed production TimeoutError has
+not yet been attributed to an operation. Deploy its verified release image
+through the normal release flow before declaring the transport stable.

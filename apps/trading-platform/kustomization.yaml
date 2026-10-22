@@ -57,3 +57,4 @@ patches:
   - path: strategy-event-authority.patch.yaml
   - path: strategy-event-liquidity.patch.yaml
   - path: strategy-event-canonical-relay.patch.yaml
+  - path: strategy-event-context.patch.yaml

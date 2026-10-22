@@ -15,6 +15,8 @@ TARGETS = {
     'authority': ('mt5-native-bridge','orchestrator-shadow','signal-orchestrator'),
     'liquidity': ('liquidity-live-runtime','runtime','liquidity-live-runtime'),
     'canonical_relay': ('signal-outbox-relay','relay',None),
+    'context_v1': ('mt5-native-bridge','context-paper','context-structure-retrace-v1'),
+    'context_v2': ('mt5-native-bridge','context-v2-research','context-structure-retrace-v2'),
 }
 PROBE = r'''import asyncio,json,os,sys
 async def probe():
@@ -119,9 +121,9 @@ def wakeup_rows(raw, runtime, started):
             stamp,timestamp,obj,_=parsed_log(line)
             if timestamp < started or obj.get('runtime_id') != runtime:
                 continue
-            if obj.get('event') not in ('strategy_cycle_woken','strategy_event_subscription_failed','strategy_nats_error'):
+            if obj.get('event') not in ('strategy_cycle_woken','strategy_event_subscription_failed','strategy_nats_error','strategy_event_ack_timeout','strategy_event_ack_recovered'):
                 continue
-            fields = ('event','runtime_id','reason','event_id','event_received_at','dispatch_ms','generation','error_type')
+            fields = ('event','runtime_id','reason','event_id','event_received_at','dispatch_ms','generation','error_type','operation','consecutive_failures')
             rows.append({'log_timestamp':stamp, **{k:obj[k] for k in fields if k in obj}})
         except (ValueError,TypeError,AttributeError):
             continue
@@ -206,7 +208,7 @@ def report(kubeconfig, context='rancher'):
                        and listener.get('listener_backends',0) > 0
                        and result['targets']['canonical_relay']['probe'].get('mode') == 'JETSTREAM')
         result['canonical_listener_observed'] = listener_ok
-        events_ok = all(result['targets'][k].get('event_wakeup_observed') for k in ('authority','liquidity'))
+        events_ok = all(result['targets'][k].get('event_wakeup_observed') for k,(_,_,runtime) in TARGETS.items() if runtime)
         result['status'] = ('CONSUMER_WAKEUPS_AND_CANONICAL_LISTENER_OBSERVED' if listener_ok and events_ok
                             else 'PENDING_OR_DEGRADED_CONSUMER_EVIDENCE')
     except Exception as exc:
