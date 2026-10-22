@@ -57,16 +57,26 @@ class ManifestTests(unittest.TestCase):
             self.assertEqual(self.cm['data'][name],data)
             compile(data,name,'exec')
 
-    def test_old_run_untouched_and_only_observer_stopped(self):
+    def test_original_run_recovers_only_without_committed_event_cutover(self):
         old=list(yaml.safe_load_all((APP/'strategy-library-canary.yaml').read_text()))
         self.assertEqual(json.loads(old[0]['data']['run.json'])['run_id'],'library-canary-20261016-v1')
-        self.assertEqual(old[1]['spec']['replicas'],0)
+        self.assertEqual(old[1]['spec']['replicas'],1)
+        gate=old[1]['spec']['template']['spec']['initContainers'][0]
+        code=gate['command'][-1]
+        self.assertIn('BLOCKED_EVENT_RUN_EXISTS',code)
+        self.assertIn('library-js-20261022-0600-v1',code)
+        self.assertIn('activation_attestation',code)
+        self.assertIn("raise SystemExit(1 if blocked else 0)",code)
+        compile(code,'recovery-gate','exec')
         collector=list(yaml.safe_load_all((APP/'market-data-collector.yaml').read_text()))[0]
         self.assertEqual(collector['spec']['replicas'],1)
         env={e['name']:e for e in collector['spec']['template']['spec']['containers'][0]['env']}
-        self.assertEqual(env['MARKET_DATA_EVENT_MODE']['value'],'JETSTREAM_OUTBOX')
-        self.assertEqual(env['LIBRARY_EVENT_DSN']['valueFrom']['secretKeyRef']['name'],'library-event-collector')
-        self.assertEqual(env['LIBRARY_EVENT_DATABASE']['value'],'trading_platform')
+        self.assertEqual(env['MARKET_DATA_EVENT_MODE']['value'],'OFF')
+        self.assertNotIn('LIBRARY_EVENT_DSN',env)
+        self.assertNotIn('library-event-collector',json.dumps(collector))
+        for doc in self.docs[1:]:
+            if doc['kind']=='Deployment':self.assertEqual(doc['spec']['replicas'],0)
+            elif doc['kind']=='Job':self.assertTrue(doc['spec']['suspend'])
 
     def test_no_credentials_in_resources(self):
         for f in ['library-jetstream.yaml','library-jetstream-network.yaml','library-jetstream-rbac.yaml']:

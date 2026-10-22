@@ -229,7 +229,7 @@ metadata:
     stratrelay.app/library-events: 'true'
     stratrelay.app/status: research
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -374,7 +374,7 @@ metadata:
     stratrelay.app/library-events: 'true'
     stratrelay.app/status: research
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -521,7 +521,7 @@ metadata:
     stratrelay.app/library-events: 'true'
     stratrelay.app/status: research
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -672,6 +672,7 @@ metadata:
     stratrelay.app/library-events: 'true'
     stratrelay.app/status: research
 spec:
+  suspend: true
   backoffLimit: 6
   activeDeadlineSeconds: 900
   template:
@@ -756,6 +757,7 @@ metadata:
     stratrelay.app/library-events: 'true'
     stratrelay.app/status: research
 spec:
+  suspend: true
   backoffLimit: 6
   activeDeadlineSeconds: 900
   template:

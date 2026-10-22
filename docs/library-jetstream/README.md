@@ -1,5 +1,26 @@
 # Library JetStream research cutover
 
+## Recovery after premature activation merge
+
+The 2026-10-22T04:29:53Z post-merge report confirms the shared collector has
+zero ready replicas, six required Secrets are absent, all three event workloads
+have zero ready replicas, the old observer is scaled to zero, and neither Job
+has succeeded. This recovery turns collector event emission OFF and removes its
+missing dedicated-credential dependency while preserving its released image.
+The three event Deployments are scaled to zero and both Jobs suspended.
+
+The original frozen polling observer is restored with a read-only startup gate:
+it refuses to run if the candidate checkpoint or any overlapping attested event
+run exists. A refusal requires managed-binding investigation, not bypassing the
+gate. No DB state, managed binding, Secret, stream or historical evidence is
+deleted or rewritten by the recovery. Shared execution authority is untouched.
+
+The activation resources below are retained as paused candidates. Do not rerun
+the activation generator or resume them until dedicated credentials/ACLs, live
+stream configuration, collector evidence readiness and atomic membership
+revalidation are addressed in a fresh reviewed cutover. Regenerate a future T0
+then; the prior deadline is not a reason to activate an incomplete transport.
+
 **PREPARED, NOT ACTIVATED. Keep the PR draft until the prerequisites below are
 verified on the cluster.** This is the original three-strategy library canary
 (Donchian V1, EMA Pullback V1, FVG Retracement V1) on BTCUSDm, XAUUSDm and USDJPYm.
