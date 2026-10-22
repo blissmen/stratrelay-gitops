@@ -1,4 +1,4 @@
-# Shared strategy event rollout — staged, not activated
+# Shared strategy event rollout — relay-only activation
 
 Application PRs #238 and #239 are merged. PRs #240 and #241 were duplicates of
 their original branches and are closed. GitHub PR comparisons use the merge base;
@@ -153,8 +153,9 @@ credential Secrets or an audit of per-client scoped ACLs.
 All existing activation gates still apply: database privilege verification,
 actual shared NATS permissions, stream provisioning, both NetworkPolicy sides,
 artifact/checkpoint bindings, and post-T0 timing evidence. Preserve frozen runs
-and keep the older immutable-library cutover paused. The relay remains replicas
-zero, provisioning Job suspended, and the staged bundle outside Flux resources.
+and keep the older immutable-library cutover paused. The original staged bundle remains outside Flux, with its relay at replicas
+zero and provisioning Job suspended. The separate active relay base is described
+below.
 
 ## Relay database bootstrap after stream provisioning
 
@@ -184,9 +185,32 @@ that login and these privileges through the actual DB service; it performs only
 a read-only privilege query. No broker or strategy data is written.
 
 `RELAY_DB_READY` means this prerequisite passed; it does not mean the event route
-is active. The prepared bundle at `staged/strategy-runtime-event-relay-activation`
-contains a single relay at replicas one and both sides of its DB/NATS network
-permissions. It remains outside Flux. Only after the credential report passes,
-prepare a separate GitOps change to enroll that bundle. Existing producers,
+is active. Following the operator's RELAY_DB_READY report, the bundle at
+`apps/trading-platform/strategy-runtime-event-relay` is enrolled in Flux. It
+contains only a single relay at replicas one, a fail-closed prerequisite init
+container and both sides of DB/NATS network permissions. Existing producers,
 consumers and strategy modes remain unchanged. The relay may legitimately be
 idle until producers are enabled; pod Ready alone is not delivery evidence.
+
+
+## Relay-only activation evidence and limits
+
+Operator evidence confirmed STRATEGY_RUNTIME provisioned/verified, then
+RELAY_DB_READY with new role/Secret, successful service-path login and privilege
+verification, and matching migration 072/073/074 filenames and checksums. These
+are reported operator observations, not a live cluster read from this repository.
+
+The active relay uses the shared trading-nats-auth account and its dedicated
+strategy-event-relay DB Secret. The init container checks the actual DB primary,
+outbox, role, delivery privileges and NATS stream compatibility without creating
+streams or publishing messages. Failures block startup and report exception type
+only. After startup, the existing relay code delivers scheduling hints and prunes
+only delivered hints older than an hour. It does not write strategy evidence or
+canonical signals. No producer or consumer is opted into JETSTREAM by this change.
+
+Post-deployment evidence must include the prerequisite result, actual image,
+restart count, shared-credential/DB connectivity and sustained relay process. A
+Ready pod is not proof of end-to-end delivery; an empty stream can be normal
+until the collector and strategy producers are enabled in subsequent changes.
+Rollback is removal of the active relay base from Flux resources; retain the DB
+role, Secret, stream, pending hints and all historical evidence for diagnosis.

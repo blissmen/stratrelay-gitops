@@ -47,3 +47,6 @@ resources:
   - library-jetstream-network.yaml
 
   - library-jetstream-rbac.yaml
+
+  # Relay prerequisite passed; strategy event producers/consumers remain unchanged.
+  - strategy-runtime-event-relay

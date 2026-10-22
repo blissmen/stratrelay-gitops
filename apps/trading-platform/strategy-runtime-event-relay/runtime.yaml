@@ -1,0 +1,128 @@
+# Relay-only activation following RELAY_DB_READY and stream provisioning evidence.
+# stratrelay-release: frozen
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strategy-runtime-event-relay
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: strategy-runtime-event-relay
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: strategy-runtime-event-relay
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: strategy-runtime-event-relay
+        stratrelay.app/strategy-events: 'true'
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: relay
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f7b4ea91af4e5c6866bdceaa0e1f10ade9c340d7e070ea110c65fa11865ee872
+        command:
+        - python
+        - -m
+        - infrastructure.messaging.runtime_event_service
+        - relay
+        envFrom:
+        - secretRef:
+            name: strategy-event-relay
+        env:
+        - name: NATS_URL
+          value: nats://trading-nats.trading.svc.cluster.local:4222
+        - name: P2_NATS_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_USER
+        - name: P2_NATS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_PASSWORD
+        - name: STRATEGY_EVENT_DATABASE
+          value: trading_platform
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: STRATEGY_EVENT_RUNTIME_ID
+          value: strategy-runtime-event-relay
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+      initContainers:
+      - name: verify-relay-prerequisites
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f7b4ea91af4e5c6866bdceaa0e1f10ade9c340d7e070ea110c65fa11865ee872
+        command:
+        - python
+        - -c
+        - "import asyncio,json,os,sys\nfrom infrastructure.messaging.runtime_events\
+          \ import connection\nfrom infrastructure.messaging.runtime_event_service\
+          \ import check_stream\nasync def verify():\n    import nats\n    with connection()\
+          \ as conn:\n        with conn.cursor() as cur:\n            cur.execute(\"\
+          SELECT current_user,has_table_privilege(current_user,'platform.strategy_runtime_outbox','SELECT'),has_column_privilege(current_user,'platform.strategy_runtime_outbox','published_at','UPDATE'),has_table_privilege(current_user,'platform.strategy_runtime_outbox','DELETE')\"\
+          )\n            if cur.fetchone()!=('strategy_event_relay',True,True,True):\n\
+          \                raise ValueError('relay DB binding or privileges changed')\n\
+          \    nc=await nats.connect(os.environ['NATS_URL'],user=os.environ['P2_NATS_USER'],password=os.environ['P2_NATS_PASSWORD'],connect_timeout=5,max_reconnect_attempts=0)\n\
+          \    try:\n        await check_stream(nc.jetstream())\n    finally:\n  \
+          \      await nc.close()\ntry:\n    asyncio.run(verify())\n    print(json.dumps({'status':'RELAY_PREREQUISITES_VERIFIED','broker_writes':0}))\n\
+          except Exception as exc:\n    print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__,'broker_writes':0}))\n\
+          \    sys.exit(1)\n"
+        envFrom:
+        - secretRef:
+            name: strategy-event-relay
+        env:
+        - name: NATS_URL
+          value: nats://trading-nats.trading.svc.cluster.local:4222
+        - name: P2_NATS_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_USER
+        - name: P2_NATS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_PASSWORD
+        - name: STRATEGY_EVENT_DATABASE
+          value: trading_platform
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        - name: STRATEGY_EVENT_RUNTIME_ID
+          value: strategy-runtime-event-relay
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
