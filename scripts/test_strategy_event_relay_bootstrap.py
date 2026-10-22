@@ -11,7 +11,8 @@ from strategy_event_preflight import MIGRATIONS
 
 
 class RelayBootstrapTests(unittest.TestCase):
-    def runner(self, role_exists=False, existing_secret=None, probe=True, primary=True, migration=True, fail_secret=False):
+    def runner(self, role_exists=False, existing_secret=None, probe=True, primary=True, migration=True, fail_secret=False, component='relay'):
+        profile = audit.PROFILES[component]
         self.commands = []
         self.password = 'test-generated-password'
         def run(args, input=None, **kwargs):
@@ -22,20 +23,20 @@ class RelayBootstrapTests(unittest.TestCase):
                 payload = {'items': [
                     {'metadata': {'name': 'postgres-0', 'labels': {'app.kubernetes.io/name': 'trading-postgres'}},
                      'spec': {'containers': [{'name': 'postgres'}]}, 'status': {'phase': 'Running'}},
-                    {'metadata': {'name': 'relay-0', 'labels': {'app.kubernetes.io/name': 'signal-outbox-relay'}},
-                     'status': {'containerStatuses': [{'name': 'relay', 'ready': True}]}}]}
+                    {'metadata': {'name': 'probe-0', 'labels': {'app.kubernetes.io/name': profile['label']}},
+                     'status': {'containerStatuses': [{'name': profile['container'], 'ready': True}]}}]}
             elif 'secret' in args:
                 if existing_secret is None:
                     return SimpleNamespace(returncode=1, stdout='', stderr='Error from server (NotFound)')
                 payload = existing_secret
             elif args[-1] == audit.ADMIN_COMMAND:
-                if input == audit.INSPECT_SQL:
+                if input == audit.INSPECT_SQL.replace(audit.ROLE, profile['role']):
                     payload = {'database': audit.DATABASE, 'primary': primary, 'outbox_exists': True,
                                'role_exists': role_exists, 'migrations': [
                                    {'version': v, 'filename': f, 'checksum_sha256': h}
                                    for v, (f, h) in MIGRATIONS.items()] if migration else []}
                 else:
-                    self.assertIn('CREATE ROLE strategy_event_relay', input)
+                    self.assertIn('CREATE ROLE '+profile['role'], input)
                     return SimpleNamespace(returncode=0, stdout='BEGIN\nCREATE ROLE\nCOMMIT\n', stderr='')
             elif args[-1] == audit.LOGIN_PROBE:
                 payload = {'verified': probe}
@@ -43,7 +44,7 @@ class RelayBootstrapTests(unittest.TestCase):
                 if fail_secret:
                     return SimpleNamespace(returncode=1, stdout='', stderr='secret-value-never-show')
                 obj = json.loads(input)
-                self.assertEqual(obj['metadata']['name'], audit.SECRET)
+                self.assertEqual(obj['metadata']['name'], profile['secret'])
                 self.assertEqual(set(obj['data']), {'STRATEGY_EVENT_DSN'})
                 return SimpleNamespace(returncode=0, stdout='secret/'+audit.SECRET, stderr='')
             else:
@@ -51,9 +52,9 @@ class RelayBootstrapTests(unittest.TestCase):
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr='')
         return run
 
-    def execute(self, apply=False, **kwargs):
-        with patch('subprocess.run', side_effect=self.runner(**kwargs)), patch('secrets.token_urlsafe', return_value='test-generated-password'):
-            result = audit.bootstrap('/test', 'rancher', apply)
+    def execute(self, apply=False, component='relay', **kwargs):
+        with patch('subprocess.run', side_effect=self.runner(component=component, **kwargs)), patch('secrets.token_urlsafe', return_value='test-generated-password'):
+            result = audit.bootstrap('/test', 'rancher', apply, component)
         self.assertNotIn('test-generated-password', json.dumps(result))
         self.assertNotIn('secret-value-never-show', json.dumps(result))
         self.assertFalse(result['workloads_changed'])
@@ -129,6 +130,22 @@ class RelayBootstrapTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             audit.role_sql("password'; DROP TABLE strategy.entry_signals;--")
 
+    def test_collector_profile_only_inserts_hints_and_checks_from_collector(self):
+        result = self.execute(apply=True, component='collector')
+        self.assertEqual(result['status'], 'COLLECTOR_DB_READY')
+        sql = audit.role_sql('safe-password', 'collector')
+        self.assertIn('INSERT (event_id,runtime_id,payload), SELECT (event_id)', sql)
+        self.assertNotIn('GRANT SELECT, DELETE', sql)
+        self.assertNotIn('GRANT UPDATE', sql)
+        self.assertNotIn('GRANT ALL', sql)
+        probe_args, payload = next((args, payload) for args, payload in self.commands if args[-1] == audit.LOGIN_PROBE)
+        self.assertEqual(probe_args[probe_args.index('-c')+1], 'collector')
+        self.assertEqual(json.loads(payload)['component'], 'collector')
+        secret = next(json.loads(payload) for args, payload in self.commands if 'create' in args)
+        self.assertEqual(secret['metadata']['name'], 'strategy-event-collector-db')
+        self.assertIn('stratrelay.app/collector-bootstrap', secret['metadata']['annotations'])
+        self.assertNotIn('P2_NATS_USER', json.dumps(secret))
+
     def test_active_bundle_only_starts_the_verified_relay(self):
         root = Path(__file__).resolve().parents[1]
         active = yaml.safe_load((root/'apps/trading-platform/kustomization.yaml').read_text())
@@ -150,6 +167,26 @@ class RelayBootstrapTests(unittest.TestCase):
         self.assertEqual(containers[0]['command'][-1], 'relay')
         self.assertTrue(any(e.get('name') == 'EXECUTION_AUTHORITY_MODE' and e.get('value') == 'DISABLED'
                             for e in containers[0]['env']))
+
+    def test_collector_patch_remains_inactive_and_only_sets_hint_transport(self):
+        root = Path(__file__).resolve().parents[1]
+        active = yaml.safe_load((root/'apps/trading-platform/kustomization.yaml').read_text())
+        self.assertFalse(any('strategy-event-collector' in r for r in active['resources']))
+        self.assertFalse(any('strategy-event-collector' in json.dumps(p) for p in active.get('patches', [])))
+        current = next(o for o in yaml.safe_load_all((root/'apps/trading-platform/market-data-collector.yaml').read_text()) if o['kind'] == 'Deployment')
+        env = {e['name']: e for e in current['spec']['template']['spec']['containers'][0]['env']}
+        self.assertNotIn('STRATEGY_EVENT_MODE', env)
+        self.assertEqual(env['MARKET_DATA_EVENT_MODE']['value'], 'OFF')
+        patch = yaml.safe_load((root/'staged/strategy-event-collector/collector.patch.yaml').read_text())
+        spec = patch['spec']['template']['spec']
+        self.assertEqual(set(spec), {'containers'})
+        container = spec['containers'][0]
+        self.assertEqual(set(container), {'name', 'env'})
+        self.assertEqual(container['name'], 'collector')
+        env = {e['name']: e for e in container['env']}
+        self.assertEqual(set(env), {'STRATEGY_EVENT_MODE','STRATEGY_EVENT_RUNTIME_ID','STRATEGY_EVENT_DATABASE','STRATEGY_EVENT_DSN'})
+        self.assertEqual(env['STRATEGY_EVENT_MODE']['value'], 'JETSTREAM')
+        self.assertEqual(env['STRATEGY_EVENT_DSN']['valueFrom']['secretKeyRef']['name'], 'strategy-event-collector-db')
 
     def test_active_resource_graph_enrolls_relay_once_and_no_stream_provision_job(self):
         root = Path(__file__).resolve().parents[1]
