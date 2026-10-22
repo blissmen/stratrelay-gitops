@@ -109,6 +109,14 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(result['nats_pods'][0]['server_version'],'2.10.25')
         self.assertNotIn('MUST_NOT_ESCAPE',json.dumps(result))
 
+    def test_postgres_failure_is_classified_without_printing_private_details(self):
+        module=load('library_infrastructure_errors',ROOT/'scripts/library_jetstream_infrastructure.py')
+        for error,reason in [('fe_sendauth: no password supplied','POSTGRES_PASSWORD_REQUIRED'),
+            ('password authentication failed for user "private"','POSTGRES_AUTHENTICATION_FAILED'),
+            ('database "private" does not exist','POSTGRES_DATABASE_ERROR'),
+            ('permission denied for table private','POSTGRES_PERMISSION_DENIED')]:
+            with self.subTest(reason=reason):self.assertEqual(module.diagnostic(error),reason)
+
     def test_cutover_sql_is_additive_and_bounded(self):
         sql=self.cm['data']['activation.sql']
         self.assertTrue(sql.startswith('BEGIN;'))

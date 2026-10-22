@@ -6,7 +6,7 @@ verified on the cluster.** This is the original three-strategy library canary
 It does not migrate Context V1/V2, corrected PA, ICT/SMC or Donchian V2 observers.
 No strategy rule, frozen parameter or historical evidence is rewritten.
 
-Local validation: 15 manifest, redaction and cutover-gate tests passed. YAML,
+Local validation: 16 manifest, redaction and cutover-gate tests passed. YAML,
 embedded Python compilation and diff checks passed. No cluster, real credential,
 NetworkPolicy or live NATS verification has been performed from this environment.
 
@@ -79,6 +79,13 @@ This invokes only read operations: pod inventory, NATS version, and PostgreSQL
 SELECTs with default_transaction_read_only=on. It never dumps NATS configuration,
 environment values or passwords. A failed local-socket/admin read remains a blocker;
 the script does not borrow or alter credentials to work around it.
+The DB query uses the matching existing POSTGRES_USER/POSTGRES_PASSWORD pair
+inside the same PostgreSQL pod when available, or the pod's explicit PGUSER/
+PGPASSWORD settings. It never substitutes another role's password, copies a
+credential out, or prompts interactively. Failures are classified without raw
+credential-helper/server error output. The 04:00 UTC inventory verified NATS
+2.10.29 and the trading-nats-auth reference, but the original DB probe failed;
+migration, role and grant evidence remains unconfirmed.
 
 ## Credential contracts
 

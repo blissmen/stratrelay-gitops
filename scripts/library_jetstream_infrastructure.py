@@ -26,6 +26,19 @@ SQL = """SELECT json_build_object(
 );"""
 
 
+def diagnostic(stderr):
+    text=stderr.lower()
+    for needle,reason in [('no password supplied','POSTGRES_PASSWORD_REQUIRED'),
+        ('password authentication failed','POSTGRES_AUTHENTICATION_FAILED'),
+        ('peer authentication failed','POSTGRES_PEER_AUTHENTICATION_FAILED'),
+        ('database "','POSTGRES_DATABASE_ERROR'),('role "','POSTGRES_ROLE_ERROR'),
+        ('permission denied','POSTGRES_PERMISSION_DENIED'),('forbidden','KUBERNETES_RBAC_FORBIDDEN'),
+        ('connection refused','CONNECTION_REFUSED'),('no such file or directory','SOCKET_OR_BINARY_NOT_FOUND'),
+        ('could not translate host name','DNS_FAILED')]:
+        if needle in text:return reason
+    return 'COMMAND_FAILED_REDACTED'
+
+
 def inventory(kubeconfig,context):
     base=['kubectl','--kubeconfig',kubeconfig,'--context',context,'-n','trading']
     result={'observed_at':datetime.now(timezone.utc).isoformat(),'context':context,
@@ -38,7 +51,7 @@ def inventory(kubeconfig,context):
             return None
         if p.returncode:
             result['errors'].append({'operation':label,'exit_code':p.returncode,
-                                     'reason':'COMMAND_FAILED_REDACTED'})
+                                     'reason':diagnostic(p.stderr)})
             return None
         return p.stdout
     data=run(['get','pods','-o','json'],'pod inventory')
@@ -52,9 +65,17 @@ def inventory(kubeconfig,context):
         containers=pg[0]['spec']['containers']
         if len(containers)==1:
             c=containers[0]['name']
-            # Existing local socket admin path only. SQL is explicit READ ONLY;
-            # no passwords are copied, logged, rotated or sent to another service.
-            shell='exec env PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000" psql -X -qAt -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-postgres}" -d trading -c "$1"'
+            # Match only the existing POSTGRES_USER/POSTGRES_PASSWORD pair. Never
+            # substitute a password from another application/role or copy it out.
+            shell=('if [ -n "${POSTGRES_USER:-}" ] && [ -n "${POSTGRES_PASSWORD:-}" ]; then '
+                   'PGUSER="$POSTGRES_USER"; PGPASSWORD="$POSTGRES_PASSWORD"; export PGUSER PGPASSWORD; '
+                   'elif [ -z "${PGUSER:-}" ]; then PGUSER=postgres; export PGUSER; fi; '
+                   'exec env PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000" '
+                   'psql -X -qAt -w -v ON_ERROR_STOP=1 -d trading -c "$1"')
+            result['postgres_pod']={'name':name,'container':c,
+                'environment_names':sorted(e['name'] for e in containers[0].get('env',[])),
+                'credential_secret_refs':sorted({e['valueFrom']['secretKeyRef']['name']
+                    for e in containers[0].get('env',[]) if 'secretKeyRef' in e.get('valueFrom',{})})}
             value=run(['exec',name,'-c',c,'--','sh','-c',shell,'--',SQL],
                       'read-only PostgreSQL prerequisites')
             if value:result['postgres']=json.loads(value)
@@ -76,6 +97,13 @@ def inventory(kubeconfig,context):
                                 for v in spec.get('volumes',[]) if 'secret' in v or 'configMap' in v]}
         server=next((c for c in spec['containers'] if 'nats' in c['image'].lower()),None)
         if server:
+            tokens=server.get('command',[])+server.get('args',[])
+            # Boolean flags only. Arguments can contain passwords/tokens.
+            item['configuration_flags']={
+                'config_flag':any(x in ['-c','--config'] or x.startswith('--config=') for x in tokens),
+                'user_flag':any(x=='--user' or x.startswith('--user=') for x in tokens),
+                'password_flag':any(x=='--pass' or x.startswith('--pass=') for x in tokens),
+                'token_flag':any(x=='--auth' or x.startswith('--auth=') for x in tokens)}
             version=run(['exec',pod['metadata']['name'],'-c',server['name'],'--','nats-server','--version'],
                         'NATS server version')
             match=re.search(r'v?(\d+\.\d+\.\d+)',version or '')
