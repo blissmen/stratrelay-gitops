@@ -105,3 +105,48 @@ No claim that the event route was active can be made from that payload alone.
 
 Source SOP:
 https://github.com/strat-relay/platform-tools/blob/410e55f4453fb7bb06cb951e143aa6040fb3c478/docs/engineering/STRATEGY_EVENT_TRANSPORT_SOP.md
+
+## Next operator step: bounded infrastructure audit
+
+When the full audit times out in PostgreSQL, obtain infrastructure evidence
+independently before provisioning credentials or enabling runners:
+
+```bash
+python3 scripts/strategy_event_preflight.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher \
+  --infrastructure-only \
+  --output "$HOME/Downloads/stratrelay-strategy-event-infrastructure.json"
+```
+
+This mode does not trace a signal, scan entry/outbox rows, or probe runner
+environments. Inside the discovered PostgreSQL pod it connects explicitly to
+loopback port 5432 and `trading_platform`, using the existing approved admin audit
+environment only for read-only SELECTs. Connection timeout is five seconds,
+statement timeout five seconds and lock timeout two seconds. It does not fall
+back to a different database or credential. Migration evidence remains unverified
+if that command fails; an observed empty migration list means the expected rows
+were not found. NATS metadata includes flag names, environment key names and
+Secret/ConfigMap references only. No argument values or configuration contents
+are returned, and stream INFO remains a read-only request.
+
+Credential provisioning must follow the actual NATS authentication configuration:
+command-line single-user authentication cannot provide distinct scoped users by
+adding Kubernetes Secrets alone. In that case prepare a separate reviewed NATS
+configuration change, including continuity for existing clients, before creating
+new runtime bindings. Do not replace shared authentication opportunistically.
+
+The credential plan must distinguish these principals:
+
+| Principal | Required scope | Excluded scope |
+| --- | --- | --- |
+| Collector and file-backed Context hint writers | Dedicated DB connection; INSERT scheduling hints | Strategy evidence, execution, broker credentials |
+| PA/library writers | Their existing evidence transaction plus INSERT scheduling hints | Admin/catalog/broker writes |
+| Event relay | Scheduling outbox delivery/pruning; publish only the two runtime hint subject families | Trading/execution subjects and stream administration |
+| Runtime consumers | Own durable consumer and allowed cache/evidence subjects; necessary JetStream reply permissions | Other consumers, stream mutation, trading publications |
+| Stream provisioner | Exact STRATEGY_RUNTIME inspection/provisioning operations | Runtime execution and broker access |
+
+These are scope requirements, not verified grants. Audit SQL privileges and NATS
+allow/deny behavior before activation, including consumer creation, pull, ACK and
+reply subjects required by the client. Existing global service credentials are
+not a substitute for the new scoped principals. Preserve frozen run identities
+and keep the old immutable-library cutover paused throughout this audit.

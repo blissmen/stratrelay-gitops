@@ -104,6 +104,47 @@ class StrategyEventRolloutTests(unittest.TestCase):
         self.assertNotIn('password', json.dumps(report))
         self.assertNotIn('token=secret', json.dumps(report))
 
+    def test_nats_configuration_redacts_inline_credentials(self):
+        workload = {'spec': {'template': {'spec': {
+            'containers': [{'name': 'nats', 'image': 'nats:test',
+                'command': ['nats-server'], 'args': ['--user', 'private-user', '--pass=private-password', '-js'],
+                'env': [{'name': 'PASSWORD', 'value': 'private-value'},
+                        {'name': 'AUTH', 'valueFrom': {'secretKeyRef': {'name': 'auth-secret', 'key': 'password'}}}]}],
+            'volumes': [{'name': 'auth', 'secret': {'secretName': 'auth-secret'}}]}}}}
+        result = audit.nats_configuration(workload)
+        self.assertEqual(result['containers'][0]['flags'], ['--pass', '--user', '-js'])
+        self.assertEqual(result['containers'][0]['secret_refs'], ['auth-secret'])
+        self.assertNotIn('private-', json.dumps(result))
+
+    def test_infrastructure_audit_uses_small_read_only_database_probe(self):
+        commands = []
+        def run(args, **kwargs):
+            commands.append(args)
+            if 'config' in args:
+                payload = 'cluster\nhttps://example.test'
+            elif 'exec' in args:
+                self.assertEqual(args[-1], audit.INFRA_DATABASE_SCRIPT)
+                payload = json.dumps({'database': 'trading_platform', 'primary': True, 'migrations': []})
+            elif 'pods' in args:
+                payload = json.dumps({'items': [{'metadata': {'name': 'trading-postgres-0',
+                    'labels': {'app.kubernetes.io/name': 'trading-postgres'}},
+                    'status': {'phase': 'Running'}, 'spec': {'containers': [{'name': 'postgres'}]}}]})
+            else:
+                payload = json.dumps({'items': []})
+            return SimpleNamespace(returncode=0, stdout=payload, stderr='')
+        with patch('subprocess.run', side_effect=run):
+            result = audit.report('/test', infrastructure_only=True)
+        self.assertEqual(result['audit_scope'], 'INFRASTRUCTURE')
+        self.assertTrue(result['database']['primary'])
+        self.assertNotIn('FROM strategy.entry_signals', audit.INFRA_DATABASE_SCRIPT)
+        self.assertNotIn('FROM platform.outbox_events', audit.INFRA_DATABASE_SCRIPT)
+        self.assertIn('PGCONNECT_TIMEOUT=5', audit.INFRA_DATABASE_SCRIPT)
+        self.assertIn('default_transaction_read_only=on', audit.INFRA_DATABASE_SCRIPT)
+        self.assertFalse(any('logs' in cmd for cmd in commands))
+        self.assertEqual(sum('exec' in cmd for cmd in commands), 1)
+        with self.assertRaises(ValueError):
+            audit.report('/test', signal_id='SIG_test', infrastructure_only=True)
+
     def test_signal_id_cannot_inject_sql(self):
         with self.assertRaises(ValueError):
             audit.report('/test', signal_id="SIG_x';SELECT password FROM secrets;--")
