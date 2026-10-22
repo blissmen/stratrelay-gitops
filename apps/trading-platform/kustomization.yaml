@@ -50,3 +50,7 @@ resources:
 
   # Relay prerequisite passed; strategy event producers/consumers remain unchanged.
   - strategy-runtime-event-relay
+
+# Credential verified before enrollment; strategies remain in their existing modes.
+patches:
+  - path: strategy-event-collector.patch.yaml
