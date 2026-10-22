@@ -1,0 +1,7 @@
+# Inactive preparation only. NOT referenced by apps/trading-platform/kustomization.yaml.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: trading
+resources:
+  - runtime.yaml
+  - network.yaml
