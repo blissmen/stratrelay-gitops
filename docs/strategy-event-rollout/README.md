@@ -155,3 +155,38 @@ actual shared NATS permissions, stream provisioning, both NetworkPolicy sides,
 artifact/checkpoint bindings, and post-T0 timing evidence. Preserve frozen runs
 and keep the older immutable-library cutover paused. The relay remains replicas
 zero, provisioning Job suspended, and the staged bundle outside Flux resources.
+
+## Relay database bootstrap after stream provisioning
+
+After `STRATEGY_RUNTIME` is provisioned/verified, run the dedicated helper on the
+operator computer. It is plan-only unless `--apply` is supplied:
+
+```bash
+python3 scripts/strategy_event_relay_bootstrap.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher --apply \
+  --output "$HOME/Downloads/stratrelay-event-relay-bootstrap.json"
+```
+
+Apply mode creates **only** the `strategy_event_relay` PostgreSQL login and
+`strategy-event-relay` Kubernetes Secret. It verifies the recorded trading
+namespace UID, actual primary/database and all three migration checksums before
+writes. A random credential is retained in the Secret before transactional role
+creation. A retry can resume an owned Secret without a DB role; it never resets
+an existing role password or adopts an unpaired pre-existing role. Unexpected
+bindings fail closed. No credential enters command arguments, stdout, reports
+or git. All subprocess output is captured; exceptions are reported by type only.
+
+The role receives CONNECT, platform schema USAGE, SELECT/DELETE on the scheduling
+outbox and UPDATE on its `published_at` column. No INSERT, schema CREATE, role
+membership, superuser, database/role creation, replication or RLS bypass is
+allowed by the login probe. The existing signal relay container is used to test
+that login and these privileges through the actual DB service; it performs only
+a read-only privilege query. No broker or strategy data is written.
+
+`RELAY_DB_READY` means this prerequisite passed; it does not mean the event route
+is active. The prepared bundle at `staged/strategy-runtime-event-relay-activation`
+contains a single relay at replicas one and both sides of its DB/NATS network
+permissions. It remains outside Flux. Only after the credential report passes,
+prepare a separate GitOps change to enroll that bundle. Existing producers,
+consumers and strategy modes remain unchanged. The relay may legitimately be
+idle until producers are enabled; pod Ready alone is not delivery evidence.
