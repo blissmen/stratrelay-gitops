@@ -1,0 +1,26 @@
+# Scheduling transport only; preserve existing authority, strategy identities and execution settings.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signal-outbox-relay
+  namespace: trading
+spec:
+  template:
+    spec:
+      containers:
+      - name: relay
+        env:
+        - name: STRATEGY_EVENT_MODE
+          value: JETSTREAM
+        - name: NATS_URL
+          value: nats://trading-nats.trading.svc.cluster.local:4222
+        - name: P2_NATS_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_USER
+        - name: P2_NATS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_PASSWORD
