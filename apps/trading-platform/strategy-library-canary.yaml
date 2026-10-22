@@ -36,7 +36,7 @@ metadata:
   namespace: trading
   labels: {app.kubernetes.io/name: strategy-library-canary-v1-observer, app.kubernetes.io/component: research-observer, stratrelay.app/status: research}
 spec:
-  replicas: 1
+  replicas: 0
   strategy: {type: Recreate}
   selector:
     matchLabels: {app.kubernetes.io/name: strategy-library-canary-v1-observer}
