@@ -1,0 +1,64 @@
+# Scheduling only; reuse the verified INSERT-only hint-writer credential.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mt5-native-bridge-main-runtime
+  namespace: trading
+spec:
+  template:
+    spec:
+      containers:
+      - name: context-paper
+        env:
+        - name: STRATEGY_EVENT_MODE
+          value: JETSTREAM
+        - name: STRATEGY_EVENT_RUNTIME_ID
+          value: context-structure-retrace-v1
+        - name: STRATEGY_EVENT_RECONCILE_SECONDS
+          value: '30'
+        - name: STRATEGY_EVENT_DATABASE
+          value: trading_platform
+        - name: STRATEGY_EVENT_DSN
+          valueFrom:
+            secretKeyRef:
+              name: strategy-event-collector-db
+              key: STRATEGY_EVENT_DSN
+        - name: NATS_URL
+          value: nats://trading-nats.trading.svc.cluster.local:4222
+        - name: P2_NATS_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_USER
+        - name: P2_NATS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_PASSWORD
+      - name: context-v2-research
+        env:
+        - name: STRATEGY_EVENT_MODE
+          value: JETSTREAM
+        - name: STRATEGY_EVENT_RUNTIME_ID
+          value: context-structure-retrace-v2
+        - name: STRATEGY_EVENT_RECONCILE_SECONDS
+          value: '30'
+        - name: STRATEGY_EVENT_DATABASE
+          value: trading_platform
+        - name: STRATEGY_EVENT_DSN
+          valueFrom:
+            secretKeyRef:
+              name: strategy-event-collector-db
+              key: STRATEGY_EVENT_DSN
+        - name: NATS_URL
+          value: nats://trading-nats.trading.svc.cluster.local:4222
+        - name: P2_NATS_USER
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_USER
+        - name: P2_NATS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trading-nats-auth
+              key: NATS_PASSWORD

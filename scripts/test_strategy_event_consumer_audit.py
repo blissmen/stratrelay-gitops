@@ -37,6 +37,24 @@ class ConsumerActivationTests(unittest.TestCase):
             for name,key_name in [('P2_NATS_USER','NATS_USER'),('P2_NATS_PASSWORD','NATS_PASSWORD')]:
                 self.assertEqual(env[name]['valueFrom']['secretKeyRef'],{'name':'trading-nats-auth','key':key_name})
 
+    def test_context_activation_only_changes_scheduling_and_reuses_hint_writer(self):
+        root=Path(__file__).resolve().parents[1]/'apps/trading-platform'
+        active=yaml.safe_load((root/'kustomization.yaml').read_text())
+        self.assertIn({'path':'strategy-event-context.patch.yaml'},active['patches'])
+        obj=yaml.safe_load((root/'strategy-event-context.patch.yaml').read_text())
+        self.assertEqual(set(obj['spec']),{'template'})
+        spec=obj['spec']['template']['spec']
+        self.assertEqual(set(spec),{'containers'})
+        self.assertEqual({c['name'] for c in spec['containers']},{'context-paper','context-v2-research'})
+        for c in spec['containers']:
+            self.assertEqual(set(c),{'name','env'})
+            env={e['name']:e for e in c['env']}
+            self.assertEqual(env['STRATEGY_EVENT_MODE']['value'],'JETSTREAM')
+            self.assertEqual(env['STRATEGY_EVENT_DATABASE']['value'],'trading_platform')
+            self.assertEqual(env['STRATEGY_EVENT_DSN']['valueFrom']['secretKeyRef'],
+                             {'name':'strategy-event-collector-db','key':'STRATEGY_EVENT_DSN'})
+            self.assertFalse(any('EXECUTION' in name or 'CUTOFF' in name for name in env))
+
     def fixture(self):
         runtime = 'signal-orchestrator'
         probe = {'mode':'JETSTREAM','runtime_id':runtime,'market_data_source':'REDIS',
@@ -135,6 +153,13 @@ class ConsumerActivationTests(unittest.TestCase):
                         'status':{'phase':'Running','podIP':'10.42.0.'+str(i),
                             'containerStatuses':[{'name':container,'ready':True,'restartCount':0,'imageID':audit.IMAGE,
                                 'state':{'running':{'startedAt':'1970-01-01T00:15:00Z'}}}]}})
+                combined={}
+                for pod in items:
+                    label=pod['metadata']['labels']['app.kubernetes.io/name']
+                    if label in combined:
+                        combined[label]['status']['containerStatuses'].extend(pod['status']['containerStatuses'])
+                    else:combined[label]=pod
+                items=list(combined.values())
                 items.append({'metadata':{'name':'postgres-0','labels':{'app.kubernetes.io/name':'trading-postgres'}},
                               'status':{'phase':'Running'},'spec':{'containers':[{'name':'postgres'}]}})
                 value = {'items':items}
@@ -147,7 +172,7 @@ class ConsumerActivationTests(unittest.TestCase):
                     if runtime != 'signal-orchestrator':value['consumer']['filters']=['runtime.market.cache.ready.v1.*']
                 else:value={'mode':'JETSTREAM'}
             elif 'logs' in args:
-                runtime = 'signal-orchestrator' if 'orchestrator-shadow' in args else 'liquidity-live-runtime'
+                runtime = next(runtime for _,container,runtime in audit.TARGETS.values() if container in args)
                 _,_,row = self.fixture()
                 row['runtime_id'] = runtime
                 return SimpleNamespace(returncode=0,stdout='1970-01-01T00:16:00Z '+json.dumps(row),stderr='')
