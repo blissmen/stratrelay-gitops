@@ -95,6 +95,8 @@ class ManifestTests(unittest.TestCase):
         module=load('library_preflight',ROOT/'scripts/library_jetstream_preflight.py')
         marker='SECRET_VALUE_MUST_NOT_ESCAPE'
         def fake(command,**kwargs):
+            if 'config' in command:return SimpleNamespace(returncode=0,stdout='local\n')
+            if '--raw=/version' in command:return SimpleNamespace(returncode=0,stdout='{"gitVersion":"test"}')
             if 'secret' in command:
                 data={k:marker for keys in module.SECRETS.values() for k in keys}
                 result={'data':data}
@@ -108,6 +110,23 @@ class ManifestTests(unittest.TestCase):
         self.assertNotIn(marker,json.dumps(result))
         self.assertTrue(result['credential_contract_present'])
         self.assertNotEqual(result['status'],'ACTIVATED')
+
+    def test_failed_reads_do_not_assert_missing_secret_keys(self):
+        module=load('library_preflight_failed',ROOT/'scripts/library_jetstream_preflight.py')
+        error=SimpleNamespace(returncode=1,stdout='',stderr='Error: context was not found: PRIVATE_HELPER_OUTPUT')
+        with patch.object(module.subprocess,'run',return_value=error):
+            result=module.report('/fake/config')
+        self.assertFalse(result['cluster_read_succeeded'])
+        self.assertTrue(all(s['missing_keys'] is None for s in result['secrets'].values()))
+        self.assertTrue(all(e['reason']=='CONTEXT_NOT_FOUND' for e in result['errors']))
+        self.assertNotIn('PRIVATE_HELPER_OUTPUT',json.dumps(result))
+
+    def test_errors_are_classified_without_disclosing_raw_errors(self):
+        module=load('library_preflight_errors',ROOT/'scripts/library_jetstream_preflight.py')
+        for message,code in [('Unauthorized','AUTHENTICATION_FAILED'),('Forbidden','RBAC_FORBIDDEN'),
+            ('connection refused','CONNECTION_REFUSED'),('x509: bad certificate','TLS_VERIFICATION_FAILED'),
+            ('Error from server (NotFound): secrets hidden not found','RESOURCE_NOT_FOUND')]:
+            with self.subTest(code=code):self.assertEqual(module.failure_reason(message),code)
 
 
 class ActivationTests(unittest.TestCase):

@@ -6,7 +6,7 @@ verified on the cluster.** This is the original three-strategy library canary
 It does not migrate Context V1/V2, corrected PA, ICT/SMC or Donchian V2 observers.
 No strategy rule, frozen parameter or historical evidence is rewritten.
 
-Local validation: 11 manifest, redaction and cutover-gate tests passed. YAML,
+Local validation: 13 manifest, redaction and cutover-gate tests passed. YAML,
 embedded Python compilation and diff checks passed. No cluster, real credential,
 NetworkPolicy or live NATS verification has been performed from this environment.
 
@@ -56,6 +56,9 @@ python3 scripts/library_jetstream_preflight.py \
 
 This report reads cluster metadata/Secret key names only and prints no Secret
 values. It does not prove DB grants, NATS ACLs or live consumer health.
+Failed reads report a sanitized error category; an inaccessible Secret has
+unknown keys rather than being declared missing. Context names and API reachability
+are included. Pass `--context <name>` if the kubeconfig uses another context.
 
 ## Credential contracts
 
