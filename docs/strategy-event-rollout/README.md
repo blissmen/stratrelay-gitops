@@ -214,3 +214,44 @@ Ready pod is not proof of end-to-end delivery; an empty stream can be normal
 until the collector and strategy producers are enabled in subsequent changes.
 Rollback is removal of the active relay base from Flux resources; retain the DB
 role, Secret, stream, pending hints and all historical evidence for diagnosis.
+
+## Collector hint-writer bootstrap (not activated)
+
+The operator's relay rollout report at 2026-10-22T18:00:02Z showed the expected
+image, one ready replica, zero relay/init restarts, and the compatible stream
+with zero retained messages. This establishes relay startup; it is not evidence
+of end-to-end scheduling or a latency improvement.
+
+The same bootstrap helper now supports a separate collector profile:
+
+```bash
+python3 scripts/strategy_event_relay_bootstrap.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher \
+  --component collector --apply \
+  --output "$HOME/Downloads/stratrelay-event-collector-bootstrap.json"
+```
+
+Expected result: COLLECTOR_DB_READY. This creates only strategy_event_collector
+and strategy-event-collector-db after the same identity/primary/migration gates.
+The collector role receives INSERT on event_id/runtime_id/payload and SELECT on
+event_id for ON CONFLICT, with CONNECT/schema USAGE. It cannot read whole hint
+payloads, update delivery status, delete hints, create schema objects, or gain
+admin/membership privileges. The login/privilege probe runs from the existing
+collector container through the DB service, without writing hints or changing
+collector environment. The relay profile remains the default and keeps its
+existing role, Secret and retry behavior.
+
+The patch at staged/strategy-event-collector/collector.patch.yaml remains outside
+Flux. It enables the bounded background cache-hint writer only after the above
+credential report succeeds. It preserves the collector image, single-reader
+Recreate strategy, Redis/bridge configuration and MARKET_DATA_EVENT_MODE=OFF.
+That older immutable-library event mode is separate and stays OFF. The collector
+writes cache-ready scheduling hints to PostgreSQL; it does not connect directly
+to NATS. Existing collector DB egress/destination ingress already permit that
+service path; no new bridge or NATS network permission is needed.
+
+Enrollment of this patch is a subsequent GitOps change and restarts the one
+collector briefly through Recreate. Check continued Redis/quote freshness,
+strategy_event_health, committed cache hints and relay NATS acceptance before
+activating consumers. This phase alone does not change strategy decision or
+entry semantics, execute orders, or opt strategies into event-driven scheduling.

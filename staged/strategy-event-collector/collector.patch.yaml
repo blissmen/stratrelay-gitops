@@ -1,0 +1,19 @@
+# Prepared only: not referenced by Flux. Require COLLECTOR_DB_READY before enrollment.
+# This is a strategic merge patch, not a standalone Deployment.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-data-collector
+  namespace: trading
+spec:
+  template:
+    spec:
+      containers:
+        - name: collector
+          env:
+            - {name: STRATEGY_EVENT_MODE, value: JETSTREAM}
+            - {name: STRATEGY_EVENT_RUNTIME_ID, value: market-data-collector}
+            - {name: STRATEGY_EVENT_DATABASE, value: trading_platform}
+            - name: STRATEGY_EVENT_DSN
+              valueFrom:
+                secretKeyRef: {name: strategy-event-collector-db, key: STRATEGY_EVENT_DSN}
