@@ -88,6 +88,30 @@ class ConsumerActivationTests(unittest.TestCase):
         prefixed='1970-01-01T00:16:00Z INFO:stratrelay.strategy_audit:'+json.dumps(row)
         self.assertEqual(len(audit.wakeup_rows(prefixed,runtime,900)),1)
 
+    def test_nanosecond_timestamps_are_normalized_for_older_python(self):
+        real_datetime=audit.datetime.datetime
+        class LegacyDatetime:
+            @staticmethod
+            def fromisoformat(value):
+                import re
+                fraction=re.search(r"\.(\d+)",value)
+                if fraction and len(fraction.group(1)) not in (3,6):
+                    raise ValueError('legacy precision limit')
+                return real_datetime.fromisoformat(value)
+        runtime,probe,row=self.fixture()
+        stamp='1970-01-01T00:16:00.123456789Z'
+        with patch.object(audit.datetime,'datetime',LegacyDatetime):
+            self.assertAlmostEqual(audit.parse_timestamp(stamp),960.123456)
+            self.assertAlmostEqual(audit.parse_timestamp('1970-01-01T01:16:00.1+01:00'),960.1)
+            rows=audit.wakeup_rows(stamp+' '+json.dumps(row),runtime,900)
+        self.assertEqual(rows[0]['log_timestamp'],stamp)
+        self.assertTrue(audit.consumer_observed(probe,rows,runtime,900,True))
+        row['reason']='RECONCILIATION'
+        rows=audit.wakeup_rows(stamp+' '+json.dumps(row),runtime,900)
+        self.assertFalse(audit.consumer_observed(probe,rows,runtime,900,True))
+        for invalid in ('not-a-date','1970-01-01T00:16:00','1970-01-01T00:16:00.1234567890Z'):
+            with self.assertRaises(ValueError):audit.parse_timestamp(invalid)
+
     def test_listener_query_is_read_only_and_ip_is_not_sql(self):
         sql = audit.listener_sql('10.42.0.3')
         self.assertIn('BEGIN READ ONLY',sql)

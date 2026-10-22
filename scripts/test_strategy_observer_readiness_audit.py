@@ -52,6 +52,23 @@ class ObserverReadinessTests(unittest.TestCase):
         self.assertTrue(sql[0].startswith('SET TRANSACTION READ ONLY'))
         self.assertFalse(any(s.upper().startswith(('INSERT','UPDATE','DELETE','ALTER','GRANT','CREATE')) for s in sql))
 
+    def test_known_runtime_errors_are_classified_without_exporting_messages(self):
+        namespace={}
+        exec(audit.PROBE.split("result={'read_only'")[0],namespace)
+        reason=namespace['reason']
+        cases={
+            'conflicting candle revision':'CANDLE_REVISION',
+            'tick size changed; start a separately identified research run':'TICK_SIZE_CHANGED_REQUIRES_NEW_RUN',
+            'evaluation requires current execution close':'CURRENT_EXECUTION_CLOSE_UNAVAILABLE',
+            'out-of-order snapshot':'OUT_OF_ORDER_SNAPSHOT',
+            'series instrument/timeframe/completion mismatch':'SERIES_IDENTITY_OR_COMPLETION_INVALID',
+            'future candle outside as-of view':'FUTURE_CANDLE',
+            'password=private':'ERROR_MESSAGE_REDACTED'}
+        for message,code in cases.items():self.assertEqual(reason(message),code)
+        self.assertIsNone(reason(None))
+        self.assertIn("stream.get('error')",audit.PROBE)
+        self.assertIn('ERROR_DETAIL_NOT_PERSISTED',audit.PROBE)
+
     def test_command_failure_is_redacted(self):
         with patch('subprocess.run',return_value=SimpleNamespace(returncode=1,stdout='',stderr='password=private')):
             result=audit.report('/test')

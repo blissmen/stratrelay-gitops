@@ -21,6 +21,16 @@ def reason(message):
         (('cached quote','stale'),'STALE_CACHED_QUOTE'),
         (('no cached quote',),'MISSING_CACHED_QUOTE'),
         (('conflicting completed candle revision',),'COMPLETED_CANDLE_REVISION'),
+        (('conflicting candle revision',),'CANDLE_REVISION'),
+        (('tick size changed',),'TICK_SIZE_CHANGED_REQUIRES_NEW_RUN'),
+        (('evaluation requires current execution close',),'CURRENT_EXECUTION_CLOSE_UNAVAILABLE'),
+        (('out-of-order snapshot',),'OUT_OF_ORDER_SNAPSHOT'),
+        (('series instrument/timeframe/completion mismatch',),'SERIES_IDENTITY_OR_COMPLETION_INVALID'),
+        (('invalid ohlc',),'INVALID_OHLC'),
+        (('misaligned candle',),'MISALIGNED_CANDLE'),
+        (('future candle',),'FUTURE_CANDLE'),
+        (('duplicate or out-of-order candle',),'CANDLE_ORDER_INVALID'),
+        (('candle not yet available',),'CANDLE_NOT_AVAILABLE_AT_CUTOFF'),
         (('gap',),'DATA_GAP'),
         (('bars','needs'),'INSUFFICIENT_BARS'),
         (('tick_size',),'TICK_METADATA_INVALID'),
@@ -51,7 +61,9 @@ try:
         result['persisted']['stream_count']=len(streams)
         for stream in streams[:500]:
             item={k:stream.get(k) for k in ('key','instrument','status','error_type','records','last_finalized_close')}
-            item['reason_code']=reason(stream.get('error_message'))
+            message=stream.get('error_message') or stream.get('error') or stream.get('reason')
+            item['error_detail_present']=bool(message)
+            item['reason_code']=reason(message) or ('ERROR_DETAIL_NOT_PERSISTED' if stream.get('error_type') else None)
             result['persisted']['streams'].append(item)
         result['persisted']['streams_truncated']=len(streams)>500
     except Exception as exc:result['database_error_type']=type(exc).__name__
