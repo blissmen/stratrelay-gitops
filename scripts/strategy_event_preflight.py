@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from urllib.parse import urlsplit
 
 from library_jetstream_preflight import failure_reason
 
@@ -122,6 +123,19 @@ def diagnostic_rows(text, provider, since, until):
     return rows
 
 
+def migration_checks(database):
+    observed = isinstance(database, dict) and isinstance(database.get('migrations'), list)
+    applied = {m['version']: m for m in database['migrations']} if observed else {}
+    checks = {}
+    for version, (filename, digest) in MIGRATIONS.items():
+        matches = (applied.get(version, {}).get('filename') == filename and
+                   applied.get(version, {}).get('checksum_sha256') == digest) if observed else None
+        checks[version] = {'matches': matches,
+                           'state': ('MATCH' if matches else 'MISSING_OR_MISMATCHED') if observed else 'UNVERIFIED',
+                           'expected_filename': filename, 'expected_checksum': digest}
+    return checks
+
+
 def report(kubeconfig, context='rancher', signal_id=None):
     if signal_id is not None and not re.fullmatch(r'SIG_[a-zA-Z0-9_-]{1,64}', signal_id):
         raise ValueError('invalid signal ID')
@@ -155,12 +169,37 @@ def report(kubeconfig, context='rancher', signal_id=None):
     if api is None:
         result['status'] = 'BLOCKED_CLUSTER_ACCESS'
         return result
+    identity = command(['config', 'view', '--minify', '-o',
+                        'jsonpath={.contexts[0].context.cluster}{"\\n"}{.clusters[0].cluster.server}'],
+                       'selected cluster identity', raw=True)
+    if identity:
+        parts = identity.strip().splitlines()
+        result['cluster_identity'] = {'cluster': parts[0],
+                                      'server_hostname': urlsplit(parts[-1]).hostname if len(parts) > 1 else None}
+    namespace = command(['get', 'namespace', 'trading', '-o', 'json'], 'namespace identity')
+    result['namespace_uid'] = (namespace or {}).get('metadata', {}).get('uid')
+    ds = command(['get', 'deployments', '-o', 'json'], 'deployment metadata')
+    pods = command(['get', 'pods', '-o', 'json'], 'pod metadata')
+    result['target_inventory'] = {'deployment_count': len(ds['items']) if ds is not None else None,
+                                  'pod_count': len(pods['items']) if pods is not None else None}
+    result['migration_checks'] = migration_checks(None)
+    if ds is None or pods is None:
+        result['status'] = 'BLOCKED_TARGET_INVENTORY_UNVERIFIED'
+        return result
+    if not ds['items'] and not pods['items']:
+        result['status'] = 'BLOCKED_EMPTY_TARGET_NAMESPACE'
+        result['unverified'].append('intended StratRelay cluster/namespace identity')
+        # Metadata projection only: never retrieve cross-namespace environment or Secret values.
+        inventory = command(['get', 'deployments,statefulsets', '-A', '-o',
+                             'jsonpath={range .items[*]}{.metadata.namespace}{"\\t"}{.kind}{"\\t"}{.metadata.name}{"\\n"}{end}'],
+                            'workload location inventory', raw=True)
+        result['workload_locations'] = inventory.splitlines() if inventory is not None else None
+        return result
     for name, keys in SECRETS.items():
         obj = command(['get', 'secret', name, '-o', 'json'], 'Secret key metadata: '+name)
         result['secrets'][name] = {'accessible': obj is not None,
                                  'missing_keys': sorted(set(keys)-set(obj.get('data', {}))) if obj else None}
         del obj  # Values are never included in the report or error text.
-    ds = command(['get', 'deployments', '-o', 'json'], 'deployment metadata')
     for d in (ds or {}).get('items', []):
         if not relevant(d['metadata']['name']):
             continue
@@ -174,7 +213,6 @@ def report(kubeconfig, context='rancher', signal_id=None):
                 'configmap_refs': [v['configMap']['name'] for v in spec.get('volumes', []) if 'configMap' in v]})
         result['deployments'].append({'name': d['metadata']['name'], 'replicas': d['spec'].get('replicas', 1),
                                      'ready': d.get('status', {}).get('readyReplicas', 0), 'containers': containers})
-    pods = command(['get', 'pods', '-o', 'json'], 'pod metadata')
     for p in (pods or {}).get('items', []):
         if not relevant(p['metadata']['name']):
             continue
@@ -227,12 +265,7 @@ def report(kubeconfig, context='rancher', signal_id=None):
         p = relays[0]
         result['nats_stream'] = command(['exec', p['metadata']['name'], '-c', p['spec']['containers'][0]['name'],
                                          '--', 'python', '-c', NATS_SCRIPT], 'read-only NATS stream INFO')
-    db = result.get('database') or {}
-    applied = {m['version']: m for m in db.get('migrations') or []}
-    result['migration_checks'] = {v: {'matches': applied.get(v, {}).get('filename') == f
-                                                 and applied.get(v, {}).get('checksum_sha256') == digest,
-                                    'expected_filename': f, 'expected_checksum': digest}
-                                  for v, (f, digest) in MIGRATIONS.items()}
+    result['migration_checks'] = migration_checks(result.get('database'))
     result['status'] = 'BLOCKED_PENDING_CREDENTIAL_BINDING_AND_ACTIVATION_REVIEW'
     # Key presence, a Ready pod or stream INFO is never sufficient to approve activation.
     return result

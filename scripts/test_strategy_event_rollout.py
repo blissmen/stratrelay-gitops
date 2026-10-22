@@ -50,11 +50,15 @@ class StrategyEventRolloutTests(unittest.TestCase):
             commands.append(args)
             if '--raw=/version' in args:
                 payload = {'gitVersion': 'v1.test'}
+            elif 'config' in args:
+                return SimpleNamespace(returncode=0, stdout='test-cluster\nhttps://example.test:6443', stderr='')
+            elif 'namespace' in args:
+                payload = {'metadata': {'uid': 'test-namespace'}}
             elif 'secret' in args:
                 name = args[args.index('secret')+1]
                 payload = {'data': {key: secret for key in audit.SECRETS[name]}}
             elif 'deployments' in args or 'pods' in args:
-                payload = {'items': []}
+                payload = {'items': [{'metadata': {'name': 'unrelated'}}]}
             else:
                 raise AssertionError('unexpected command')
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr='')
@@ -67,7 +71,38 @@ class StrategyEventRolloutTests(unittest.TestCase):
         self.assertTrue(report['read_only'])
         self.assertNotEqual(report['status'], 'READY')
         self.assertTrue(report['unverified'])
-        self.assertTrue(all('get' in cmd for cmd in commands))
+        self.assertTrue(all('get' in cmd or 'config' in cmd for cmd in commands))
+
+    def test_missing_database_evidence_is_unverified(self):
+        for db in (None, {}, {'migrations': None}):
+            for check in audit.migration_checks(db).values():
+                self.assertIsNone(check['matches'])
+                self.assertEqual(check['state'], 'UNVERIFIED')
+        self.assertTrue(all(c['matches'] is False for c in audit.migration_checks({'migrations': []}).values()))
+        rows = [{'version': v, 'filename': f, 'checksum_sha256': h} for v, (f, h) in audit.MIGRATIONS.items()]
+        self.assertTrue(all(c['matches'] is True for c in audit.migration_checks({'migrations': rows}).values()))
+
+    def test_empty_namespace_stops_before_credentials_and_collects_locations(self):
+        commands = []
+        def run(args, **kwargs):
+            commands.append(args)
+            if 'config' in args:
+                payload = 'test-cluster\nhttps://username:password@example.test:6443/private?token=secret'
+            elif 'deployments,statefulsets' in args:
+                payload = 'actual-namespace\tStatefulSet\ttrading-postgres\n'
+            else:
+                payload = json.dumps({'items': [], 'metadata': {'uid': 'test-uid'}})
+            return SimpleNamespace(returncode=0, stdout=payload, stderr='')
+        with patch('subprocess.run', side_effect=run):
+            report = audit.report('/test')
+        self.assertEqual(report['status'], 'BLOCKED_EMPTY_TARGET_NAMESPACE')
+        self.assertEqual(report['cluster_identity']['server_hostname'], 'example.test')
+        self.assertEqual(report['namespace_uid'], 'test-uid')
+        self.assertEqual(report['workload_locations'], ['actual-namespace\tStatefulSet\ttrading-postgres'])
+        self.assertTrue(all(c['matches'] is None for c in report['migration_checks'].values()))
+        self.assertFalse(any('secret' in cmd or 'exec' in cmd for cmd in commands))
+        self.assertNotIn('password', json.dumps(report))
+        self.assertNotIn('token=secret', json.dumps(report))
 
     def test_signal_id_cannot_inject_sql(self):
         with self.assertRaises(ValueError):
