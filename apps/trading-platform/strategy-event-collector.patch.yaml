@@ -1,4 +1,4 @@
-# Prepared only: not referenced by Flux. Require COLLECTOR_DB_READY before enrollment.
+# Collector hint-writer activation following operator COLLECTOR_DB_READY evidence.
 # This is a strategic merge patch, not a standalone Deployment.
 apiVersion: apps/v1
 kind: Deployment

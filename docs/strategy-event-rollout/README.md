@@ -215,7 +215,7 @@ until the collector and strategy producers are enabled in subsequent changes.
 Rollback is removal of the active relay base from Flux resources; retain the DB
 role, Secret, stream, pending hints and all historical evidence for diagnosis.
 
-## Collector hint-writer bootstrap (not activated)
+## Collector hint-writer bootstrap and activation
 
 The operator's relay rollout report at 2026-10-22T18:00:02Z showed the expected
 image, one ready replica, zero relay/init restarts, and the compatible stream
@@ -241,17 +241,42 @@ collector container through the DB service, without writing hints or changing
 collector environment. The relay profile remains the default and keeps its
 existing role, Secret and retry behavior.
 
-The patch at staged/strategy-event-collector/collector.patch.yaml remains outside
-Flux. It enables the bounded background cache-hint writer only after the above
-credential report succeeds. It preserves the collector image, single-reader
+After the operator reported COLLECTOR_DB_READY with successful service-path
+login/privilege verification, the patch at
+apps/trading-platform/strategy-event-collector.patch.yaml is enrolled through
+Kustomize. It enables only the bounded background cache-hint writer. It preserves the collector image, single-reader
 Recreate strategy, Redis/bridge configuration and MARKET_DATA_EVENT_MODE=OFF.
 That older immutable-library event mode is separate and stays OFF. The collector
 writes cache-ready scheduling hints to PostgreSQL; it does not connect directly
 to NATS. Existing collector DB egress/destination ingress already permit that
 service path; no new bridge or NATS network permission is needed.
 
-Enrollment of this patch is a subsequent GitOps change and restarts the one
-collector briefly through Recreate. Check continued Redis/quote freshness,
+This activation restarts the one collector briefly through Recreate. Check continued Redis/quote freshness,
 strategy_event_health, committed cache hints and relay NATS acceptance before
 activating consumers. This phase alone does not change strategy decision or
 entry semantics, execute orders, or opt strategies into event-driven scheduling.
+
+
+After Flux applies the collector patch, run the read-only delivery audit:
+
+```bash
+python3 scripts/strategy_event_collector_audit.py \
+  --kubeconfig "$HOME/Downloads/local (1).yaml" --context rancher \
+  --output "$HOME/Downloads/stratrelay-event-collector-rollout.json"
+```
+
+COLLECTOR_HINT_DELIVERY_OBSERVED requires the expected ready image on collector
+and relay, actual collector JETSTREAM/runtime/database bindings, fresh cache
+heartbeat and writer success after this collector container started, compatible
+NATS stream configuration, and post-start hint rows marked published by the
+relay. It reads at most 50 recent hint rows with transaction/statement timeouts;
+it does not insert test hints, publish NATS messages or query strategy outcomes.
+Row created-to-published durations use the database row timestamps; created_at
+is not a transaction commit timestamp or an end-to-end strategy latency.
+Zero retained stream messages does not negate already-published durable rows.
+
+The audit always reports strategy_consumption_verified=false. Cache hint
+delivery proves neither strategy consumption nor canonical signal latency or
+broker execution. Continue with consumer opt-in only after this evidence is
+reviewed. Roll back the collector hint writer by removing its Kustomize patch,
+preserving credentials, stream, hint rows and all historical evidence.

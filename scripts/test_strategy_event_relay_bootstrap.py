@@ -168,16 +168,16 @@ class RelayBootstrapTests(unittest.TestCase):
         self.assertTrue(any(e.get('name') == 'EXECUTION_AUTHORITY_MODE' and e.get('value') == 'DISABLED'
                             for e in containers[0]['env']))
 
-    def test_collector_patch_remains_inactive_and_only_sets_hint_transport(self):
+    def test_collector_patch_only_enables_the_verified_hint_writer(self):
         root = Path(__file__).resolve().parents[1]
         active = yaml.safe_load((root/'apps/trading-platform/kustomization.yaml').read_text())
         self.assertFalse(any('strategy-event-collector' in r for r in active['resources']))
-        self.assertFalse(any('strategy-event-collector' in json.dumps(p) for p in active.get('patches', [])))
+        self.assertIn({'path': 'strategy-event-collector.patch.yaml'}, active['patches'])
         current = next(o for o in yaml.safe_load_all((root/'apps/trading-platform/market-data-collector.yaml').read_text()) if o['kind'] == 'Deployment')
         env = {e['name']: e for e in current['spec']['template']['spec']['containers'][0]['env']}
         self.assertNotIn('STRATEGY_EVENT_MODE', env)
         self.assertEqual(env['MARKET_DATA_EVENT_MODE']['value'], 'OFF')
-        patch = yaml.safe_load((root/'staged/strategy-event-collector/collector.patch.yaml').read_text())
+        patch = yaml.safe_load((root/'apps/trading-platform/strategy-event-collector.patch.yaml').read_text())
         spec = patch['spec']['template']['spec']
         self.assertEqual(set(spec), {'containers'})
         container = spec['containers'][0]
