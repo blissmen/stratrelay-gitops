@@ -6,7 +6,7 @@ verified on the cluster.** This is the original three-strategy library canary
 It does not migrate Context V1/V2, corrected PA, ICT/SMC or Donchian V2 observers.
 No strategy rule, frozen parameter or historical evidence is rewritten.
 
-Local validation: 13 manifest, redaction and cutover-gate tests passed. YAML,
+Local validation: 15 manifest, redaction and cutover-gate tests passed. YAML,
 embedded Python compilation and diff checks passed. No cluster, real credential,
 NetworkPolicy or live NATS verification has been performed from this environment.
 
@@ -31,8 +31,9 @@ run/T0; the activation refuses elapsed T0 and never reuses an existing run.
    its account allows the scoped subjects/JetStream operations below. Establish
    available file-store capacity for two bounded 256 MiB streams.
 4. Run the read-only report and verify the Kubernetes API service destination.
-   The cutover reader policy currently targets `10.43.0.1:443`; reconcile the
-   actual service/backend policy requirements before merge. Do not open broad
+   The selected-file report at 2026-10-22T03:53:11Z confirms API service
+   `10.43.0.1:443` and backend `10.10.10.10:6443`; both exact destinations are
+   in the cutover reader policy. Verify effective policy before merge. Do not open broad
    internet egress to make the API gate pass.
 5. Verify the three existing instances are OFF/ineligible, retain their original
    run binding and exact BTC/XAU/USDJPY memberships, and have enabled library
@@ -59,6 +60,25 @@ values. It does not prove DB grants, NATS ACLs or live consumer health.
 Failed reads report a sanitized error category; an inaccessible Secret has
 unknown keys rather than being declared missing. Context names and API reachability
 are included. Pass `--context <name>` if the kubeconfig uses another context.
+
+The selected-file report restored access using `rancher`, confirmed the exact
+released collector/scanner images and existing signal-cutoff Secret, and returned
+RESOURCE_NOT_FOUND for all six new library-event Secrets. Old polling canary still
+runs its frozen image. No transport Jobs or Deployments exist in that report.
+
+Before provisioning credentials, gather the read-only local-socket PostgreSQL
+prerequisites and NATS version/config-source inventory:
+
+```bash
+python3 scripts/library_jetstream_infrastructure.py \
+  --kubeconfig '<the-working-selected-file>' --context rancher \
+  > "$HOME/Downloads/library-jetstream-infrastructure.json"
+```
+
+This invokes only read operations: pod inventory, NATS version, and PostgreSQL
+SELECTs with default_transaction_read_only=on. It never dumps NATS configuration,
+environment values or passwords. A failed local-socket/admin read remains a blocker;
+the script does not borrow or alter credentials to work around it.
 
 ## Credential contracts
 

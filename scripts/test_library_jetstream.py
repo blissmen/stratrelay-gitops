@@ -82,6 +82,33 @@ class ManifestTests(unittest.TestCase):
         self.assertNotIn('22348',text)
         self.assertNotIn('trading-redis',text)
 
+    def test_cutover_api_policy_includes_verified_backend(self):
+        docs=list(yaml.safe_load_all((APP/'library-jetstream-network.yaml').read_text()))
+        policy=next(d for d in docs if d['metadata']['name']=='library-event-activate-apiserver')
+        routes={(rule['to'][0]['ipBlock']['cidr'],rule['ports'][0]['port'])
+                for rule in policy['spec']['egress']}
+        self.assertEqual(routes,{('10.43.0.1/32',443),('10.10.10.10/32',6443)})
+
+    def test_infrastructure_inventory_is_readonly_and_redacted(self):
+        module=load('library_infrastructure',ROOT/'scripts/library_jetstream_infrastructure.py')
+        def pod(name,image):
+            return {'metadata':{'name':name+'-0','labels':{'app.kubernetes.io/name':name}},
+                'status':{'phase':'Running'},'spec':{'containers':[{'name':name,'image':image,
+                    'env':[{'name':'PASSWORD','value':'MUST_NOT_ESCAPE'}]}]}}
+        def fake(cmd,**kwargs):
+            if 'pods' in cmd:
+                data=json.dumps({'items':[pod('trading-postgres','postgres:17'),pod('trading-nats','nats:2.10')]})
+            elif 'psql' in ' '.join(cmd):
+                self.assertIn('default_transaction_read_only=on',' '.join(cmd))
+                self.assertTrue(cmd[-1].startswith('SELECT'))
+                data='{"database":"trading","primary":true}'
+            else:data='nats-server: v2.10.25 MUST_NOT_ESCAPE'
+            return SimpleNamespace(returncode=0,stdout=data,stderr='')
+        with patch.object(module.subprocess,'run',side_effect=fake):result=module.inventory('/fake','rancher')
+        self.assertEqual(result['status'],'INVENTORIED_NOT_ACTIVATED')
+        self.assertEqual(result['nats_pods'][0]['server_version'],'2.10.25')
+        self.assertNotIn('MUST_NOT_ESCAPE',json.dumps(result))
+
     def test_cutover_sql_is_additive_and_bounded(self):
         sql=self.cm['data']['activation.sql']
         self.assertTrue(sql.startswith('BEGIN;'))

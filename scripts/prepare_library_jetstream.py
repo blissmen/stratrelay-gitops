@@ -124,7 +124,9 @@ def generate(run_id, activation_time):
     network.append(resource('NetworkPolicy','library-event-activate-apiserver',spec={
         'podSelector':{'matchLabels':{'app.kubernetes.io/name':'library-event-activate'}},
         'policyTypes':['Egress'],'egress':[{'to':[{'ipBlock':{'cidr':'10.43.0.1/32'}}],
-            'ports':[{'port':443,'protocol':'TCP'}]}]}))
+            'ports':[{'port':443,'protocol':'TCP'}]},
+            {'to':[{'ipBlock':{'cidr':'10.10.10.10/32'}}],
+             'ports':[{'port':6443,'protocol':'TCP'}]}]}))
     (APP/'library-jetstream-network.yaml').write_text(yaml.safe_dump_all(network,sort_keys=False))
     # Source remains one reader. A merge requires provisioned credentials; missing
     # credentials would interrupt this shared Recreate collector, so draft is mandatory.
