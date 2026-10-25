@@ -24,6 +24,8 @@ spec:
         app.kubernetes.io/component: identity
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull
       containers:
         - name: iam-service
           image: ghcr.io/strat-relay/iam-service@sha256:4e5b2ee09575aa3c999b2d6bee35e946861263bd7c67d0b84304c5b63dc14b7b

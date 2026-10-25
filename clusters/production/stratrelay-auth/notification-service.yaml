@@ -24,6 +24,8 @@ spec:
         app.kubernetes.io/component: notifications
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull
       initContainers:
         - name: migrate
           image: ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076
