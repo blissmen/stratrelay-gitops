@@ -7,3 +7,4 @@ resources:
   - ../../apps/trading-platform
   - ../../apps/open-webui
   - ../../apps/stratrelay-portal
+  - ./flux-system
