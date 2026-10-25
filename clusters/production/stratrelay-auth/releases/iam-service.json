@@ -1,5 +1,5 @@
 {
   "repository": "strat-relay/iam-service",
   "commit": "26c079cbb637b73d0997cb3327cbbd7d13d643f5",
-  "image": "ghcr.io/strat-relay/iam-service@sha256:8c9936ed462d7080795d216b87f7bce12647151a4bd457dde15c1d6bedf75621"
+  "image": "ghcr.io/strat-relay/iam-service@sha256:4e5b2ee09575aa3c999b2d6bee35e946861263bd7c67d0b84304c5b63dc14b7b"
 }
