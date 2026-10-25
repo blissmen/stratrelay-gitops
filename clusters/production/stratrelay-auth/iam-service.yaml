@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-service
+  labels:
+    app.kubernetes.io/name: iam-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: identity
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: iam-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: iam-service
+        app.kubernetes.io/part-of: stratrelay
+        app.kubernetes.io/component: identity
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: iam-service
+          image: ghcr.io/strat-relay/iam-service:sha-6e6e41b
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: stratrelay-auth-config
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: iam-database-url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: iam-db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: iam-db-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-secret
+            - name: JWT_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-issuer
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: google-client-id
+                  optional: true
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: google-client-secret
+                  optional: true
+            - name: GOOGLE_REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: google-redirect-uri
+                  optional: true
+            - name: STRATRELAY_APP_URL
+              value: https://stratrelay.app
+            - name: STRATRELAY_ACTIVATION_URL
+              value: https://stratrelay.app/activate
+            - name: STRATRELAY_SUPPORT_EMAIL
+              value: support@stratrelay.app
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iam-service
+  labels:
+    app.kubernetes.io/name: iam-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: identity
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: iam-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

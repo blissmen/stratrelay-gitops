@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stratrelay-auth-config
+  labels:
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: auth-platform
+data:
+  NATS_URL: nats://trading-nats:4222
+  NATS_SUBJECTS: il.notifications.requested
+  NOTIFICATION_SERVICE_HOST: notification-service
+  NOTIFICATION_SERVICE_PORT: "8080"

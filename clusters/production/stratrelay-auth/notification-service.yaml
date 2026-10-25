@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: notifications
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notification-service
+        app.kubernetes.io/part-of: stratrelay
+        app.kubernetes.io/component: notifications
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        - name: migrate
+          image: ghcr.io/strat-relay/gonotification-service:sha-f63007a
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - |
+              until pg_isready -d "$DATABASE_URL"; do
+                echo "waiting for notification database..."
+                sleep 3
+              done
+              /app/scripts/run_migrations.sh "$DATABASE_URL" /app/db/migrations notification
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: notification-database-url
+      containers:
+        - name: notification-service
+          image: ghcr.io/strat-relay/gonotification-service:sha-f63007a
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: stratrelay-auth-config
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: notification-database-url
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: resend-api-key
+            - name: RESEND_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: resend-from
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 384Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: notifications
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: notification-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
