@@ -5,3 +5,10 @@ resources:
   - service.yaml
   - ingress.yaml
   - ingress-networkpolicy.yaml
+  - nginx-config.yaml
+
+patches:
+  - path: nginx-config-patch.yaml
+    target:
+      kind: Deployment
+      name: stratrelay-portal
