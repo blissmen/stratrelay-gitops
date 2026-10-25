@@ -26,7 +26,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
         - name: migrate
-          image: ghcr.io/strat-relay/gonotification-service@sha256:80ff63516eba78e7f85eb0799039306652ef3e9a562033bfb36c788ee634405d
+          image: ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
@@ -44,7 +44,7 @@ spec:
                   key: notification-database-url
       containers:
         - name: notification-service
-          image: ghcr.io/strat-relay/gonotification-service@sha256:80ff63516eba78e7f85eb0799039306652ef3e9a562033bfb36c788ee634405d
+          image: ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
