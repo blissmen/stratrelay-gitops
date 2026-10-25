@@ -26,7 +26,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: iam-service
-          image: ghcr.io/strat-relay/iam-service:sha-6e6e41b
+          image: ghcr.io/strat-relay/iam-service@sha256:8c9936ed462d7080795d216b87f7bce12647151a4bd457dde15c1d6bedf75621
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
