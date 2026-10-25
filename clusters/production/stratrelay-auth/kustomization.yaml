@@ -7,3 +7,4 @@ resources:
   - config.yaml
   - iam-service.yaml
   - notification-service.yaml
+  - network-policies.yaml
