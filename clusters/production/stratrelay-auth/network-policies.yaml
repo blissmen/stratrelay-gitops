@@ -21,6 +21,33 @@ spec:
     - ports:
         - port: 5432
           protocol: TCP
+    - ports:
+        - port: 4222
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stratrelay-auth-nats-ingress
+  namespace: trading
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: trading-nats
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - iam-service
+                  - notification-service
+      ports:
+        - port: 4222
+          protocol: TCP
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
