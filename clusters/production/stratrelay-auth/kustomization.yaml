@@ -8,3 +8,4 @@ resources:
   - iam-service.yaml
   - notification-service.yaml
   - network-policies.yaml
+  - payment-service.yaml
