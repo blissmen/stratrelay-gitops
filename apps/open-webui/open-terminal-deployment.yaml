@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: open-terminal
-          image: ghcr.io/open-webui/open-terminal:v0.14.0
+          image: ghcr.io/open-webui/open-terminal:0.14.0
           imagePullPolicy: IfNotPresent
           env:
             - name: OPEN_TERMINAL_API_KEY_FILE
