@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: stratrelay-portal
-          image: ghcr.io/strat-relay/portal@sha256:7be27448db0521c9458ae17270f95e3351c7665c8cde11ada2c4161c908a9651
+          image: ghcr.io/strat-relay/portal@sha256:7360e4ee8d4dfea94fd0141f4bac32265f0c4fc4caa7e0fc22857ce58d4eb1c5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
