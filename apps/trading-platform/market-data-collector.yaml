@@ -61,6 +61,11 @@ spec:
               value: "2"
             - name: MARKET_QUOTES_PER_PASS
               value: "10"
+            # Keep all due symbols inside the candle boundary. The collector's bridge gate
+            # remains the hard concurrency limit; this only enables independent snapshots to
+            # overlap instead of serializing several seconds of bridge latency per symbol.
+            - name: MARKET_DATA_BAR_WORKERS
+              value: "4"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
