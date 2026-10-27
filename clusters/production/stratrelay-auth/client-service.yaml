@@ -28,7 +28,7 @@ spec:
         - name: ghcr-pull
       containers:
         - name: client-service
-          image: ghcr.io/strat-relay/client-service@sha256:581b65cd4d62bcadf8e4ee1b7aacc86219c540c5ba27e5b82014ad753ac9b59d
+          image: ghcr.io/strat-relay/client-service@sha256:a3bf81098c874ae1667dc4d7d6b4f181875516efd1605e9d8f5db919a2345668
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
