@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-service
+  labels:
+    app.kubernetes.io/name: client-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: client-platform
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: client-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: client-service
+        app.kubernetes.io/part-of: stratrelay
+        app.kubernetes.io/component: client-platform
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: client-service
+          image: ghcr.io/strat-relay/client-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: client-database-url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: client-db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: client-db-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-secret
+            - name: JWT_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-issuer
+            - name: NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: nats-url
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: internal-api-key
+            - name: IAM_BASE_URL
+              value: http://iam-service.trading.svc.cluster.local:8080
+            - name: PLATFORM_API_URL
+              value: http://platform-api-router.trading.svc.cluster.local:22351
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-service
+  labels:
+    app.kubernetes.io/name: client-service
+    app.kubernetes.io/part-of: stratrelay
+    app.kubernetes.io/component: client-platform
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: client-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
