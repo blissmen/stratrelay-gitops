@@ -9,3 +9,4 @@ resources:
   - notification-service.yaml
   - network-policies.yaml
   - payment-service.yaml
+  - client-service.yaml

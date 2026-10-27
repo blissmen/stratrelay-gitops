@@ -68,6 +68,13 @@ spec:
                   key: stripe-webhook-secret
             - name: STRATRELAY_APP_URL
               value: https://stratrelay.app
+            - name: CLIENT_SERVICE_BASE_URL
+              value: http://client-service.trading.svc.cluster.local:8080
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: internal-api-key
           readinessProbe:
             httpGet:
               path: /health

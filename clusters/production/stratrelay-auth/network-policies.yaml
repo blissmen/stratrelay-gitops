@@ -11,6 +11,7 @@ spec:
           - iam-service
           - notification-service
           - payment-service
+          - client-service
   policyTypes:
     - Egress
   egress:
@@ -43,6 +44,7 @@ spec:
           - iam-service
           - notification-service
           - payment-service
+          - client-service
   policyTypes:
     - Ingress
   ingress:
@@ -75,6 +77,7 @@ spec:
                   - iam-service
                   - notification-service
                   - payment-service
+                  - client-service
       ports:
         - port: 4222
           protocol: TCP
@@ -100,6 +103,7 @@ spec:
                   - iam-service
                   - notification-service
                   - payment-service
+                  - client-service
       ports:
         - port: 5432
           protocol: TCP
