@@ -89,3 +89,29 @@ spec:
       port: 22351
       targetPort: http
       protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-api-router-ingress
+  namespace: trading
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: platform-api-router
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudflared
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: client-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-api
+      ports:
+        - port: 22351
+          protocol: TCP

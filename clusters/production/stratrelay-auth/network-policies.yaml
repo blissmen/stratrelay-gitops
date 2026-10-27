@@ -27,6 +27,12 @@ spec:
         - port: 4222
           protocol: TCP
     - ports:
+        - port: 22351
+          protocol: TCP
+    - ports:
+        - port: 8080
+          protocol: TCP
+    - ports:
         - port: 443
           protocol: TCP
 ---
