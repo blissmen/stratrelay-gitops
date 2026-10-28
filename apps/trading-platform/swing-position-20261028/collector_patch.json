@@ -1,0 +1,51 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "market-data-collector",
+    "namespace": "trading"
+  },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "collector",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:43fffa9ad435a35013027778240a3a60d22cb037ba3d771fc164d255eb923218",
+            "envFrom": [
+              {
+                "secretRef": {
+                  "name": "trading-runtime-endpoints"
+                }
+              },
+              {
+                "configMapRef": {
+                  "name": "trading-db-primary-prepared"
+                }
+              },
+              {
+                "secretRef": {
+                  "name": "library-event-collector"
+                }
+              }
+            ],
+            "env": [
+              {
+                "name": "MARKET_DATA_D1_SYMBOLS",
+                "value": "BTCUSDm"
+              },
+              {
+                "name": "MARKET_DATA_EVENT_MODE",
+                "value": "JETSTREAM_OUTBOX"
+              },
+              {
+                "name": "LIBRARY_EVENT_DATABASE",
+                "value": "trading_platform"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
