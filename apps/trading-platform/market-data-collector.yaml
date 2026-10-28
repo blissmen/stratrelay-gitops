@@ -48,6 +48,9 @@ spec:
                 name: trading-db-primary-prepared
           env:
             - {name: MARKET_DATA_EVENT_MODE, value: 'OFF'}
+            # Optional native UTC daily data for the five Swing research definitions.
+            # No observer activation, publication-mode change or execution permission.
+            - {name: MARKET_DATA_D1_SYMBOLS, value: 'BTCUSDm'}
             - name: MARKET_DATA_BRIDGE_URL
               value: http://10.10.10.100:22347/mcp
             - name: REDIS_PASSWORD
