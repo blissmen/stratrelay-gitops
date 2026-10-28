@@ -54,7 +54,6 @@ resources:
 
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
-  - path: swing-position-20261028/collector_patch.json
   - path: strategy-event-collector.patch.yaml
   - path: strategy-event-authority.patch.yaml
   - path: strategy-event-liquidity.patch.yaml
