@@ -1,0 +1,14 @@
+{
+  "source_commit": "16ec7b6d7d3621bfdf6519dd2e8c965eb5f3a032",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:43fffa9ad435a35013027778240a3a60d22cb037ba3d771fc164d255eb923218",
+  "source_hashes": {
+    "market_data_cache/daily.py": "03df0157fb95ddb16429670c457014ecbd917f737d97c2e998ef571a491cfe11",
+    "market_data_cache/canonical.py": "7ef2b1ff1fe4f1741d38647f3fc10af903f1de5b4a9ba361baa2b3d189da3776",
+    "market_data_cache/store.py": "f45e250c7f45cbf28293f4d6765f42e627ef7378da71af6c774e01a6812a44f7",
+    "market_data_cache/service.py": "d12630c1f2eb27011ca017e6af2f54068257106d041e6f5697bc9d93611d0731",
+    "research/swing_position_forward.py": "fe9162fb4d4f90cd78bb9b9596ac892f9a02c6fbcb29e297bbdc85bf3984768e",
+    "research/library_event_consumer.py": "13bb3de67e7a0efc0b7930e404cc6dc72f6b9c5766f4b7710584c89ab8cd596c",
+    "research/strategy_library_forward.py": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+    "research/strategy_library_registration.py": "624f0c8c4bf8353dc87c24b1593fbbcf83075af1a1ccd5f16cedc5ca56f9d0dc"
+  }
+}
