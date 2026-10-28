@@ -1,3 +1,11 @@
+# Recovery after missing credential binding
+
+The deployed orchestrator is blocked with CreateContainerConfigError: Secret library-event-orchestrator not found. The earlier activation PR was merged before its credential prerequisites were verified. This change pauses both Swing Deployments and the activation Job and removes the collector event patch from active Kustomize. The base collector retains event mode OFF without the new library-event-collector dependency. It preserves all manifests, SQL, source attestations, run data and broker execution settings.
+
+This is containment, not completed activation or credential provisioning. No Secret values are stored in Git. Do not resume or reuse an elapsed activation deadline. First inspect the old Job and database state through the approved cluster path. If the old run exists, verify and preserve it rather than overwriting or automatically rebinding its instances. If no run exists, generate a complete fresh run/T0 bundle only after credentials, effective grants, NATS ACLs, streams, relay and data readiness are verified. Missing binding names must not be satisfied with placeholder credentials or copied admin DSNs.
+
+Required live action: provision library-event-observer/orchestrator/collector and verify the relay using the approved credential mechanism. Authoring environment has no cluster credential/API access, so provisioning and current activation state remain unconfirmed.
+
 # Swing research activation
 
 DRAFT: cluster credentials, privileges, stream ACLs and data readiness are not verified from the authoring environment. Do not merge until these bindings are reviewed. No live activation is claimed.
