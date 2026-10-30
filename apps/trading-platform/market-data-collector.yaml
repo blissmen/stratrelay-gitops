@@ -71,6 +71,8 @@ spec:
               value: "1"
             - name: MARKET_DATA_BRIDGE_MAX_INFLIGHT
               value: "1"
+            - name: MARKET_DATA_PRIORITY_SYMBOLS
+              value: "USDJPYm"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
