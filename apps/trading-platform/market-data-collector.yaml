@@ -64,13 +64,13 @@ spec:
               value: "2"
             - name: MARKET_QUOTES_PER_PASS
               value: "10"
-            # The MT5 EA serves one historical range reliably at a time. Keep
-            # recovery serialized so a large gap cannot trip the bridge circuit
-            # breaker for every symbol.
+            # 3 concurrent workers allow BTC/XAU/USDJPY to progress in parallel.
+            # Circuit breaker trips only on EA_UNAVAILABLE (transport errors), not
+            # on TRUE_BAR_GAP (data-level); with a healthy bridge this is safe.
             - name: MARKET_DATA_BAR_WORKERS
-              value: "1"
+              value: "3"
             - name: MARKET_DATA_BRIDGE_MAX_INFLIGHT
-              value: "1"
+              value: "3"
             - name: MARKET_DATA_PRIORITY_SYMBOLS
               value: "USDJPYm"
           securityContext:
