@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - research-continuations-20261031.json
   - swing-position-20261028
   - platform-api.yaml
   - platform-api-router.yaml
@@ -54,6 +55,9 @@ resources:
 
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
+  - path: research-continuation-0.patch.yaml
+  - path: research-continuation-1.patch.yaml
+  - path: research-continuation-2.patch.yaml
   - path: strategy-event-collector.patch.yaml
   - path: strategy-event-authority.patch.yaml
   - path: strategy-event-liquidity.patch.yaml

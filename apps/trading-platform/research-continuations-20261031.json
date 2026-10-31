@@ -1,0 +1,42 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "library-canary-20261031-r1-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"library-canary-20261031-r1\",\n  \"activation_time\": 1793418300,\n  \"keys\": [\n    \"donchian_breakout\",\n    \"ema_pullback\",\n    \"fvg_retracement\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"USDJPY\": \"USDJPYm\",\n    \"XAUUSD\": \"XAUUSDm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"COMPLETED_CANDLE_RECONSTRUCTION\",\n  \"entry_quote_max_age_seconds\": null,\n  \"transport\": \"POLL\"\n}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "ict-smc-20261031-r1-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"ict-smc-20261031-r1\",\n  \"activation_time\": 1793418300,\n  \"keys\": [\n    \"judas_swing@V2\",\n    \"power_of_three@V1\",\n    \"order_block_retracement@V2\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"USDJPY\": \"USDJPYm\",\n    \"XAUUSD\": \"XAUUSDm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"entry_quote_max_age_seconds\": null,\n  \"transport\": \"POLL\"\n}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "donchian-v2-20261031-r1-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"donchian-v2-20261031-r1\",\n  \"activation_time\": 1793418300,\n  \"keys\": [\n    \"donchian_breakout@V2\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"USDJPY\": \"USDJPYm\",\n    \"XAUUSD\": \"XAUUSDm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"entry_quote_max_age_seconds\": null,\n  \"transport\": \"POLL\"\n}"
+      }
+    }
+  ]
+}
