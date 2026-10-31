@@ -36,7 +36,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: router
-          image: ghcr.io/strat-relay/trading-platform-api-router@sha256:f492a2c6e41de495a9f20a51ab9c7a67bf57bbf8acdc3338aec830492f3e482d
+          image: ghcr.io/strat-relay/trading-platform-api-router@sha256:4084ce785d3d0606d6d2917321a32dd2aec0e39d4882774202995bdef4f37cbb
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
