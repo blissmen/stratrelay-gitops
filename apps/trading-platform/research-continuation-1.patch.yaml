@@ -7,12 +7,55 @@ spec:
   template:
     spec:
       containers:
-        - name: observer
-          image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:0318108dd91b4fb6ef3e2229b129a46d71f1dca7f67b021998d537b9dbfbcfbf"
+      - name: observer
+        image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735"
       volumes:
+      - name: manifest
+        configMap:
+          name: ict-smc-20261031-r1-manifest
+      - name: binding-preflight
+        configMap:
+          name: continuation-binding-preflight-20261031-r2
+      initContainers:
+      - name: verify-continuation-binding
+        image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735"
+        command:
+        - python
+        - /recovery/continuation_binding_preflight.py
+        envFrom:
+        - secretRef:
+            name: strategy-library-observer-db
+        env:
+        - name: PYTHONPATH
+          value: /app
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+        - name: PGOPTIONS
+          value: -c default_transaction_read_only=on -c statement_timeout=10000
+        - name: PGCONNECT_TIMEOUT
+          value: '10'
+        - name: EXECUTION_AUTHORITY_MODE
+          value: DISABLED
+        volumeMounts:
         - name: manifest
-          configMap:
-            name: ict-smc-20261031-r1-manifest
+          mountPath: /config
+          readOnly: true
+        - name: binding-preflight
+          mountPath: /recovery
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
 
 # stratrelay-release: frozen
-# Checkpoint-bound continuation: no bulk release image changes.
+# Resume only after read-only saved-binding verification.

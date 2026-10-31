@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - continuation-binding-preflight-20261031-r2.json
   - donchian-binding-preflight-20261031-r1.json
   - research-observer-diagnostics-20261031-r2.json
   - research-observer-diagnostics-20261031.json
@@ -68,4 +69,5 @@ patches:
   - path: strategy-event-liquidity.patch.yaml
   - path: strategy-event-canonical-relay.patch.yaml
   - path: strategy-event-context.patch.yaml
+
 
