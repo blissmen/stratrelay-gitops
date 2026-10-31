@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:a8fc3ae90749aaabc5907891f1cf32c94eddfdf57d809c684142c0509047bebe
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:18e10be5d06987f425f08e91b22653f7abe2ad6f899b0cc2c976d7f543a36b65
       volumes:
         - name: manifest
           configMap:
