@@ -10,7 +10,7 @@ from pathlib import Path
 import shutil
 
 
-def stage(bundle,root):
+def stage(bundle,root,prior_bundles=()):
     cfg=json.loads((bundle/'run.json').read_text())
     release=json.loads((bundle/'release.json').read_text())
     run=cfg['run_id'];image=release['image']
@@ -63,6 +63,12 @@ except Exception as exc:
     old=json.loads((root/'apps/trading-platform/swing-position-20261028/workload.json').read_text())
     archived=[x for x in old['items'] if x['kind'] in ('ConfigMap','Job')]
     assert all(x['spec'].get('suspend') is True for x in archived if x['kind']=='Job')
+    for prior in prior_bundles:
+        previous=json.loads((prior/'workload.json').read_text())
+        archived.extend(x for x in previous['items'] if x['kind']=='ConfigMap')
+        archived.append(json.loads((prior/'activation-job.json').read_text()))
+    identities=[(x['kind'],x['metadata']['name']) for x in archived]
+    if len(identities)!=len(set(identities)):raise ValueError('duplicate historical resource identity')
     # A shared relay transports immutable outbox IDs, not one strategy run.
     # Never retain the legacy October-22 activation gate or source image.
     relay_gate='''import asyncio,json,os,sys
@@ -103,5 +109,6 @@ except Exception as exc:
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--bundle',type=Path,required=True)
-    p.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2]);a=p.parse_args()
-    stage(a.bundle,a.root)
+    p.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
+    p.add_argument('--prior-bundle',type=Path,action='append',default=[]);a=p.parse_args()
+    stage(a.bundle,a.root,a.prior_bundle)
