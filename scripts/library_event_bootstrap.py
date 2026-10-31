@@ -124,7 +124,7 @@ def bootstrap(kubeconfig,context,source,apply=False):
         for component in COMPONENTS:
             role=role_name(component);name='library-event-'+component
             item=result['components'][component]={'role':role,'secret':name,'role_created':False,'secret_created':False}
-            exists=json.loads(call(pg,"SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+role+"');"))
+            exists=json.loads(call(pg,"SELECT to_json(EXISTS(SELECT 1 FROM pg_roles WHERE rolname='"+role+"'));"))
             secret=get('secret',name,True)
             if exists and secret is None:raise ValueError('UNPAIRED_ROLE_REQUIRES_REVIEW')
             expected_keys={'LIBRARY_EVENT_DSN'} | (set(nats_data) if component!='collector' else set())

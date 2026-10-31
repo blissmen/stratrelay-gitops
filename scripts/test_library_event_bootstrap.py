@@ -30,7 +30,9 @@ class BootstrapTests(unittest.TestCase):
                     return SimpleNamespace(returncode=1,stdout='',stderr='NotFound')
                 if args[-1]==b.ADMIN_COMMAND:
                     if 'json_build_object' in input:return ok({'database':b.DATABASE,'primary':True,'migrations':checks})
-                    if 'SELECT EXISTS' in input:return ok(role_exists)
+                    if 'pg_roles' in input:
+                        self.assertIn('to_json(EXISTS',input)
+                        return ok(role_exists)
                     self.assertIn('CREATE ROLE library_event_',input)
                     # Role creation must never precede its durable credential.
                     role=input.split('CREATE ROLE ')[1].split()[0]
