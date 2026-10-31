@@ -1,0 +1,80 @@
+name: Prepare MT5 counterpart forward activation
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_image:
+        description: Built main-release trading-platform-runtime image with sha256 digest
+        required: true
+        type: string
+permissions:
+  contents: write
+  pull-requests: write
+  packages: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test staging guards
+        run: python -m unittest discover -s scripts -p test_stage_mt5_counterparts.py -v
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate fresh plans from the built runtime and stage a review branch
+        env:
+          RUNTIME_IMAGE: ${{ inputs.runtime_image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RUNTIME_IMAGE" =~ ^ghcr\.io/strat-relay/trading-platform-runtime@sha256:[0-9a-f]{64}$ ]]
+          docker pull "$RUNTIME_IMAGE"
+          source_repo=$(docker image inspect "$RUNTIME_IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.source" }}')
+          [[ "$source_repo" == 'https://github.com/strat-relay/platform-tools' ]]
+          revision=$(docker image inspect "$RUNTIME_IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          stamp=$(date -u +%Y%m%dt%H%M%S)
+          t0=$(( ($(date -u +%s) / 900 + 1) * 900 + 3600 ))
+          bundle_root="$RUNNER_TEMP/mt5-counterpart-bundles"
+          mkdir -p "$bundle_root"
+          chmod 777 "$bundle_root"
+          for group in intraday daily; do
+            run_id="mt5-$group-$stamp-${revision:0:7}"
+            docker run --rm --entrypoint python -v "$bundle_root:/bundle" "$RUNTIME_IMAGE" \
+              -m research.mt5_counterpart_forward plan --group "$group" \
+              --run-id "$run_id" --activation-time "$t0" --image "$RUNTIME_IMAGE" --output "/bundle/$group"
+            python scripts/stage_mt5_counterparts.py --bundle "$bundle_root/$group" --root .
+          done
+          echo "MT5_BRANCH=activate/mt5-counterparts-$stamp" >> "$GITHUB_ENV"
+          echo "MT5_T0=$t0" >> "$GITHUB_ENV"
+          echo "MT5_SOURCE=$revision" >> "$GITHUB_ENV"
+          echo "MT5_FORWARD_T0_EPOCH=$t0" >> "$GITHUB_STEP_SUMMARY"
+          echo 'This preparation does not contact Kubernetes or enable broker execution.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Open activation PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$MT5_BRANCH"
+          git add apps/trading-platform
+          git commit -m 'Stage fresh MT5 research counterpart runs'
+          git push origin "$MT5_BRANCH"
+          body="$RUNNER_TEMP/mt5-counterpart-pr.md"
+          cat > "$body" <<EOF
+          Register and activate eight MT5-adapted research counterparts through the existing event-driven observer/orchestrator.
+
+          Runtime source: $MT5_SOURCE
+          Fresh T0 epoch: $MT5_T0
+
+          Five M15/H4 counterparts observe BTCUSD/XAUUSD/USDJPY; three D1 counterparts observe BTCUSD only. Execution remains OFF/ineligible. Existing observers, run state and pinned images remain unchanged. Provisioning uses existing Secret references and guarded atomic SQL.
+
+          Verify library-event-observer/orchestrator Secrets and MARKET_EVIDENCE/LIBRARY_RESEARCH credentials before merge. Merge before T0; if missed, rerun preparation for new identities. Never edit the old binding or clear state.
+          EOF
+          gh pr create --base main --head "$MT5_BRANCH" --title 'Activate eight MT5 research counterparts' --body-file "$body"
