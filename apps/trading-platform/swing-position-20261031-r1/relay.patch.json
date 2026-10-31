@@ -1,0 +1,27 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "library-event-relay",
+    "namespace": "trading"
+  },
+  "spec": {
+    "replicas": 1,
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "relay",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:9945cf4185579d721c9de68af0aab34352aa674ac878d60a26c678c0143bbd19",
+            "env": [
+              {
+                "name": "EXECUTION_AUTHORITY_MODE",
+                "value": "DISABLED"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
