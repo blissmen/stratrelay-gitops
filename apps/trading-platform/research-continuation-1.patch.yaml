@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ict-smc-forward-v1-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      containers:
+        - name: observer
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:3804f52805c806374d107eefde544c5ebbe34ff00327623abeee903453383687
+      volumes:
+        - name: manifest
+          configMap:
+            name: ict-smc-20261031-r1-manifest
