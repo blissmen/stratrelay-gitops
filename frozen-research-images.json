@@ -2,6 +2,15 @@
   "schema": "stratrelay-frozen-research-images.v1",
   "workloads": [
     {
+      "path": "apps/trading-platform/swing-position-20261031-r1/workload.json",
+      "run_id": "swing-position-20261031-r1",
+      "binding": "14e43642deb477650311c199bebf53d6fe0be2660411d8118681b8e593d676af",
+      "status": "FRESH_RUN_RESEARCH_ONLY",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:9945cf4185579d721c9de68af0aab34352aa674ac878d60a26c678c0143bbd19"
+      ]
+    },
+    {
       "path": "apps/trading-platform/ict-smc-forward-20261018-1845.yaml",
       "run_id": "ict-smc-forward-20261019-0226",
       "binding": "d7b4aaca5a90b8c36af548746b7161f3f64fb2a4ab4d34c0642418254b6fb873",
