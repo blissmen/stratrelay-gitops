@@ -1,0 +1,23 @@
+{
+  "source_repository": "strat-relay/platform-tools",
+  "source_commit": "6f60d941d11644e313af1a73aa1a3d0466494777",
+  "release_run": "https://github.com/strat-relay/platform-tools/actions/runs/41223092115",
+  "scope": ["market-data-collector", "platform-signals-api"],
+  "images": {
+    "market-data-collector": "ghcr.io/strat-relay/trading-platform-runtime@sha256:f25fbda211144be613866bb50cb120f9c6b2844d697a29abd5ae6f551a9aaa6f",
+    "platform-signals-api": "ghcr.io/strat-relay/trading-platform-control-api@sha256:d04856bdd1c91b22266b3176f8fa07c9dca538b38ba829f3bfeacd2502f4eaaf"
+  },
+  "migration": {
+    "version": "085",
+    "filename": "085_signal_analysis_snapshot_lookup.sql",
+    "sha256": "3e9a7fb31c759a87ab1c86cbf1c59d3bd97036c289b3f965a6b87a97c2351804",
+    "verified_applied": true,
+    "effect": "snapshot lookup index and existing read-only-role SELECT only"
+  },
+  "flags": {
+    "MARKET_DATA_ARCHIVE_ENABLED": true,
+    "SIGNAL_ANALYSIS_CANDLE_RECOVERY": true
+  },
+  "unchanged": ["strategy configurations", "memberships", "frozen observer images", "execution", "risk", "trade management", "outcome semantics", "chart library", "overlays"],
+  "rollback": "Revert these two pins or disable their scoped feature flags. Preserve all archived data and migration 085."
+}

@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:f7d8c61f085d775e52be694f020e9badf8c29e434bc75aa31308ab72eae0b515
+          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:d04856bdd1c91b22266b3176f8fa07c9dca538b38ba829f3bfeacd2502f4eaaf
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -84,6 +84,12 @@ spec:
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
             - name: BROKER_VIEW_MAX_AGE_SECONDS
               value: "45"
+            # Recovery reads only PostgreSQL evidence and the existing Redis cache.
+            # This follows REDIS_PASSWORD so Kubernetes expands it before use.
+            - name: SIGNAL_ANALYSIS_CANDLE_RECOVERY
+              value: "true"
+            - name: SIGNAL_ANALYSIS_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           volumeMounts:
             - name: platform-config
               mountPath: /etc/platform-config
