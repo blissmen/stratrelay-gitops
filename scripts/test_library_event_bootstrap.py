@@ -11,7 +11,7 @@ import library_event_bootstrap as b
 
 
 class BootstrapTests(unittest.TestCase):
-    def execute(self,apply=False,role_exists=False,fail_secret=False,probe=True):
+    def execute(self,apply=False,role_exists=False,fail_secret=False,probe=True,existing=None):
         self.calls=[];self.created={}
         with tempfile.TemporaryDirectory() as root:
             migrations=Path(root)/'postgres/migrations';migrations.mkdir(parents=True)
@@ -26,6 +26,7 @@ class BootstrapTests(unittest.TestCase):
                     kind,name=args[args.index('get')+1:][:2]
                     if kind=='namespace':return ok({'metadata':{'uid':b.NAMESPACE_UID}})
                     if name=='trading-nats-auth':return ok({'data':{k:base64.b64encode(v.encode()).decode() for k,v in [('NATS_USER','test-user'),('NATS_PASSWORD','hidden-nats-password')]}})
+                    if existing and name in existing:return ok(existing[name])
                     return SimpleNamespace(returncode=1,stdout='',stderr='NotFound')
                 if args[-1]==b.ADMIN_COMMAND:
                     if 'json_build_object' in input:return ok({'database':b.DATABASE,'primary':True,'migrations':checks})
@@ -72,6 +73,14 @@ class BootstrapTests(unittest.TestCase):
         result=self.execute(apply=True,probe=False)
         self.assertEqual(result['reason'],'LOGIN_OR_PRIVILEGE_GATE_FAILED')
         self.assertEqual(len(self.created),1)
+
+    def test_retry_reuses_all_existing_credentials_without_writes(self):
+        self.execute(apply=True)
+        existing=self.created.copy()
+        result=self.execute(apply=True,role_exists=True,existing=existing)
+        self.assertEqual(result['status'],'CREDENTIALS_VERIFIED')
+        self.assertFalse(self.created)
+        self.assertFalse(any('CREATE ROLE' in (payload or '') for _,payload in self.calls))
 
     def test_publication_grants_have_no_managed_or_broker_writes(self):
         sql=b.role_sql('orchestrator','a'*64)
