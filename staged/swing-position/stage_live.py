@@ -10,7 +10,7 @@ from pathlib import Path
 import shutil
 
 
-def stage(bundle,root):
+def stage(bundle,root,prior_bundles=()):
     cfg=json.loads((bundle/'run.json').read_text())
     release=json.loads((bundle/'release.json').read_text())
     run=cfg['run_id'];image=release['image']
@@ -63,9 +63,40 @@ except Exception as exc:
     old=json.loads((root/'apps/trading-platform/swing-position-20261028/workload.json').read_text())
     archived=[x for x in old['items'] if x['kind'] in ('ConfigMap','Job')]
     assert all(x['spec'].get('suspend') is True for x in archived if x['kind']=='Job')
+    for prior in prior_bundles:
+        previous=json.loads((prior/'workload.json').read_text())
+        archived.extend(x for x in previous['items'] if x['kind']=='ConfigMap')
+        archived.append(json.loads((prior/'activation-job.json').read_text()))
+    identities=[(x['kind'],x['metadata']['name']) for x in archived]
+    if len(identities)!=len(set(identities)):raise ValueError('duplicate historical resource identity')
+    # A shared relay transports immutable outbox IDs, not one strategy run.
+    # Never retain the legacy October-22 activation gate or source image.
+    relay_gate='''import asyncio,json,os,sys
+import nats
+from research.library_event_store import open_connection
+from research.library_event_service import check_streams
+async def verify():
+    if os.environ.get('EXECUTION_AUTHORITY_MODE')!='DISABLED':
+        raise ValueError('research authority must remain disabled')
+    with open_connection() as conn:
+        row=conn.execute("SELECT has_table_privilege(current_user,'research.library_stream_outbox','SELECT'), has_column_privilege(current_user,'research.library_stream_outbox','published_at','UPDATE'),extract(epoch FROM clock_timestamp()-min(created_at)) FROM research.library_stream_outbox WHERE published_at IS NULL").fetchone()
+        if not all(row[:2]):raise ValueError('relay privileges unavailable')
+        if len(sys.argv)>1 and sys.argv[1]=='health' and row[2] is not None and row[2]>30:
+            raise ValueError('relay backlog')
+    nc=await nats.connect(os.environ['NATS_URL'],user=os.environ['P2_NATS_USER'],password=os.environ['P2_NATS_PASSWORD'],connect_timeout=3,max_reconnect_attempts=0)
+    try:await check_streams(nc.jetstream())
+    finally:await nc.close()
+try:
+    asyncio.run(verify());print(json.dumps({'status':'RELAY_PREREQUISITES_VERIFIED','broker_writes':0}))
+except Exception as exc:
+    print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__}));raise SystemExit(1)
+'''
     relay={'apiVersion':'apps/v1','kind':'Deployment','metadata':{'name':'library-event-relay','namespace':'trading'},
-        'spec':{'replicas':1,'template':{'spec':{'containers':[{'name':'relay','image':image,
-            'env':[{'name':'EXECUTION_AUTHORITY_MODE','value':'DISABLED'}]}]}}}}
+        'spec':{'replicas':1,'template':{'spec':{
+            'initContainers':[{'name':'verify-activation','image':image,'command':['python','-c',relay_gate]}],
+            'containers':[{'name':'relay','image':image,
+                'readinessProbe':{'exec':{'command':['python','-c',relay_gate,'health']},'periodSeconds':30,'timeoutSeconds':15,'failureThreshold':3},
+                'env':[{'name':'EXECUTION_AUTHORITY_MODE','value':'DISABLED'}]}]}}}}
     def write(name,value):
         (dest/name).write_text(json.dumps(value,indent=2)+'\n')
     write('workload.json',workload);write('activation-job.json',job)
@@ -78,5 +109,6 @@ except Exception as exc:
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--bundle',type=Path,required=True)
-    p.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2]);a=p.parse_args()
-    stage(a.bundle,a.root)
+    p.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
+    p.add_argument('--prior-bundle',type=Path,action='append',default=[]);a=p.parse_args()
+    stage(a.bundle,a.root,a.prior_bundle)
