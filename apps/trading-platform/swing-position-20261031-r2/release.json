@@ -1,0 +1,19 @@
+{
+  "source_commit": "ecf400f2877b2155d5eae370d7cb9adc98be2c59",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+  "source_hashes": {
+    "market_data_cache/daily.py": "03df0157fb95ddb16429670c457014ecbd917f737d97c2e998ef571a491cfe11",
+    "market_data_cache/canonical.py": "7ef2b1ff1fe4f1741d38647f3fc10af903f1de5b4a9ba361baa2b3d189da3776",
+    "market_data_cache/store.py": "f45e250c7f45cbf28293f4d6765f42e627ef7378da71af6c774e01a6812a44f7",
+    "market_data_cache/service.py": "9da349e7515549c8feb3a1249bb3d1226dc873a42fe7c9a6b3d7f17eec47975e",
+    "research/swing_position_forward.py": "328fac0c8d6791097f400977ebf3f7d68ead9ceb106217e9cdfdac1eb63b444e",
+    "research/library_event_consumer.py": "c54f58ffdaf76739a0e0df73a657fe08d3d65f2a009935aa67a754c8d48e6710",
+    "research/library_event_store.py": "ee75fea42eb6924a54aa11ed0d72fbcee32591dd4c2cfc6035aed8ca64435581",
+    "research/library_event_service.py": "edc934a464e2a2b622b463dfb6861bbf722120022780174cf58c4dc9d1649744",
+    "orchestration/canonical_signal_publisher.py": "91b9b420e337ffcede7a908e24f247edcbe01fc464e22c78d3348f76d74bf02b",
+    "migration/signal.py": "647ec6aa61b6e5cd03bfe2757a8b1fbaa6e6a9acc811710c3ca9751f6796da01",
+    "postgres/migrations/083_library_publication_locks.sql": "6fb41c50c026482a1bea95e752ffa90d3c8e62d39f2673e6db515e852873b2c3",
+    "research/strategy_library_forward.py": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+    "research/strategy_library_registration.py": "624f0c8c4bf8353dc87c24b1593fbbcf83075af1a1ccd5f16cedc5ca56f9d0dc"
+  }
+}

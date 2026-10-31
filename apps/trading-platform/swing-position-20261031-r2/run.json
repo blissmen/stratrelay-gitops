@@ -1,0 +1,23 @@
+{
+  "schema": "library-forward-observation.v1",
+  "execution_eligible": false,
+  "run_id": "swing-position-20261031-r2",
+  "activation_time": 1793448600,
+  "keys": [
+    "h4_structure_pullback",
+    "daily_channel_breakout",
+    "daily_ema_pullback",
+    "weekly_range_break_retest",
+    "h4_momentum_continuation"
+  ],
+  "symbols": {
+    "BTCUSD": "BTCUSDm"
+  },
+  "history": 320,
+  "max_age_seconds": 330,
+  "prospective_max_delay": 120,
+  "max_retained_bars": 10000,
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+  "entry_quote_max_age_seconds": 5,
+  "transport": "JETSTREAM"
+}

@@ -4,7 +4,7 @@ resources:
   - research-observer-diagnostics-20261031-r2.json
   - research-observer-diagnostics-20261031.json
   - research-continuations-20261031.json
-  - swing-position-20261031-r1
+  - swing-position-20261031-r2
   - platform-api.yaml
   - platform-api-router.yaml
   - platform-realtime-api.yaml
@@ -57,8 +57,8 @@ resources:
 
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
-  - path: swing-position-20261031-r1/collector.patch.json
-  - path: swing-position-20261031-r1/relay.patch.json
+  - path: swing-position-20261031-r2/collector.patch.json
+  - path: swing-position-20261031-r2/relay.patch.json
   - path: research-continuation-0.patch.yaml
   - path: research-continuation-1.patch.yaml
   - path: research-continuation-2.patch.yaml

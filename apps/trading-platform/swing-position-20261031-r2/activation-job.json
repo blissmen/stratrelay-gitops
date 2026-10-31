@@ -1,0 +1,101 @@
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "name": "swing-position-20261031-r2-activate",
+    "namespace": "trading"
+  },
+  "spec": {
+    "backoffLimit": 0,
+    "activeDeadlineSeconds": 120,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app.kubernetes.io/name": "swing-position-20261031-r2-activate"
+        }
+      },
+      "spec": {
+        "restartPolicy": "Never",
+        "automountServiceAccountToken": false,
+        "imagePullSecrets": [
+          {
+            "name": "ghcr-pull"
+          }
+        ],
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 65532,
+          "runAsGroup": 65532,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "activate",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+            "command": [
+              "python",
+              "-c",
+              "import os\nfrom pathlib import Path\nimport psycopg\ntry:\n    with psycopg.connect(host='trading-postgres.trading.svc.cluster.local',port=5432,\n            dbname='trading_platform',user=os.environ['PGUSER'],password=os.environ['PGPASSWORD'],\n            connect_timeout=5) as conn:\n        conn.execute(Path('/config/activation.sql').read_text())\n    print('SWING_GUARDED_ACTIVATION_COMMITTED',flush=True)\nexcept Exception as exc:\n    print('SWING_ACTIVATION_BLOCKED '+type(exc).__name__,flush=True)\n    raise SystemExit(1)\n"
+            ],
+            "env": [
+              {
+                "name": "PGUSER",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "trading-postgres-auth",
+                    "key": "POSTGRES_ADMIN_USER"
+                  }
+                }
+              },
+              {
+                "name": "PGPASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "trading-postgres-auth",
+                    "key": "POSTGRES_ADMIN_PASSWORD"
+                  }
+                }
+              }
+            ],
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            },
+            "resources": {
+              "requests": {
+                "cpu": "25m",
+                "memory": "64Mi"
+              },
+              "limits": {
+                "cpu": "200m",
+                "memory": "128Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "config",
+                "mountPath": "/config",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config",
+            "configMap": {
+              "name": "swing-position-20261031-r2-manifest"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

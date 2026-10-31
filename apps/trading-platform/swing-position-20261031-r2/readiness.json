@@ -1,0 +1,28 @@
+{
+  "status": "PREPARED_NOT_ACTIVATED",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+  "run_id": "swing-position-20261031-r2",
+  "activation_time": 1793448600,
+  "binding": "8a897aa4853715673f5e31841ea02439cec1502c2253666dc5c3954c98a8f963",
+  "keys": [
+    "h4_structure_pullback",
+    "daily_channel_breakout",
+    "daily_ema_pullback",
+    "weekly_range_break_retest",
+    "h4_momentum_continuation"
+  ],
+  "execution_eligible": false,
+  "broker_writes": 0,
+  "prerequisites": [
+    "migration 070",
+    "dedicated credentials/ACLs",
+    "provisioned bounded streams",
+    "legacy orchestrator skip guard deployed",
+    "old run consumers quiesced",
+    "existing frozen research registrations and memberships",
+    "future T0 activation transaction",
+    "native UTC 24/7 D1 warm-up (320 bars), H1/H4 warm-up, fresh bid/ask",
+    "reviewed image/source attestation; no in-container source edits",
+    "collector optional D1 enabled for BTCUSDm only"
+  ]
+}
