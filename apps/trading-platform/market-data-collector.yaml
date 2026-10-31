@@ -49,6 +49,10 @@ spec:
             - configMapRef:
                 name: trading-db-primary-prepared
           env:
+            # Phase 1 preflight passed against this collector's actual primary
+            # target and privileges. Existing immutable runtime already supports
+            # commit-before-cache archival; do not repin frozen strategy images.
+            - {name: MARKET_DATA_ARCHIVE_ENABLED, value: 'true'}
             - {name: MARKET_DATA_EVENT_MODE, value: 'OFF'}
             # Optional native UTC daily data for the five Swing research definitions.
             # No observer activation, publication-mode change or execution permission.
