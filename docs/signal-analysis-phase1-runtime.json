@@ -1,11 +1,11 @@
 {
   "source_repository": "strat-relay/platform-tools",
-  "source_commit": "6f60d941d11644e313af1a73aa1a3d0466494777",
-  "release_run": "https://github.com/strat-relay/platform-tools/actions/runs/41223092115",
+  "source_commit": "87f96698d7ea4797eacbfdfde432c4b1267ff5b6",
+  "release_run": "https://github.com/strat-relay/platform-tools/actions/runs/41224098824",
   "scope": ["market-data-collector", "platform-signals-api"],
   "images": {
-    "market-data-collector": "ghcr.io/strat-relay/trading-platform-runtime@sha256:f25fbda211144be613866bb50cb120f9c6b2844d697a29abd5ae6f551a9aaa6f",
-    "platform-signals-api": "ghcr.io/strat-relay/trading-platform-control-api@sha256:d04856bdd1c91b22266b3176f8fa07c9dca538b38ba829f3bfeacd2502f4eaaf"
+    "market-data-collector": "ghcr.io/strat-relay/trading-platform-runtime@sha256:a4dbd9c71214e0afa0da808132ab2372967052a452bec71fa9fb262b5fa3dad8",
+    "platform-signals-api": "ghcr.io/strat-relay/trading-platform-control-api@sha256:5fcd346a2483e636d142abbb470292188a1a8c767079d1ddd554223262d399de"
   },
   "migration": {
     "version": "085",
