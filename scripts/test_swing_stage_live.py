@@ -49,5 +49,17 @@ class StageTests(unittest.TestCase):
         self.assertTrue(all(e['valueFrom']['secretKeyRef']['name']=='trading-postgres-auth' for e in c['env']))
         self.assertNotIn('postgresql://',json.dumps(job))
 
+    def test_dedicated_orchestrator_enables_both_canonical_flags_not_execution(self):
+        workload=json.loads((self.output/'workload.json').read_text())
+        dep=next(x for x in workload['items'] if x['kind']=='Deployment' and x['metadata']['name']=='swing-position-v1-orchestrator')
+        pod=dep['spec']['template']['spec']
+        for c in pod['containers']+pod['initContainers']:
+            env={e['name']:e.get('value') for e in c['env']}
+            self.assertEqual(env['SIGNAL_DB_PRIMARY_ENABLED'],'true')
+            self.assertEqual(env['SIGNAL_JETSTREAM_PRIMARY_ENABLED'],'true')
+            self.assertEqual(env['EXECUTION_AUTHORITY_MODE'],'DISABLED')
+        self.assertIn('require_schema()',pod['initContainers'][0]['command'][2])
+        compile(pod['initContainers'][0]['command'][2],'<authority-gate>','exec')
+
 
 if __name__=='__main__':unittest.main()

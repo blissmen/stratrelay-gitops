@@ -25,6 +25,29 @@ def stage(bundle,root,prior_bundles=()):
     cm['data']['activation.sql']=(bundle/'activation.sql').read_text()
     cm['data']['release.json']=(bundle/'release.json').read_text()
     cm['immutable']=True
+    for dep in workload['items']:
+        if dep['kind']!='Deployment' or dep['metadata']['name']!='swing-position-v1-orchestrator':continue
+        pod=dep['spec']['template']['spec']
+        # Existing DB_PRIMARY authority requires BOTH canonical-primary flags.
+        # These are signal transport flags, never broker execution authority.
+        for c in pod['containers']+pod['initContainers']:
+            for e in c['env']:
+                if e['name']=='SIGNAL_JETSTREAM_PRIMARY_ENABLED':e['value']='true'
+        guard='''import os
+from migration.flags import SignalAuthorityFlags,SignalAuthorityMode
+from orchestration.canonical_signal_publisher import CanonicalSignalPublisher
+from research.library_event_store import open_connection
+from research.swing_position_forward import main
+if SignalAuthorityFlags.mode_from_env() is not SignalAuthorityMode.DB_PRIMARY:
+    raise ValueError('canonical research orchestrator requires DB_PRIMARY')
+if os.environ.get('EXECUTION_AUTHORITY_MODE')!='DISABLED':
+    raise ValueError('research execution authority must remain disabled')
+with open_connection() as conn:
+    CanonicalSignalPublisher(conn,cutoff_id=os.environ['SIGNAL_CUTOFF_ID'],
+        cutoff_utc=os.environ['SIGNAL_CUTOFF_UTC'],restricted_research=True).require_schema()
+main()
+'''
+        pod['initContainers'][0]['command']=['python','-c',guard,'verify','--manifest','/config/run.json']
     job_name=run+'-activate';labels={'app.kubernetes.io/name':job_name}
     activation_code='''import os
 from pathlib import Path
