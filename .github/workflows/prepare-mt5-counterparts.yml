@@ -1,5 +1,7 @@
 name: Prepare MT5 counterpart forward activation
 on:
+  push:
+    branches: ['prepare/mt5-counterparts-forward-20261031']
   workflow_dispatch:
     inputs:
       runtime_image:
@@ -15,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -27,7 +31,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate fresh plans from the built runtime and stage a review branch
         env:
-          RUNTIME_IMAGE: ${{ inputs.runtime_image }}
+          RUNTIME_IMAGE: ${{ inputs.runtime_image || 'ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -37,6 +41,7 @@ jobs:
           [[ "$source_repo" == 'https://github.com/strat-relay/platform-tools' ]]
           revision=$(docker image inspect "$RUNTIME_IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
           [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$revision" == "5ec8c134fa8bbfec1d0a79acd91b0902ea48a760" ]]
           stamp=$(date -u +%Y%m%dt%H%M%S)
           t0=$(( ($(date -u +%s) / 900 + 1) * 900 + 3600 ))
           bundle_root="$RUNNER_TEMP/mt5-counterpart-bundles"
