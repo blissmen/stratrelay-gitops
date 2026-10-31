@@ -1,0 +1,28 @@
+{
+  "status": "PREPARED_NOT_ACTIVATED",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+  "run_id": "mt5-daily-20261031t181132-5ec8c13",
+  "activation_time": 1793471220,
+  "binding": "03bbde85c0b4e1202073d139f9614558a872b045495394524fbbb3712cd1553b",
+  "keys": [
+    "ema_50_200@V2",
+    "daily_ema_pullback@V2",
+    "daily_channel_breakout@V2"
+  ],
+  "execution_eligible": false,
+  "broker_writes": 0,
+  "prerequisites": [
+    "migration 070",
+    "dedicated credentials/ACLs",
+    "provisioned bounded streams",
+    "legacy orchestrator skip guard deployed",
+    "old run consumers quiesced",
+    "existing frozen research registrations and memberships",
+    "future T0 activation transaction"
+  ],
+  "family_assignments": {
+    "ema_50_200@V2": "Trend Following",
+    "daily_ema_pullback@V2": "Swing Position",
+    "daily_channel_breakout@V2": "Swing Position"
+  }
+}

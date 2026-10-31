@@ -1,0 +1,25 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "market-data-collector",
+    "namespace": "trading"
+  },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "collector",
+            "env": [
+              {
+                "name": "MARKET_DATA_EVENT_SYMBOLS",
+                "value": "BTCUSDm,XAUUSDm,USDJPYm"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
