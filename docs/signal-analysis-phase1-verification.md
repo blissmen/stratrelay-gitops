@@ -45,7 +45,7 @@ Bounded recovery then used only seven actual bars from immutable snapshot
 - PG insertion clocks are 17:18:24 UTC, NOT the old candle close clocks. Source run
   references the immutable snapshot and recovery job. No strategy evidence filled.
 
-After recovery: 128 visible candles; COMPLETE requested/calculation coverage;
+After recovery: 128 visible candles; COMPLETE effective/calculation coverage;
 warmup 400/400; missing 0; selected-not-archived 0; no coverage warnings.
 Replay remains honestly unavailable because the original 15:25 decision is not
 an M15 open. No timestamp rounding or outcome-contract/outcome mutation.
