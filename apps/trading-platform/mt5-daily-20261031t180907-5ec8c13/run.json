@@ -1,0 +1,21 @@
+{
+  "schema": "library-forward-observation.v1",
+  "execution_eligible": false,
+  "run_id": "mt5-daily-20261031t180907-5ec8c13",
+  "activation_time": 1793474100,
+  "keys": [
+    "ema_50_200@V2",
+    "daily_ema_pullback@V2",
+    "daily_channel_breakout@V2"
+  ],
+  "symbols": {
+    "BTCUSD": "BTCUSDm"
+  },
+  "history": 320,
+  "max_age_seconds": 330,
+  "prospective_max_delay": 120,
+  "max_retained_bars": 10000,
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+  "entry_quote_max_age_seconds": 5,
+  "transport": "JETSTREAM"
+}
