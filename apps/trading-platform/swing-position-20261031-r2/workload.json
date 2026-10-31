@@ -407,7 +407,7 @@
                   },
                   {
                     "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
-                    "value": "false"
+                    "value": "true"
                   },
                   {
                     "name": "PYTHONDONTWRITEBYTECODE",
@@ -485,8 +485,8 @@
                 "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
                 "command": [
                   "python",
-                  "-m",
-                  "research.swing_position_forward",
+                  "-c",
+                  "import os\nfrom migration.flags import SignalAuthorityFlags,SignalAuthorityMode\nfrom orchestration.canonical_signal_publisher import CanonicalSignalPublisher\nfrom research.library_event_store import open_connection\nfrom research.swing_position_forward import main\nif SignalAuthorityFlags.mode_from_env() is not SignalAuthorityMode.DB_PRIMARY:\n    raise ValueError('canonical research orchestrator requires DB_PRIMARY')\nif os.environ.get('EXECUTION_AUTHORITY_MODE')!='DISABLED':\n    raise ValueError('research execution authority must remain disabled')\nwith open_connection() as conn:\n    CanonicalSignalPublisher(conn,cutoff_id=os.environ['SIGNAL_CUTOFF_ID'],\n        cutoff_utc=os.environ['SIGNAL_CUTOFF_UTC'],restricted_research=True).require_schema()\nmain()\n",
                   "verify",
                   "--manifest",
                   "/config/run.json"
@@ -543,7 +543,7 @@
                   },
                   {
                     "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
-                    "value": "false"
+                    "value": "true"
                   },
                   {
                     "name": "PYTHONDONTWRITEBYTECODE",
