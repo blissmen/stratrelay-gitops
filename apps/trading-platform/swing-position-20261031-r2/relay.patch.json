@@ -1,0 +1,51 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "library-event-relay",
+    "namespace": "trading"
+  },
+  "spec": {
+    "replicas": 1,
+    "template": {
+      "spec": {
+        "initContainers": [
+          {
+            "name": "verify-activation",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+            "command": [
+              "python",
+              "-c",
+              "import asyncio,json,os,sys\nimport nats\nfrom research.library_event_store import open_connection\nfrom research.library_event_service import check_streams\nasync def verify():\n    if os.environ.get('EXECUTION_AUTHORITY_MODE')!='DISABLED':\n        raise ValueError('research authority must remain disabled')\n    with open_connection() as conn:\n        row=conn.execute(\"SELECT has_table_privilege(current_user,'research.library_stream_outbox','SELECT'), has_column_privilege(current_user,'research.library_stream_outbox','published_at','UPDATE'),extract(epoch FROM clock_timestamp()-min(created_at)) FROM research.library_stream_outbox WHERE published_at IS NULL\").fetchone()\n        if not all(row[:2]):raise ValueError('relay privileges unavailable')\n        if len(sys.argv)>1 and sys.argv[1]=='health' and row[2] is not None and row[2]>30:\n            raise ValueError('relay backlog')\n    nc=await nats.connect(os.environ['NATS_URL'],user=os.environ['P2_NATS_USER'],password=os.environ['P2_NATS_PASSWORD'],connect_timeout=3,max_reconnect_attempts=0)\n    try:await check_streams(nc.jetstream())\n    finally:await nc.close()\ntry:\n    asyncio.run(verify());print(json.dumps({'status':'RELAY_PREREQUISITES_VERIFIED','broker_writes':0}))\nexcept Exception as exc:\n    print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__}));raise SystemExit(1)\n"
+            ]
+          }
+        ],
+        "containers": [
+          {
+            "name": "relay",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+            "readinessProbe": {
+              "exec": {
+                "command": [
+                  "python",
+                  "-c",
+                  "import asyncio,json,os,sys\nimport nats\nfrom research.library_event_store import open_connection\nfrom research.library_event_service import check_streams\nasync def verify():\n    if os.environ.get('EXECUTION_AUTHORITY_MODE')!='DISABLED':\n        raise ValueError('research authority must remain disabled')\n    with open_connection() as conn:\n        row=conn.execute(\"SELECT has_table_privilege(current_user,'research.library_stream_outbox','SELECT'), has_column_privilege(current_user,'research.library_stream_outbox','published_at','UPDATE'),extract(epoch FROM clock_timestamp()-min(created_at)) FROM research.library_stream_outbox WHERE published_at IS NULL\").fetchone()\n        if not all(row[:2]):raise ValueError('relay privileges unavailable')\n        if len(sys.argv)>1 and sys.argv[1]=='health' and row[2] is not None and row[2]>30:\n            raise ValueError('relay backlog')\n    nc=await nats.connect(os.environ['NATS_URL'],user=os.environ['P2_NATS_USER'],password=os.environ['P2_NATS_PASSWORD'],connect_timeout=3,max_reconnect_attempts=0)\n    try:await check_streams(nc.jetstream())\n    finally:await nc.close()\ntry:\n    asyncio.run(verify());print(json.dumps({'status':'RELAY_PREREQUISITES_VERIFIED','broker_writes':0}))\nexcept Exception as exc:\n    print(json.dumps({'status':'BLOCKED','error_type':type(exc).__name__}));raise SystemExit(1)\n",
+                  "health"
+                ]
+              },
+              "periodSeconds": 30,
+              "timeoutSeconds": 15,
+              "failureThreshold": 3
+            },
+            "env": [
+              {
+                "name": "EXECUTION_AUTHORITY_MODE",
+                "value": "DISABLED"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
