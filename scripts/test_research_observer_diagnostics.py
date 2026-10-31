@@ -1,6 +1,7 @@
 import ast
 import json
 import unittest
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 import research_observer_diagnostics as diagnostics
@@ -22,6 +23,24 @@ class Store:
 
 
 class DiagnosticsTests(unittest.TestCase):
+    def test_denied_migration_read_does_not_discard_registration_and_checkpoint_reads(self):
+        class Denied(Exception):
+            sqlstate = '42501'
+        conn, cur = MagicMock(), MagicMock()
+        conn.__enter__.return_value = conn
+        conn.cursor.return_value.__enter__.return_value = cur
+        cur.fetchone.return_value = ('trading_platform', False, 'on')
+        cur.execute.side_effect = lambda sql, *args: (_ for _ in ()).throw(Denied()) if 'schema_migrations' in sql else None
+        cur.fetchall.side_effect = [[('id',False,False,'OFF','daily_ema_pullback','run')],
+                                   [('run',{'status':'OK','streams':[]},None)]]
+        with patch('postgres.db.connect',return_value=conn):
+            result = diagnostics.db_report()
+        self.assertIsNone(result['migrations'])
+        self.assertEqual(result['instances'][0]['run_id'],'run')
+        self.assertEqual(result['checkpoints'][0]['health_status'],'OK')
+        self.assertEqual(result['errors'],[{'section':'migration_checksums',
+                         'error_type':'Denied','sqlstate':'42501'}])
+
     def test_real_staleness_is_not_waived_for_weekend(self):
         # Friday 20:00 UTC -> Saturday 10:00 UTC, ahead of 21:00 close.
         report = diagnostics.cache_report(Store(), 1793440800)
