@@ -1,0 +1,32 @@
+{
+  "status": "PREPARED_NOT_ACTIVATED",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+  "run_id": "mt5-intraday-20261031t181132-5ec8c13",
+  "activation_time": 1793471220,
+  "binding": "eb959024e96e80f74689bf111d454933eb17a9d90b5c08e0bbf9582e2ed44a71",
+  "keys": [
+    "ema_20_50@V2",
+    "ema_pullback@V2",
+    "rsi_reversion@V2",
+    "bollinger_reversion@V2",
+    "donchian_breakout@V3"
+  ],
+  "execution_eligible": false,
+  "broker_writes": 0,
+  "prerequisites": [
+    "migration 070",
+    "dedicated credentials/ACLs",
+    "provisioned bounded streams",
+    "legacy orchestrator skip guard deployed",
+    "old run consumers quiesced",
+    "existing frozen research registrations and memberships",
+    "future T0 activation transaction"
+  ],
+  "family_assignments": {
+    "ema_20_50@V2": "Trend Following",
+    "ema_pullback@V2": "Trend Following",
+    "rsi_reversion@V2": "Mean Reversion",
+    "bollinger_reversion@V2": "Mean Reversion",
+    "donchian_breakout@V3": "Breakout"
+  }
+}

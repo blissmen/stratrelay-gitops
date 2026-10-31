@@ -1,0 +1,827 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "mt5-intraday-20261031t181132-5ec8c13-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"mt5-intraday-20261031t181132-5ec8c13\",\n  \"activation_time\": 1793471220,\n  \"keys\": [\n    \"ema_20_50@V2\",\n    \"ema_pullback@V2\",\n    \"rsi_reversion@V2\",\n    \"bollinger_reversion@V2\",\n    \"donchian_breakout@V3\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"XAUUSD\": \"XAUUSDm\",\n    \"USDJPY\": \"USDJPYm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"entry_quote_max_age_seconds\": 5,\n  \"transport\": \"JETSTREAM\"\n}",
+        "registration.sql": "SET LOCAL statement_timeout='30s';\n\nDO $primary$ BEGIN IF pg_is_in_recovery() THEN RAISE EXCEPTION 'Writable primary required'; END IF; END $primary$;\n\nSELECT pg_advisory_xact_lock(hashtext('mt5-counterpart-registration'));\n\n-- Additive MT5 counterpart registration with immutable identity checks.\n\n-- New instances are offline/ineligible; existing activated research rows are preserved.\n\n-- family_key is a unique legacy catalog key, not the family taxonomy.\n\nINSERT INTO strategy_mgmt.parameter_schema(schema_id,fields,created_by) VALUES ('STRATEGY_LIBRARY_COMPOSITION_V1','{\"contract\": \"resolved-library-definition.v1\", \"frozen\": true}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT (schema_id) DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('24cccbd8-a4db-51b3-83cc-9a5c6129fed4','SMA 20/50 Cross \u2014 MT5 adaptation','LIBRARY:TREND_FOLLOWING_EMA_20_50','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_20_50@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_20_50\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('c1989077-d0e2-5afb-bb2b-ab7f4ef5f1d7','24cccbd8-a4db-51b3-83cc-9a5c6129fed4','V2','library.ema_20_50@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('293f3a7d-14cd-5e50-a48f-25d707b1534c','TREND_FOLLOWING_EMA_20_50@V2:experimental:9f32c968f8d6b1a1','c1989077-d0e2-5afb-bb2b-ab7f4ef5f1d7','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 completed SMA20 crosses above SMA50; long-only next-open observation; structural/ATR stop and 2R target.\", \"key\": \"ema_20_50\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"SMA 20/50 Cross \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'9f32c968f8d6b1a1a583a465f099b8b4cc5ac939cbdc418268892daf5f4b0076',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_20_50@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_20_50\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('3c035613-255f-5bf4-9308-b2bf83b80f82','c1989077-d0e2-5afb-bb2b-ab7f4ef5f1d7','293f3a7d-14cd-5e50-a48f-25d707b1534c','SMA 20/50 Cross \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_20_50@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_20_50\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='24cccbd8-a4db-51b3-83cc-9a5c6129fed4'::uuid AND d.family_key='LIBRARY:TREND_FOLLOWING_EMA_20_50' AND v.id='c1989077-d0e2-5afb-bb2b-ab7f4ef5f1d7'::uuid AND v.evaluator_key='library.ema_20_50@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='293f3a7d-14cd-5e50-a48f-25d707b1534c'::uuid AND p.parameter_set_id='TREND_FOLLOWING_EMA_20_50@V2:experimental:9f32c968f8d6b1a1' AND p.fingerprint='9f32c968f8d6b1a1a583a465f099b8b4cc5ac939cbdc418268892daf5f4b0076' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 completed SMA20 crosses above SMA50; long-only next-open observation; structural/ATR stop and 2R target.\", \"key\": \"ema_20_50\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"SMA 20/50 Cross \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='3c035613-255f-5bf4-9308-b2bf83b80f82'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_20_50@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_20_50\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: ema_20_50@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('1c9d3bdc-4c6f-508a-916b-ff8e14f3637e','SMA Trend Pullback \u2014 MT5 adaptation','LIBRARY:TREND_FOLLOWING_EMA_PULLBACK','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_PULLBACK\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('9eb5f739-bd08-5d0f-8a5c-b1a7c7930872','1c9d3bdc-4c6f-508a-916b-ff8e14f3637e','V2','library.ema_pullback@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('abcad2a7-9d87-5f59-b32f-b056f3b65809','TREND_FOLLOWING_EMA_PULLBACK@V2:experimental:504df6d6cc1cdea9','9eb5f739-bd08-5d0f-8a5c-b1a7c7930872','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 prior close above SMA50; completed candle touches 99% of prior close and reclaims; next-open long, not a passive limit order.\", \"key\": \"ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'504df6d6cc1cdea9c014e66f8a0f2aa7e39d164fb4f1fd27b7b6f344cce64faf',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_PULLBACK\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('3fbc6e8f-0dca-525b-833b-b782b7ac914b','9eb5f739-bd08-5d0f-8a5c-b1a7c7930872','abcad2a7-9d87-5f59-b32f-b056f3b65809','SMA Trend Pullback \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_PULLBACK\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='1c9d3bdc-4c6f-508a-916b-ff8e14f3637e'::uuid AND d.family_key='LIBRARY:TREND_FOLLOWING_EMA_PULLBACK' AND v.id='9eb5f739-bd08-5d0f-8a5c-b1a7c7930872'::uuid AND v.evaluator_key='library.ema_pullback@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='abcad2a7-9d87-5f59-b32f-b056f3b65809'::uuid AND p.parameter_set_id='TREND_FOLLOWING_EMA_PULLBACK@V2:experimental:504df6d6cc1cdea9' AND p.fingerprint='504df6d6cc1cdea9c014e66f8a0f2aa7e39d164fb4f1fd27b7b6f344cce64faf' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 prior close above SMA50; completed candle touches 99% of prior close and reclaims; next-open long, not a passive limit order.\", \"key\": \"ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='3fbc6e8f-0dca-525b-833b-b782b7ac914b'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_PULLBACK\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: ema_pullback@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('61d8017e-b2dc-54d5-88dc-8774e4dc1588','Wilder RSI Reversion \u2014 MT5 adaptation','LIBRARY:MEAN_REVERSION_RSI_REVERSION','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"rsi_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_RSI_REVERSION\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('01fb0e57-4142-51e3-8ba5-4cc13046c76a','61d8017e-b2dc-54d5-88dc-8774e4dc1588','V2','library.rsi_reversion@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('0c32517b-fb02-523b-abd6-6f37ca18f219','MEAN_REVERSION_RSI_REVERSION@V2:experimental:1587faa7aca58adb','01fb0e57-4142-51e3-8ba5-4cc13046c76a','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 Wilder RSI14 crosses below35; next-open long; prior20 mean target, structural/ATR stop. No portfolio RSI exit.\", \"key\": \"rsi_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_rsi\", \"name\": \"Wilder RSI Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'1587faa7aca58adb59854d90386df3a420b3f6771f2848114772678f8d5305d2',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"rsi_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_RSI_REVERSION\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('178c7c6d-5fe9-50f3-9be7-e2e2759b8b10','01fb0e57-4142-51e3-8ba5-4cc13046c76a','0c32517b-fb02-523b-abd6-6f37ca18f219','Wilder RSI Reversion \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"rsi_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_RSI_REVERSION\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='61d8017e-b2dc-54d5-88dc-8774e4dc1588'::uuid AND d.family_key='LIBRARY:MEAN_REVERSION_RSI_REVERSION' AND v.id='01fb0e57-4142-51e3-8ba5-4cc13046c76a'::uuid AND v.evaluator_key='library.rsi_reversion@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='0c32517b-fb02-523b-abd6-6f37ca18f219'::uuid AND p.parameter_set_id='MEAN_REVERSION_RSI_REVERSION@V2:experimental:1587faa7aca58adb' AND p.fingerprint='1587faa7aca58adb59854d90386df3a420b3f6771f2848114772678f8d5305d2' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 Wilder RSI14 crosses below35; next-open long; prior20 mean target, structural/ATR stop. No portfolio RSI exit.\", \"key\": \"rsi_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_rsi\", \"name\": \"Wilder RSI Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='178c7c6d-5fe9-50f3-9be7-e2e2759b8b10'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"rsi_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_RSI_REVERSION\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: rsi_reversion@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('70b8ab98-1129-5103-b54c-7c2e97ea4e62','Bollinger Reversion \u2014 MT5 adaptation','LIBRARY:MEAN_REVERSION_BOLLINGER_REVERSION','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"bollinger_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_BOLLINGER_REVERSION\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('2cce7841-e848-51bf-b6b2-a546326231a6','70b8ab98-1129-5103-b54c-7c2e97ea4e62','V2','library.bollinger_reversion@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('58383510-c289-5443-87d7-092432be2ff0','MEAN_REVERSION_BOLLINGER_REVERSION@V2:experimental:99aa881e6d710c7c','2cce7841-e848-51bf-b6b2-a546326231a6','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 closes across below prior20 mean minus two sample standard deviations; next-open long, frozen mean target.\", \"key\": \"bollinger_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_bollinger\", \"name\": \"Bollinger Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'99aa881e6d710c7cc8bd902926967a838669396c9c2257a492bcc50aaa3bff01',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"bollinger_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_BOLLINGER_REVERSION\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('b0c95322-51fa-5c0f-a964-a7b9861b5c3b','2cce7841-e848-51bf-b6b2-a546326231a6','58383510-c289-5443-87d7-092432be2ff0','Bollinger Reversion \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"bollinger_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_BOLLINGER_REVERSION\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='70b8ab98-1129-5103-b54c-7c2e97ea4e62'::uuid AND d.family_key='LIBRARY:MEAN_REVERSION_BOLLINGER_REVERSION' AND v.id='2cce7841-e848-51bf-b6b2-a546326231a6'::uuid AND v.evaluator_key='library.bollinger_reversion@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='58383510-c289-5443-87d7-092432be2ff0'::uuid AND p.parameter_set_id='MEAN_REVERSION_BOLLINGER_REVERSION@V2:experimental:99aa881e6d710c7c' AND p.fingerprint='99aa881e6d710c7cc8bd902926967a838669396c9c2257a492bcc50aaa3bff01' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 closes across below prior20 mean minus two sample standard deviations; next-open long, frozen mean target.\", \"key\": \"bollinger_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_bollinger\", \"name\": \"Bollinger Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='b0c95322-51fa-5c0f-a964-a7b9861b5c3b'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"library_key\": \"bollinger_reversion@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"MEAN_REVERSION_BOLLINGER_REVERSION\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: bollinger_reversion@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('34a1c19d-f29e-5b60-af05-6061913cf238','55-Bar Donchian \u2014 MT5 adaptation','LIBRARY:BREAKOUT_DONCHIAN_BREAKOUT','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Breakout\", \"library_key\": \"donchian_breakout@V3\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"BREAKOUT_DONCHIAN_BREAKOUT\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('3cce8d4b-cfad-54f3-b603-401f57e25d03','34a1c19d-f29e-5b60-af05-6061913cf238','V3','library.donchian_breakout@V3','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('4bd4f99f-cf62-532b-bba0-cabbe4523f2f','BREAKOUT_DONCHIAN_BREAKOUT@V3:experimental:d0ba201fc4907f7d','3cce8d4b-cfad-54f3-b603-401f57e25d03','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"H4\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"H4\", \"execution_eligible\": false, \"family\": \"Breakout\", \"fast\": 20, \"hypothesis\": \"Completed H4 close crosses prior55 high/low channel; next-open long/short; structural/ATR stop and 2R. No futures contract sizing.\", \"key\": \"donchian_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 55, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_channel\", \"name\": \"55-Bar Donchian \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V3\"}'::jsonb,'d0ba201fc4907f7d1786973288091f00b401670b4581d9f50e40ec8d499270dd',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Breakout\", \"library_key\": \"donchian_breakout@V3\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"BREAKOUT_DONCHIAN_BREAKOUT\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('9ebf2433-8232-5185-816e-f13e0017b7db','3cce8d4b-cfad-54f3-b603-401f57e25d03','4bd4f99f-cf62-532b-bba0-cabbe4523f2f','55-Bar Donchian \u2014 MT5 adaptation V3 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Breakout\", \"library_key\": \"donchian_breakout@V3\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"BREAKOUT_DONCHIAN_BREAKOUT\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='34a1c19d-f29e-5b60-af05-6061913cf238'::uuid AND d.family_key='LIBRARY:BREAKOUT_DONCHIAN_BREAKOUT' AND v.id='3cce8d4b-cfad-54f3-b603-401f57e25d03'::uuid AND v.evaluator_key='library.donchian_breakout@V3' AND v.version_label='V3' AND v.lifecycle='FROZEN' AND p.id='4bd4f99f-cf62-532b-bba0-cabbe4523f2f'::uuid AND p.parameter_set_id='BREAKOUT_DONCHIAN_BREAKOUT@V3:experimental:d0ba201fc4907f7d' AND p.fingerprint='d0ba201fc4907f7d1786973288091f00b401670b4581d9f50e40ec8d499270dd' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"H4\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"H4\", \"execution_eligible\": false, \"family\": \"Breakout\", \"fast\": 20, \"hypothesis\": \"Completed H4 close crosses prior55 high/low channel; next-open long/short; structural/ATR stop and 2R. No futures contract sizing.\", \"key\": \"donchian_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 55, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_channel\", \"name\": \"55-Bar Donchian \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V3\"}'::jsonb AND p.frozen AND i.id='9ebf2433-8232-5185-816e-f13e0017b7db'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Breakout\", \"library_key\": \"donchian_breakout@V3\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"BREAKOUT_DONCHIAN_BREAKOUT\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: donchian_breakout@V3'; END IF; END $library$;\n\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('TREND_FOLLOWING_EMA_20_50','V2','SMA 20/50 Cross \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'3c035613-255f-5bf4-9308-b2bf83b80f82','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_20_50' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3c035613-255f-5bf4-9308-b2bf83b80f82','TREND_FOLLOWING_EMA_20_50','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3c035613-255f-5bf4-9308-b2bf83b80f82','TREND_FOLLOWING_EMA_20_50','XAUUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3c035613-255f-5bf4-9308-b2bf83b80f82','TREND_FOLLOWING_EMA_20_50','USDJPY','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('TREND_FOLLOWING_EMA_PULLBACK','V2','SMA Trend Pullback \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'3fbc6e8f-0dca-525b-833b-b782b7ac914b','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_PULLBACK' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3fbc6e8f-0dca-525b-833b-b782b7ac914b','TREND_FOLLOWING_EMA_PULLBACK','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3fbc6e8f-0dca-525b-833b-b782b7ac914b','TREND_FOLLOWING_EMA_PULLBACK','XAUUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('3fbc6e8f-0dca-525b-833b-b782b7ac914b','TREND_FOLLOWING_EMA_PULLBACK','USDJPY','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('MEAN_REVERSION_RSI_REVERSION','V2','Wilder RSI Reversion \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'178c7c6d-5fe9-50f3-9be7-e2e2759b8b10','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='MEAN_REVERSION_RSI_REVERSION' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('178c7c6d-5fe9-50f3-9be7-e2e2759b8b10','MEAN_REVERSION_RSI_REVERSION','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('178c7c6d-5fe9-50f3-9be7-e2e2759b8b10','MEAN_REVERSION_RSI_REVERSION','XAUUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('178c7c6d-5fe9-50f3-9be7-e2e2759b8b10','MEAN_REVERSION_RSI_REVERSION','USDJPY','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('MEAN_REVERSION_BOLLINGER_REVERSION','V2','Bollinger Reversion \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'b0c95322-51fa-5c0f-a964-a7b9861b5c3b','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='MEAN_REVERSION_BOLLINGER_REVERSION' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('b0c95322-51fa-5c0f-a964-a7b9861b5c3b','MEAN_REVERSION_BOLLINGER_REVERSION','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('b0c95322-51fa-5c0f-a964-a7b9861b5c3b','MEAN_REVERSION_BOLLINGER_REVERSION','XAUUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('b0c95322-51fa-5c0f-a964-a7b9861b5c3b','MEAN_REVERSION_BOLLINGER_REVERSION','USDJPY','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('BREAKOUT_DONCHIAN_BREAKOUT','V3','55-Bar Donchian \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'9ebf2433-8232-5185-816e-f13e0017b7db','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='BREAKOUT_DONCHIAN_BREAKOUT' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('9ebf2433-8232-5185-816e-f13e0017b7db','BREAKOUT_DONCHIAN_BREAKOUT','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('9ebf2433-8232-5185-816e-f13e0017b7db','BREAKOUT_DONCHIAN_BREAKOUT','XAUUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('9ebf2433-8232-5185-816e-f13e0017b7db','BREAKOUT_DONCHIAN_BREAKOUT','USDJPY','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\n-- Additive MT5 counterpart registration with immutable identity checks.\n\n-- New instances are offline/ineligible; existing activated research rows are preserved.\n\n-- family_key is a unique legacy catalog key, not the family taxonomy.\n\nINSERT INTO strategy_mgmt.parameter_schema(schema_id,fields,created_by) VALUES ('STRATEGY_LIBRARY_COMPOSITION_V1','{\"contract\": \"resolved-library-definition.v1\", \"frozen\": true}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT (schema_id) DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('c700c8e6-6ebe-55dc-b855-b9f24e2689ca','Daily SMA 50/200 \u2014 MT5 adaptation','LIBRARY:TREND_FOLLOWING_EMA_50_200','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_50_200@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_50_200\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('ced7d325-1c10-508f-a1ec-dcbaca76414a','c700c8e6-6ebe-55dc-b855-b9f24e2689ca','V2','library.ema_50_200@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('dfad9df3-b26d-5941-bf3d-7802cb2f24a8','TREND_FOLLOWING_EMA_50_200@V2:experimental:021e33efea0d5402','ced7d325-1c10-508f-a1ec-dcbaca76414a','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 50, \"hypothesis\": \"BTC UTC D1 SMA50 crosses above SMA200; long-only next-open observation, not sector allocation.\", \"key\": \"ema_50_200\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"Daily SMA 50/200 \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 200, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'021e33efea0d5402aa91d0075c5a38c887c906ea1e1934a6d0dff8948145c04c',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_50_200@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_50_200\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('17335fb0-2fbe-5a7a-9e93-c3e2170ef208','ced7d325-1c10-508f-a1ec-dcbaca76414a','dfad9df3-b26d-5941-bf3d-7802cb2f24a8','Daily SMA 50/200 \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_50_200@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_50_200\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='c700c8e6-6ebe-55dc-b855-b9f24e2689ca'::uuid AND d.family_key='LIBRARY:TREND_FOLLOWING_EMA_50_200' AND v.id='ced7d325-1c10-508f-a1ec-dcbaca76414a'::uuid AND v.evaluator_key='library.ema_50_200@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='dfad9df3-b26d-5941-bf3d-7802cb2f24a8'::uuid AND p.parameter_set_id='TREND_FOLLOWING_EMA_50_200@V2:experimental:021e33efea0d5402' AND p.fingerprint='021e33efea0d5402aa91d0075c5a38c887c906ea1e1934a6d0dff8948145c04c' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 50, \"hypothesis\": \"BTC UTC D1 SMA50 crosses above SMA200; long-only next-open observation, not sector allocation.\", \"key\": \"ema_50_200\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"Daily SMA 50/200 \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 200, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='17335fb0-2fbe-5a7a-9e93-c3e2170ef208'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"ema_50_200@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_EMA_50_200\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: ema_50_200@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('450971b4-caec-52f0-ae76-3d3ac9aad5e0','Daily SMA Trend Pullback \u2014 MT5 adaptation','LIBRARY:SWING_POSITION_DAILY_EMA_PULLBACK','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_EMA_PULLBACK\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('0d5c1b56-7c0c-5283-ae81-c73f1c6ca3b5','450971b4-caec-52f0-ae76-3d3ac9aad5e0','V2','library.daily_ema_pullback@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('e33e1345-c214-5c39-bf15-8ad3c4bab411','SWING_POSITION_DAILY_EMA_PULLBACK@V2:experimental:b8e1d12be4362f2c','0d5c1b56-7c0c-5283-ae81-c73f1c6ca3b5','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Swing Position\", \"fast\": 20, \"hypothesis\": \"BTC UTC D1 prior close above SMA50; 1% completed-candle pullback/reclaim; next-open long.\", \"key\": \"daily_ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"Daily SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'b8e1d12be4362f2c3c2b85d6267e14b70d7b8e10c127b4c244c00b2ec9c4c868',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_EMA_PULLBACK\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('f7cd1d50-476e-50cd-b247-e1d9dd01f093','0d5c1b56-7c0c-5283-ae81-c73f1c6ca3b5','e33e1345-c214-5c39-bf15-8ad3c4bab411','Daily SMA Trend Pullback \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_EMA_PULLBACK\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='450971b4-caec-52f0-ae76-3d3ac9aad5e0'::uuid AND d.family_key='LIBRARY:SWING_POSITION_DAILY_EMA_PULLBACK' AND v.id='0d5c1b56-7c0c-5283-ae81-c73f1c6ca3b5'::uuid AND v.evaluator_key='library.daily_ema_pullback@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='e33e1345-c214-5c39-bf15-8ad3c4bab411'::uuid AND p.parameter_set_id='SWING_POSITION_DAILY_EMA_PULLBACK@V2:experimental:b8e1d12be4362f2c' AND p.fingerprint='b8e1d12be4362f2c3c2b85d6267e14b70d7b8e10c127b4c244c00b2ec9c4c868' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Swing Position\", \"fast\": 20, \"hypothesis\": \"BTC UTC D1 prior close above SMA50; 1% completed-candle pullback/reclaim; next-open long.\", \"key\": \"daily_ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"Daily SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='f7cd1d50-476e-50cd-b247-e1d9dd01f093'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_ema_pullback@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_EMA_PULLBACK\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: daily_ema_pullback@V2'; END IF; END $library$;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('8b87e871-256c-52c4-9e98-848ad45afd89','Daily Channel Breakout \u2014 MT5 adaptation','LIBRARY:SWING_POSITION_DAILY_CHANNEL_BREAKOUT','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_channel_breakout@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_CHANNEL_BREAKOUT\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('091238ba-f0cb-5f5d-b340-6d4862021214','8b87e871-256c-52c4-9e98-848ad45afd89','V2','library.daily_channel_breakout@V2','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('d2c41b9c-19df-5a6f-84b5-dbe6645cc8fe','SWING_POSITION_DAILY_CHANNEL_BREAKOUT@V2:experimental:ce2d1390711eea34','091238ba-f0cb-5f5d-b340-6d4862021214','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Swing Position\", \"fast\": 20, \"hypothesis\": \"BTC UTC D1 close crosses above prior20 closes plus0.2%; next-open long, not a buy-stop or ten-bar hold.\", \"key\": \"daily_channel_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_close_channel\", \"name\": \"Daily Channel Breakout \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb,'ce2d1390711eea3492778ea161bafccc30cec86c3da8713ee5b57d38a3407e59',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_channel_breakout@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_CHANNEL_BREAKOUT\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('f205586d-3164-5bcf-bbaf-52316af4133e','091238ba-f0cb-5f5d-b340-6d4862021214','d2c41b9c-19df-5a6f-84b5-dbe6645cc8fe','Daily Channel Breakout \u2014 MT5 adaptation V2 forward observer',false,false,'OFF','[\"BTCUSD\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_channel_breakout@V2\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_CHANNEL_BREAKOUT\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='8b87e871-256c-52c4-9e98-848ad45afd89'::uuid AND d.family_key='LIBRARY:SWING_POSITION_DAILY_CHANNEL_BREAKOUT' AND v.id='091238ba-f0cb-5f5d-b340-6d4862021214'::uuid AND v.evaluator_key='library.daily_channel_breakout@V2' AND v.version_label='V2' AND v.lifecycle='FROZEN' AND p.id='d2c41b9c-19df-5a6f-84b5-dbe6645cc8fe'::uuid AND p.parameter_set_id='SWING_POSITION_DAILY_CHANNEL_BREAKOUT@V2:experimental:ce2d1390711eea34' AND p.fingerprint='ce2d1390711eea3492778ea161bafccc30cec86c3da8713ee5b57d38a3407e59' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"D1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"D1\", \"execution_eligible\": false, \"family\": \"Swing Position\", \"fast\": 20, \"hypothesis\": \"BTC UTC D1 close crosses above prior20 closes plus0.2%; next-open long, not a buy-stop or ten-bar hold.\", \"key\": \"daily_channel_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_close_channel\", \"name\": \"Daily Channel Breakout \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb AND p.frozen AND i.id='f205586d-3164-5bcf-bbaf-52316af4133e'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Swing Position\", \"library_key\": \"daily_channel_breakout@V2\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"SWING_POSITION_DAILY_CHANNEL_BREAKOUT\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: daily_channel_breakout@V2'; END IF; END $library$;\n\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('TREND_FOLLOWING_EMA_50_200','V2','Daily SMA 50/200 \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'17335fb0-2fbe-5a7a-9e93-c3e2170ef208','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_50_200' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('17335fb0-2fbe-5a7a-9e93-c3e2170ef208','TREND_FOLLOWING_EMA_50_200','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('SWING_POSITION_DAILY_EMA_PULLBACK','V2','Daily SMA Trend Pullback \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'f7cd1d50-476e-50cd-b247-e1d9dd01f093','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='SWING_POSITION_DAILY_EMA_PULLBACK' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('f7cd1d50-476e-50cd-b247-e1d9dd01f093','SWING_POSITION_DAILY_EMA_PULLBACK','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('SWING_POSITION_DAILY_CHANNEL_BREAKOUT','V2','Daily Channel Breakout \u2014 MT5 adaptation','MT5-adapted research; not an exact QuantJourney reproduction.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'f205586d-3164-5bcf-bbaf-52316af4133e','mt5-counterpart-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='SWING_POSITION_DAILY_CHANNEL_BREAKOUT' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('f205586d-3164-5bcf-bbaf-52316af4133e','SWING_POSITION_DAILY_CHANNEL_BREAKOUT','BTCUSD','ACTIVE','mt5-counterpart-forward') ON CONFLICT DO NOTHING;\n",
+        "activation.sql": "BEGIN; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(hashtext('library-event-cutover'));\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='TREND_FOLLOWING_EMA_20_50' AND adapter='StrategyLibraryAdapter';\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='TREND_FOLLOWING_EMA_PULLBACK' AND adapter='StrategyLibraryAdapter';\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='MEAN_REVERSION_RSI_REVERSION' AND adapter='StrategyLibraryAdapter';\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='MEAN_REVERSION_BOLLINGER_REVERSION' AND adapter='StrategyLibraryAdapter';\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='BREAKOUT_DONCHIAN_BREAKOUT' AND adapter='StrategyLibraryAdapter';\nDO $time$ BEGIN IF extract(epoch from clock_timestamp()) >= 1793471220 THEN RAISE EXCEPTION 'T0 elapsed: prepare fresh future event run'; END IF; END $time$;\nDO $fresh$ BEGIN IF EXISTS (SELECT 1 FROM research.strategy_library_forward_state WHERE run_id='mt5-intraday-20261031t181132-5ec8c13') THEN RAISE EXCEPTION 'Run already exists: inspect state; never overwrite'; END IF; END $fresh$;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='3c035613-255f-5bf4-9308-b2bf83b80f82'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V2' AND v.evaluator_key='library.ema_20_50@V2' AND p.frozen AND p.fingerprint='9f32c968f8d6b1a1a583a465f099b8b4cc5ac939cbdc418268892daf5f4b0076' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 completed SMA20 crosses above SMA50; long-only next-open observation; structural/ATR stop and 2R target.\", \"key\": \"ema_20_50\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"SMA 20/50 Cross \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_20_50' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"orchestrator_run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"publication_activation_time\": 1793471220, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='3c035613-255f-5bf4-9308-b2bf83b80f82'::uuid;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='3fbc6e8f-0dca-525b-833b-b782b7ac914b'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V2' AND v.evaluator_key='library.ema_pullback@V2' AND p.frozen AND p.fingerprint='504df6d6cc1cdea9c014e66f8a0f2aa7e39d164fb4f1fd27b7b6f344cce64faf' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 prior close above SMA50; completed candle touches 99% of prior close and reclaims; next-open long, not a passive limit order.\", \"key\": \"ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_EMA_PULLBACK' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"orchestrator_run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"publication_activation_time\": 1793471220, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='3fbc6e8f-0dca-525b-833b-b782b7ac914b'::uuid;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='178c7c6d-5fe9-50f3-9be7-e2e2759b8b10'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V2' AND v.evaluator_key='library.rsi_reversion@V2' AND p.frozen AND p.fingerprint='1587faa7aca58adb59854d90386df3a420b3f6771f2848114772678f8d5305d2' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 Wilder RSI14 crosses below35; next-open long; prior20 mean target, structural/ATR stop. No portfolio RSI exit.\", \"key\": \"rsi_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_rsi\", \"name\": \"Wilder RSI Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='MEAN_REVERSION_RSI_REVERSION' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"orchestrator_run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"publication_activation_time\": 1793471220, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='178c7c6d-5fe9-50f3-9be7-e2e2759b8b10'::uuid;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='b0c95322-51fa-5c0f-a964-a7b9861b5c3b'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V2' AND v.evaluator_key='library.bollinger_reversion@V2' AND p.frozen AND p.fingerprint='99aa881e6d710c7cc8bd902926967a838669396c9c2257a492bcc50aaa3bff01' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 closes across below prior20 mean minus two sample standard deviations; next-open long, frozen mean target.\", \"key\": \"bollinger_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_bollinger\", \"name\": \"Bollinger Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='MEAN_REVERSION_BOLLINGER_REVERSION' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"orchestrator_run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"publication_activation_time\": 1793471220, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='b0c95322-51fa-5c0f-a964-a7b9861b5c3b'::uuid;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='9ebf2433-8232-5185-816e-f13e0017b7db'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V3' AND v.evaluator_key='library.donchian_breakout@V3' AND p.frozen AND p.fingerprint='d0ba201fc4907f7d1786973288091f00b401670b4581d9f50e40ec8d499270dd' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"H4\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"H4\", \"execution_eligible\": false, \"family\": \"Breakout\", \"fast\": 20, \"hypothesis\": \"Completed H4 close crosses prior55 high/low channel; next-open long/short; structural/ATR stop and 2R. No futures contract sizing.\", \"key\": \"donchian_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 55, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_channel\", \"name\": \"55-Bar Donchian \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V3\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='BREAKOUT_DONCHIAN_BREAKOUT' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"orchestrator_run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"publication_activation_time\": 1793471220, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='9ebf2433-8232-5185-816e-f13e0017b7db'::uuid;\nINSERT INTO research.strategy_library_forward_state(run_id,state) VALUES ('mt5-intraday-20261031t181132-5ec8c13','{\"activation_attestation\": {\"activation_time\": 1793471220, \"binding\": \"eb959024e96e80f74689bf111d454933eb17a9d90b5c08e0bbf9582e2ed44a71\", \"execution_eligible\": false, \"image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0\", \"run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"schema\": \"library-event-stream.v1\", \"transport\": \"JETSTREAM\"}, \"binding\": \"eb959024e96e80f74689bf111d454933eb17a9d90b5c08e0bbf9582e2ed44a71\", \"manifest\": {\"artifact\": \"0767acf6a56297eb343a92f8b821eaeca323cb05a593b38d2a57e4862bd83ab0\", \"config\": {\"activation_time\": 1793471220, \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"entry_quote_max_age_seconds\": 5, \"history\": 320, \"keys\": [\"ema_20_50@V2\", \"ema_pullback@V2\", \"rsi_reversion@V2\", \"bollinger_reversion@V2\", \"donchian_breakout@V3\"], \"max_age_seconds\": 330, \"max_retained_bars\": 10000, \"prospective_max_delay\": 120, \"run_id\": \"mt5-intraday-20261031t181132-5ec8c13\", \"symbols\": {\"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\", \"XAUUSD\": \"XAUUSDm\"}, \"transport\": \"JETSTREAM\"}, \"definitions\": {\"bollinger_reversion@V2\": {\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 closes across below prior20 mean minus two sample standard deviations; next-open long, frozen mean target.\", \"key\": \"bollinger_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_bollinger\", \"name\": \"Bollinger Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}, \"donchian_breakout@V3\": {\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"H4\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"H4\", \"execution_eligible\": false, \"family\": \"Breakout\", \"fast\": 20, \"hypothesis\": \"Completed H4 close crosses prior55 high/low channel; next-open long/short; structural/ATR stop and 2R. No futures contract sizing.\", \"key\": \"donchian_breakout\", \"lifecycle\": \"RESEARCH\", \"lookback\": 55, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_channel\", \"name\": \"55-Bar Donchian \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V3\"}, \"ema_20_50@V2\": {\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 completed SMA20 crosses above SMA50; long-only next-open observation; structural/ATR stop and 2R target.\", \"key\": \"ema_20_50\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_sma_cross\", \"name\": \"SMA 20/50 Cross \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}, \"ema_pullback@V2\": {\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"M15 prior close above SMA50; completed candle touches 99% of prior close and reclaims; next-open long, not a passive limit order.\", \"key\": \"ema_pullback\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_pullback\", \"name\": \"SMA Trend Pullback \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}, \"rsi_reversion@V2\": {\"atr_multiple\": 1.2, \"atr_period\": 20, \"buffer_atr\": 0.1, \"context\": \"M15\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Mean Reversion\", \"fast\": 20, \"hypothesis\": \"M15 Wilder RSI14 crosses below35; next-open long; prior20 mean target, structural/ATR stop. No portfolio RSI exit.\", \"key\": \"rsi_reversion\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"mt5_rsi\", \"name\": \"Wilder RSI Reversion \\u2014 MT5 adaptation\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [\"BTCUSD\", \"XAUUSD\", \"USDJPY\"], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V2\"}}}, \"streams\": {}}'::jsonb); COMMIT;\n"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-observer",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "mt5-counterpart-intraday-observer",
+          "app.kubernetes.io/component": "research-observer",
+          "stratrelay.app/status": "research"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "mt5-counterpart-intraday-observer"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "mt5-counterpart-intraday-observer",
+              "app.kubernetes.io/component": "research-observer",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "observer",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.library_event_service",
+                  "observer",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-observer"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.mt5_counterpart_forward",
+                      "health",
+                      "--manifest",
+                      "/config/run.json",
+                      "--role",
+                      "observer"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "mt5-intraday-20261031t181132-5ec8c13-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
+            ],
+            "initContainers": [
+              {
+                "name": "verify-research-registration",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.mt5_counterpart_forward",
+                  "verify",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-observer"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-orchestrator",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "mt5-counterpart-intraday-orchestrator",
+          "app.kubernetes.io/component": "research-observer",
+          "stratrelay.app/status": "research"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "mt5-counterpart-intraday-orchestrator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "mt5-counterpart-intraday-orchestrator",
+              "app.kubernetes.io/component": "research-observer",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "orchestrator",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.library_event_service",
+                  "orchestrator",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.mt5_counterpart_forward",
+                      "health",
+                      "--manifest",
+                      "/config/run.json",
+                      "--role",
+                      "orchestrator"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "mt5-intraday-20261031t181132-5ec8c13-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
+            ],
+            "initContainers": [
+              {
+                "name": "verify-research-registration",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:e92f98691996761024026a1c5d0ebcf55097059c368c357bdf87a1d5469a36d0",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.mt5_counterpart_forward",
+                  "verify",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-egress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchExpressions": [
+            {
+              "key": "app.kubernetes.io/name",
+              "operator": "In",
+              "values": [
+                "mt5-counterpart-intraday-observer",
+                "mt5-counterpart-intraday-orchestrator"
+              ]
+            }
+          ]
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-nats"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 4222,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-trading-postgres-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-postgres"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "mt5-counterpart-intraday-observer",
+                        "mt5-counterpart-intraday-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-trading-redis-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-redis"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "mt5-counterpart-intraday-observer",
+                        "mt5-counterpart-intraday-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "mt5-counterpart-intraday-trading-nats-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-nats"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "mt5-counterpart-intraday-observer",
+                        "mt5-counterpart-intraday-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 4222,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
