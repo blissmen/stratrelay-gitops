@@ -16,3 +16,5 @@ jobs:
           python-version: '3.12'
       - run: python3 scripts/check_frozen_research.py
       - run: python3 -m unittest discover -s scripts -p test_frozen_research.py
+      - run: python3 -m unittest discover -s scripts -p test_donchian_binding_preflight.py
+

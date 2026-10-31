@@ -8,8 +8,11 @@ spec:
     spec:
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:0318108dd91b4fb6ef3e2229b129a46d71f1dca7f67b021998d537b9dbfbcfbf
+          image: "ghcr.io/strat-relay/trading-platform-runtime@sha256:0318108dd91b4fb6ef3e2229b129a46d71f1dca7f67b021998d537b9dbfbcfbf"
       volumes:
         - name: manifest
           configMap:
             name: library-canary-20261031-r1-manifest
+
+# stratrelay-release: frozen
+# Checkpoint-bound continuation: no bulk release image changes.
