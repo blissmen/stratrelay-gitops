@@ -42,6 +42,24 @@ spec:
               containerPort: 22350
               protocol: TCP
           env:
+            # Console access is fail-closed until this namespace-local secret
+            # contains the existing IAM JWT signing key and approved IAM user UUIDs.
+            - name: CONSOLE_IAM_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: console-operator-auth
+                  key: JWT_SECRET
+                  optional: true
+            - name: CONSOLE_OPERATOR_SUBJECTS
+              valueFrom:
+                secretKeyRef:
+                  name: console-operator-auth
+                  key: OPERATOR_SUBJECTS
+                  optional: true
+            - name: CONSOLE_IAM_JWT_ISSUER
+              value: influencelnk-iam
+            - name: STRATEGY_CATALOG_ADMIN_WRITES_ENABLED
+              value: "false"
             - name: TRADING_POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
