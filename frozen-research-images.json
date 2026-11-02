@@ -59,16 +59,34 @@
       "run_id": "library-canary-20261031-r1",
       "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735"
-      ]
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+      ],
+      "reader_maintenance": {
+        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
+        "source_commit": "7e23d514318777ee523b20add69fdab29557b4c4",
+        "base_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735",
+        "unchanged_strategy_artifact": "186dac674b285fc2e02c74c86692977a742daccf75b9ec3e846e179d30801f44",
+        "unchanged_forward_adapter_sha256": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+        "expected_checkpoint_binding": "0f289899efd2d282e014ada033e9413e34475a0e9920b224b5a132aa9577baed",
+        "checkpoint_reset": false
+      }
     },
     {
       "path": "apps/trading-platform/research-continuation-1.patch.yaml",
       "run_id": "ict-smc-20261031-r1",
       "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735"
-      ]
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+      ],
+      "reader_maintenance": {
+        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
+        "source_commit": "7e23d514318777ee523b20add69fdab29557b4c4",
+        "base_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735",
+        "unchanged_strategy_artifact": "186dac674b285fc2e02c74c86692977a742daccf75b9ec3e846e179d30801f44",
+        "unchanged_forward_adapter_sha256": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+        "expected_checkpoint_binding": "bcbab42db1b8469b6df80d5a34110666035bb6c3e1db77c68f508c0d4d602ef1",
+        "checkpoint_reset": false
+      }
     },
     {
       "path": "apps/trading-platform/research-continuation-2.patch.yaml",
