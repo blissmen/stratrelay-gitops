@@ -40,7 +40,7 @@ spec:
         - name: collector
           # platform-tools #277, source d52770262ae56fc106d9d8fdbe284f7759831146.
           # Independent hot-quote lifecycles; event production remains OFF.
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:ead676331c4c70cd9ae6aba94947c1144ec30123ab4f42fbcb9508f49936d051
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:d91c65d814bf9964aaa47c6eb36cbb12ef52a1d716a46e78f40f6b117afeaf9e
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "market_data_cache.service"]
           envFrom:
