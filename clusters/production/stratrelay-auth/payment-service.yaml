@@ -77,7 +77,7 @@ spec:
                   key: internal-api-key
           readinessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 20
             periodSeconds: 10
@@ -85,7 +85,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20
