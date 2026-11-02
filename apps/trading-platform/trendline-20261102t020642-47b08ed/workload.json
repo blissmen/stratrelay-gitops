@@ -1,0 +1,827 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "trendline-20261102t020642-47b08ed-manifest",
+        "namespace": "trading"
+      },
+      "data": {
+        "run.json": "{\n  \"schema\": \"library-forward-observation.v1\",\n  \"execution_eligible\": false,\n  \"run_id\": \"trendline-20261102t020642-47b08ed\",\n  \"activation_time\": 1793587020,\n  \"keys\": [\n    \"trendline_break_retest\"\n  ],\n  \"symbols\": {\n    \"BTCUSD\": \"BTCUSDm\",\n    \"XAUUSD\": \"XAUUSDm\",\n    \"USDJPY\": \"USDJPYm\"\n  },\n  \"history\": 320,\n  \"max_age_seconds\": 330,\n  \"prospective_max_delay\": 120,\n  \"max_retained_bars\": 10000,\n  \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\",\n  \"entry_quote_max_age_seconds\": 5,\n  \"transport\": \"JETSTREAM\"\n}",
+        "registration.sql": "SET LOCAL statement_timeout='30s';\n\nDO $primary$ BEGIN IF pg_is_in_recovery() THEN RAISE EXCEPTION 'Writable primary required'; END IF; END $primary$;\n\nSELECT pg_advisory_xact_lock(hashtext('trendline-forward-registration'));\n\n-- Additive trendline registration with immutable identity checks.\n\n-- New instances are offline/ineligible; existing activated research rows are preserved.\n\n-- family_key is a unique legacy catalog key, not the family taxonomy.\n\nINSERT INTO strategy_mgmt.parameter_schema(schema_id,fields,created_by) VALUES ('STRATEGY_LIBRARY_COMPOSITION_V1','{\"contract\": \"resolved-library-definition.v1\", \"frozen\": true}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT (schema_id) DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_definition(id,name,family_key,description,provenance_notes,created_by) VALUES ('70d09b81-8b37-5013-972d-493c20e40fa4','Trendline Break + Retest','LIBRARY:TREND_FOLLOWING_TRENDLINE_BREAK_RETEST','Research-only library composition; no validated performance claim.','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"trendline_break_retest\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_TRENDLINE_BREAK_RETEST\"}','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_version(id,definition_id,version_label,evaluator_key,lifecycle,schema_id,release_notes,frozen_at,frozen_by,created_by) VALUES ('7b17224b-6094-5c3a-b514-e9932c3ec356','70d09b81-8b37-5013-972d-493c20e40fa4','V1','library.trendline_break_retest@V1','FROZEN','STRATEGY_LIBRARY_COMPOSITION_V1','Frozen implementation only. Research lifecycle; not execution-qualified.',now(),'strategy-library-forward-candidate-v1','strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.parameter_set(id,parameter_set_id,strategy_version_id,schema_id,values,fingerprint,frozen,frozen_at,frozen_by,provenance,created_by) VALUES ('3d51aa5b-6fbf-5ee5-ad81-48cfe0e3933f','TREND_FOLLOWING_TRENDLINE_BREAK_RETEST@V1:experimental:c3d74bf9e1009b20','7b17224b-6094-5c3a-b514-e9932c3ec356','STRATEGY_LIBRARY_COMPOSITION_V1','{\"atr_multiple\": 1.2, \"atr_period\": 14, \"buffer_atr\": 0.1, \"context\": \"H1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"Two confirmed M15 lows/highs form an existing sloping line; close breaks it; subsequent retest confirms in break direction.\", \"key\": \"trendline_break_retest\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"trendline_retest\", \"name\": \"Trendline Break + Retest\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V1\"}'::jsonb,'c3d74bf9e1009b20b6b73e2e52f757ab587d61cecec4847f5e800f82fe6a62cf',true,now(),'strategy-library-forward-candidate-v1','{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"trendline_break_retest\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_TRENDLINE_BREAK_RETEST\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy_mgmt.strategy_instance_v2(id,strategy_version_id,parameter_set_id,display_name,online,execution_eligible,execution_mode,instruments,attributes,created_by) VALUES ('23c971c9-cbf9-5539-99e9-0ebd1366065d','7b17224b-6094-5c3a-b514-e9932c3ec356','3d51aa5b-6fbf-5ee5-ad81-48cfe0e3933f','Trendline Break + Retest V1 forward observer',false,false,'OFF','[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb,'{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"trendline_break_retest\", \"mode\": \"OBSERVER_ONLY\", \"signal_publication\": false, \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_TRENDLINE_BREAK_RETEST\"}'::jsonb,'strategy-library-forward-candidate-v1') ON CONFLICT DO NOTHING;\n\nDO $library$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_definition d JOIN strategy_mgmt.strategy_version v ON v.definition_id=d.id JOIN strategy_mgmt.parameter_set p ON p.strategy_version_id=v.id JOIN strategy_mgmt.strategy_instance_v2 i ON i.strategy_version_id=v.id AND i.parameter_set_id=p.id WHERE d.id='70d09b81-8b37-5013-972d-493c20e40fa4'::uuid AND d.family_key='LIBRARY:TREND_FOLLOWING_TRENDLINE_BREAK_RETEST' AND v.id='7b17224b-6094-5c3a-b514-e9932c3ec356'::uuid AND v.evaluator_key='library.trendline_break_retest@V1' AND v.version_label='V1' AND v.lifecycle='FROZEN' AND p.id='3d51aa5b-6fbf-5ee5-ad81-48cfe0e3933f'::uuid AND p.parameter_set_id='TREND_FOLLOWING_TRENDLINE_BREAK_RETEST@V1:experimental:c3d74bf9e1009b20' AND p.fingerprint='c3d74bf9e1009b20b6b73e2e52f757ab587d61cecec4847f5e800f82fe6a62cf' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 14, \"buffer_atr\": 0.1, \"context\": \"H1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"Two confirmed M15 lows/highs form an existing sloping line; close breaks it; subsequent retest confirms in break direction.\", \"key\": \"trendline_break_retest\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"trendline_retest\", \"name\": \"Trendline Break + Retest\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V1\"}'::jsonb AND p.frozen AND i.id='23c971c9-cbf9-5539-99e9-0ebd1366065d'::uuid AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.instruments='[\"BTCUSD\", \"XAUUSD\", \"USDJPY\"]'::jsonb AND i.attributes @> '{\"broker_writes\": false, \"execution_eligible\": false, \"family\": \"Trend Following\", \"library_key\": \"trendline_break_retest\", \"mode\": \"OBSERVER_ONLY\", \"status\": \"RESEARCH\", \"strategy_id\": \"TREND_FOLLOWING_TRENDLINE_BREAK_RETEST\"}'::jsonb) THEN RAISE EXCEPTION 'Library registration identity/safety conflict: trendline_break_retest'; END IF; END $library$;\n\n\nINSERT INTO platform.strategy_definition(strategy_id,strategy_version,display_name,description,adapter,enabled,routes,default_instance_id,updated_by) VALUES ('TREND_FOLLOWING_TRENDLINE_BREAK_RETEST','V1','Trendline Break + Retest','Sloping trendline break and breakout-level retest; research only.','StrategyLibraryAdapter',false,'{\"audit\": true, \"distribution_queue\": true, \"shadow_execution\": false}'::jsonb,'23c971c9-cbf9-5539-99e9-0ebd1366065d','trendline-forward') ON CONFLICT(strategy_id) DO NOTHING;\n\nDO $parent$ BEGIN IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_TRENDLINE_BREAK_RETEST' AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Parent adapter conflict'; END IF; END $parent$;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('23c971c9-cbf9-5539-99e9-0ebd1366065d','TREND_FOLLOWING_TRENDLINE_BREAK_RETEST','BTCUSD','ACTIVE','trendline-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('23c971c9-cbf9-5539-99e9-0ebd1366065d','TREND_FOLLOWING_TRENDLINE_BREAK_RETEST','XAUUSD','ACTIVE','trendline-forward') ON CONFLICT DO NOTHING;\n\nINSERT INTO strategy.instrument_membership(strategy_instance_id,strategy_id,canonical_instrument,state,updated_by) VALUES ('23c971c9-cbf9-5539-99e9-0ebd1366065d','TREND_FOLLOWING_TRENDLINE_BREAK_RETEST','USDJPY','ACTIVE','trendline-forward') ON CONFLICT DO NOTHING;\n",
+        "activation.sql": "BEGIN; SET LOCAL statement_timeout='20s'; SELECT pg_advisory_xact_lock(hashtext('library-event-cutover'));\nDO $primary$ BEGIN IF current_database()<>'trading_platform' OR pg_is_in_recovery() THEN RAISE EXCEPTION 'Verified trading_platform primary required'; END IF; END $primary$;\nUPDATE platform.strategy_definition SET enabled=true,updated_at=now() WHERE strategy_id='TREND_FOLLOWING_TRENDLINE_BREAK_RETEST' AND adapter='StrategyLibraryAdapter';\nDO $time$ BEGIN IF extract(epoch from clock_timestamp()) >= 1793587020 THEN RAISE EXCEPTION 'T0 elapsed: prepare fresh future event run'; END IF; END $time$;\nDO $fresh$ BEGIN IF EXISTS (SELECT 1 FROM research.strategy_library_forward_state WHERE run_id='trendline-20261102t020642-47b08ed') THEN RAISE EXCEPTION 'Run already exists: inspect state; never overwrite'; END IF; END $fresh$;\nDO $instance$ BEGIN IF NOT EXISTS (SELECT 1 FROM strategy_mgmt.strategy_instance_v2 i JOIN strategy_mgmt.strategy_version v ON v.id=i.strategy_version_id JOIN strategy_mgmt.parameter_set p ON p.id=i.parameter_set_id WHERE i.id='23c971c9-cbf9-5539-99e9-0ebd1366065d'::uuid AND NOT i.online AND NOT i.execution_eligible AND i.execution_mode='OFF' AND i.attributes->>'status'='RESEARCH' AND v.version_label='V1' AND v.evaluator_key='library.trendline_break_retest@V1' AND p.frozen AND p.fingerprint='c3d74bf9e1009b20b6b73e2e52f757ab587d61cecec4847f5e800f82fe6a62cf' AND p.values='{\"atr_multiple\": 1.2, \"atr_period\": 14, \"buffer_atr\": 0.1, \"context\": \"H1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"Two confirmed M15 lows/highs form an existing sloping line; close breaks it; subsequent retest confirms in break direction.\", \"key\": \"trendline_break_retest\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"trendline_retest\", \"name\": \"Trendline Break + Retest\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V1\"}'::jsonb) THEN RAISE EXCEPTION 'Existing frozen OFF research instance must be quiesced before cutover'; END IF; IF NOT EXISTS (SELECT 1 FROM platform.strategy_definition WHERE strategy_id='TREND_FOLLOWING_TRENDLINE_BREAK_RETEST' AND enabled AND adapter='StrategyLibraryAdapter') THEN RAISE EXCEPTION 'Enabled library parent required'; END IF; END $instance$;\nUPDATE strategy_mgmt.strategy_instance_v2 SET online=true,attributes=attributes || '{\"forward_entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"forward_image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c\", \"orchestrator_run_id\": \"trendline-20261102t020642-47b08ed\", \"publication_activation_time\": 1793587020, \"publication_mode\": \"ORCHESTRATOR_RESEARCH_ONLY\", \"publication_transport\": \"JETSTREAM\", \"research_only\": true, \"signal_publication\": true}'::jsonb,updated_at=now() WHERE id='23c971c9-cbf9-5539-99e9-0ebd1366065d'::uuid;\nINSERT INTO research.strategy_library_forward_state(run_id,state) VALUES ('trendline-20261102t020642-47b08ed','{\"activation_attestation\": {\"activation_time\": 1793587020, \"binding\": \"33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8\", \"execution_eligible\": false, \"image\": \"ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c\", \"run_id\": \"trendline-20261102t020642-47b08ed\", \"schema\": \"library-event-stream.v1\", \"transport\": \"JETSTREAM\"}, \"binding\": \"33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8\", \"manifest\": {\"artifact\": \"595a05f1c2b8e9f4e25e16a5093061d95871cc47eec6837802ae3460b7db9a6f\", \"config\": {\"activation_time\": 1793587020, \"entry_mode\": \"CONTEMPORANEOUS_CANDLE_OPEN\", \"entry_quote_max_age_seconds\": 5, \"history\": 320, \"keys\": [\"trendline_break_retest\"], \"max_age_seconds\": 330, \"max_retained_bars\": 10000, \"prospective_max_delay\": 120, \"run_id\": \"trendline-20261102t020642-47b08ed\", \"symbols\": {\"BTCUSD\": \"BTCUSDm\", \"USDJPY\": \"USDJPYm\", \"XAUUSD\": \"XAUUSDm\"}, \"transport\": \"JETSTREAM\"}, \"definitions\": {\"trendline_break_retest\": {\"atr_multiple\": 1.2, \"atr_period\": 14, \"buffer_atr\": 0.1, \"context\": \"H1\", \"entry_policy\": \"NEXT_OPEN_RECONSTRUCTED\", \"execution\": \"M15\", \"execution_eligible\": false, \"family\": \"Trend Following\", \"fast\": 20, \"hypothesis\": \"Two confirmed M15 lows/highs form an existing sloping line; close breaks it; subsequent retest confirms in break direction.\", \"key\": \"trendline_break_retest\", \"lifecycle\": \"RESEARCH\", \"lookback\": 20, \"max_entry_gap_atr\": 0.25, \"min_r\": 1.0, \"mode\": \"trendline_retest\", \"name\": \"Trendline Break + Retest\", \"range_end\": 60, \"range_start\": 0, \"session_tz\": \"UTC\", \"setup_bars\": 8, \"slow\": 50, \"symbols\": [], \"target_policy\": \"FIXED_R\", \"target_r\": 2.0, \"tolerance_atr\": 0.15, \"trade_end\": 240, \"trade_start\": 60, \"version\": \"V1\"}}}, \"streams\": {}}'::jsonb); COMMIT;\n"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "trendline-break-retest-v1-observer",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "trendline-break-retest-v1-observer",
+          "app.kubernetes.io/component": "research-observer",
+          "stratrelay.app/status": "research"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trendline-break-retest-v1-observer"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "trendline-break-retest-v1-observer",
+              "app.kubernetes.io/component": "research-observer",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "observer",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.library_event_service",
+                  "observer",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-observer"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.trendline_forward",
+                      "health",
+                      "--manifest",
+                      "/config/run.json",
+                      "--role",
+                      "observer"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "trendline-20261102t020642-47b08ed-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
+            ],
+            "initContainers": [
+              {
+                "name": "verify-research-registration",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.trendline_forward",
+                  "verify",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-observer"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "RESEARCH_ONLY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "25m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "trendline-break-retest-v1-orchestrator",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "trendline-break-retest-v1-orchestrator",
+          "app.kubernetes.io/component": "research-observer",
+          "stratrelay.app/status": "research"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trendline-break-retest-v1-orchestrator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "trendline-break-retest-v1-orchestrator",
+              "app.kubernetes.io/component": "research-observer",
+              "stratrelay.app/status": "research"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "orchestrator",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.library_event_service",
+                  "orchestrator",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "25m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-m",
+                      "research.trendline_forward",
+                      "health",
+                      "--manifest",
+                      "/config/run.json",
+                      "--role",
+                      "orchestrator"
+                    ]
+                  },
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 15,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "manifest",
+                "configMap": {
+                  "name": "trendline-20261102t020642-47b08ed-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
+            ],
+            "initContainers": [
+              {
+                "name": "verify-research-registration",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+                "command": [
+                  "python",
+                  "-m",
+                  "research.trendline_forward",
+                  "verify",
+                  "--manifest",
+                  "/config/run.json"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "25m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "manifest",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "trendline-break-retest-egress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchExpressions": [
+            {
+              "key": "app.kubernetes.io/name",
+              "operator": "In",
+              "values": [
+                "trendline-break-retest-v1-observer",
+                "trendline-break-retest-v1-orchestrator"
+              ]
+            }
+          ]
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-nats"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 4222,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "trendline-break-retest-trading-postgres-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-postgres"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "trendline-break-retest-v1-observer",
+                        "trendline-break-retest-v1-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "trendline-break-retest-trading-redis-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-redis"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "trendline-break-retest-v1-observer",
+                        "trendline-break-retest-v1-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "trendline-break-retest-trading-nats-ingress",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-nats"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "trendline-break-retest-v1-observer",
+                        "trendline-break-retest-v1-orchestrator"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 4222,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
