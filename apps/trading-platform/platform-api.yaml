@@ -57,8 +57,13 @@ spec:
                   name: stratrelay-auth-secrets
                   key: jwt-issuer
                   optional: true
+            # Catalog writes require signed IAM OPS_ADMIN authorization and
+            # verified IAM actor attribution in platform-tools. This switch
+            # does not grant operator roles or bypass JWT verification.
+            # Deployment prerequisite: schema migration 089, catalog child
+            # tables and INSERT grants on strategy_catalog_admin_audit.
             - name: STRATEGY_CATALOG_ADMIN_WRITES_ENABLED
-              value: "false"
+              value: "true"
             - name: TRADING_POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
