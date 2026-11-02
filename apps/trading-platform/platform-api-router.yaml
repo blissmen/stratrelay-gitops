@@ -112,6 +112,9 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: control-api
+        - podSelector:
+            matchLabels:
+              app: trading-ops-console
       ports:
         - port: 22351
           protocol: TCP
