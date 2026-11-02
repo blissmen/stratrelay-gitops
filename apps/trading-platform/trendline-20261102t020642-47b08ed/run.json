@@ -1,0 +1,21 @@
+{
+  "schema": "library-forward-observation.v1",
+  "execution_eligible": false,
+  "run_id": "trendline-20261102t020642-47b08ed",
+  "activation_time": 1793587020,
+  "keys": [
+    "trendline_break_retest"
+  ],
+  "symbols": {
+    "BTCUSD": "BTCUSDm",
+    "XAUUSD": "XAUUSDm",
+    "USDJPY": "USDJPYm"
+  },
+  "history": 320,
+  "max_age_seconds": 330,
+  "prospective_max_delay": 120,
+  "max_retained_bars": 10000,
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+  "entry_quote_max_age_seconds": 5,
+  "transport": "JETSTREAM"
+}

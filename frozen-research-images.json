@@ -104,6 +104,15 @@
         "expected_checkpoint_binding": "e5b4480c5d3d9cb17127af1268e79a05dc7295d3469aad9e5b587fb125937324",
         "checkpoint_reset": false
       }
+    },
+    {
+      "path": "apps/trading-platform/trendline-20261102t020642-47b08ed/workload.json",
+      "run_id": "trendline-20261102t020642-47b08ed",
+      "binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
+      "status": "FRESH_RUN_RESEARCH_ONLY",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c"
+      ]
     }
   ]
 }

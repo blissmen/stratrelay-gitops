@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - trendline-20261102t020642-47b08ed
   - mt5-daily-20261031t181132-5ec8c13
   - mt5-intraday-20261031t181132-5ec8c13
   - continuation-binding-preflight-20261031-r2.json
@@ -74,3 +75,4 @@ patches:
 
 
   - path: mt5-intraday-20261031t181132-5ec8c13/collector-event-scope.patch.json
+  - path: trendline-20261102t020642-47b08ed/collector-event-scope.patch.json
