@@ -116,3 +116,26 @@ spec:
       ports:
         - port: 5432
           protocol: TCP
+---
+# Internal billing calls must reach client-service to resolve saved plan
+# configurations. Keep this permission narrower than the public auth ingress:
+# only payment-service may initiate TCP/8080 requests to client-service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stratrelay-client-service-payment-ingress
+  namespace: trading
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: client-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: payment-service
+      ports:
+        - port: 8080
+          protocol: TCP
