@@ -70,6 +70,10 @@ spec:
               value: https://stratrelay.app
             - name: CLIENT_SERVICE_BASE_URL
               value: http://client-service.trading.svc.cluster.local:8080
+            # CommercialCatalogClient reads authoritative prices and active
+            # symbols/tiers through the internal Platform API router.
+            - name: PLATFORM_API_URL
+              value: http://platform-api-router.trading.svc.cluster.local:22351
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -77,7 +81,7 @@ spec:
                   key: internal-api-key
           readinessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 20
             periodSeconds: 10
@@ -85,7 +89,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20
