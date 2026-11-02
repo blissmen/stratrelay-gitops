@@ -58,6 +58,9 @@ spec:
         - podSelector:
             matchLabels:
               app: stratrelay-portal
+        - podSelector:
+            matchLabels:
+              app: trading-ops-console
       ports:
         - port: 8080
           protocol: TCP
