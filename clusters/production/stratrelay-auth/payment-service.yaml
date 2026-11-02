@@ -61,6 +61,16 @@ spec:
                 secretKeyRef:
                   name: payment-service-secrets
                   key: stripe-secret-key
+            # Public Stripe.js bootstrap only. Optional during rollout to keep
+            # payment-service healthy; /api/public/stripe-config returns 503
+            # (without exposing a key) until this secret entry exists.
+            # Do not use a sk_* value here. Use matching Stripe account/mode.
+            - name: STRIPE_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payment-service-secrets
+                  key: stripe-publishable-key
+                  optional: true
             - name: STRIPE_WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
