@@ -11,7 +11,7 @@
         "containers": [
           {
             "name": "collector",
-            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:a4dbd9c71214e0afa0da808132ab2372967052a452bec71fa9fb262b5fa3dad8",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:ead676331c4c70cd9ae6aba94947c1144ec30123ab4f42fbcb9508f49936d051",
             "envFrom": [
               {
                 "secretRef": {
