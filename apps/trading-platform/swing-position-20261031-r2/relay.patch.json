@@ -12,7 +12,7 @@
         "initContainers": [
           {
             "name": "verify-activation",
-            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:ead676331c4c70cd9ae6aba94947c1144ec30123ab4f42fbcb9508f49936d051",
             "command": [
               "python",
               "-c",
@@ -23,7 +23,7 @@
         "containers": [
           {
             "name": "relay",
-            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807",
+            "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:ead676331c4c70cd9ae6aba94947c1144ec30123ab4f42fbcb9508f49936d051",
             "readinessProbe": {
               "exec": {
                 "command": [
