@@ -42,16 +42,21 @@ spec:
               containerPort: 22350
               protocol: TCP
           env:
-            # Console access is fail-closed until this namespace-local secret
-            # contains the existing IAM JWT signing key. Operator roles come from IAM.
+            # Verify IAM tokens using the same source-of-truth signing key and
+            # issuer IAM itself uses. Do not clone or hardcode them independently.
+            # Operator permissions are asserted only by signed IAM roles.
             - name: CONSOLE_IAM_JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: console-operator-auth
-                  key: JWT_SECRET
+                  name: stratrelay-auth-secrets
+                  key: jwt-secret
                   optional: true
             - name: CONSOLE_IAM_JWT_ISSUER
-              value: influencelnk-iam
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-issuer
+                  optional: true
             - name: STRATEGY_CATALOG_ADMIN_WRITES_ENABLED
               value: "false"
             - name: TRADING_POSTGRES_DSN
