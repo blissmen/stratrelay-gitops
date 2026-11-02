@@ -69,6 +69,14 @@ spec:
                 secretKeyRef:
                   name: stratrelay-auth-secrets
                   key: jwt-issuer
+            # Independent server-only credential for privileged IAM role CRUD.
+            # Missing key disables grants/revocations (role login remains available).
+            - name: IAM_ROLE_ADMIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: role-admin-api-key
+                  optional: true
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
