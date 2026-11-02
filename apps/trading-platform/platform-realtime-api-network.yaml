@@ -15,6 +15,9 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: platform-api-router
+        - podSelector:
+            matchLabels:
+              app: trading-ops-console
       ports:
         - port: 22352
           protocol: TCP
