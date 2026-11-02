@@ -109,6 +109,10 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: client-service
+        # Payment service quotes use the same read-only catalog endpoint.
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: payment-service
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: control-api
