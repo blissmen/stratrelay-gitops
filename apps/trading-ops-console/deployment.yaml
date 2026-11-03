@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: trading-ops-console
-          image: ghcr.io/blissmen/trading-ops-console@sha256:c782af434615704f5b4952c307f2a49e9f8860ff807f1742b905413580fc2ae3
+          image: ghcr.io/blissmen/trading-ops-console@sha256:d21f7878d9f9ffdb5bf1ae0f6978c5bdf54637d0a6ef718ab20dcc8c555ca663
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
