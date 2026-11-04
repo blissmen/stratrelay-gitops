@@ -12,6 +12,8 @@ spec:
           command: [python, -m, research.swing_position_forward, verify, --manifest, /config/run.json]
           envFrom:
             - secretRef:
+                name: library-event-observer
+            - secretRef:
                 name: strategy-library-observer-db
           volumeMounts:
             - name: binding-preflight
@@ -41,6 +43,8 @@ spec:
           image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
           command: [python, -m, research.swing_position_forward, verify, --manifest, /config/run.json]
           envFrom:
+            - secretRef:
+                name: library-event-orchestrator
             - secretRef:
                 name: strategy-library-observer-db
           volumeMounts:
