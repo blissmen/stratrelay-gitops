@@ -17,7 +17,7 @@ spec:
       securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f43d5347cdc31b73d88a6b8bb67623c2d7f5ce3072d9719562fd3dac32afcc4f
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:454e364c962090f8ba18603577e1540fc09f292e0e565cbbe82e3a6fa93a9c12
           imagePullPolicy: IfNotPresent
           command: [python, -m, research.price_action_forward_runtime, run]
           envFrom:
@@ -66,7 +66,7 @@ spec:
       securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: observer
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:f43d5347cdc31b73d88a6b8bb67623c2d7f5ce3072d9719562fd3dac32afcc4f
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:454e364c962090f8ba18603577e1540fc09f292e0e565cbbe82e3a6fa93a9c12
           imagePullPolicy: IfNotPresent
           command: [python, -m, research.price_action_forward_runtime, run]
           envFrom:
