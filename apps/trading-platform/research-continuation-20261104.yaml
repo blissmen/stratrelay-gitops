@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: continuation-binding-preflight-20261104-r3
+  namespace: trading
+immutable: true
+data:
+  preflight.py: |
+    import json
+    from dataclasses import asdict
+    from postgres.db import connect
+    from research.strategy_library_forward import RunConfig, ForwardObserver
+    cfg = RunConfig.load('/config/run.json')
+    with connect(readonly=True) as conn:
+      with conn.cursor() as cur:
+        cur.execute("SET TRANSACTION READ ONLY")
+        cur.execute("SET LOCAL statement_timeout='10s'")
+        cur.execute("SELECT state FROM research.strategy_library_forward_state WHERE run_id=%s", (cfg.run_id,))
+        row = cur.fetchone()
+      conn.rollback()
+    stored = row[0] if row else None
+    saved = (stored or {}).get('manifest', {})
+    enc = lambda x: json.dumps(x, sort_keys=True, separators=(',', ':'))
+    report = {
+      'run_id': cfg.run_id,
+      'status': 'BINDING_MATCH' if stored and stored.get('binding') == ForwardObserver(cfg).binding and enc(saved.get('config')) == enc(asdict(cfg)) and saved.get('artifact') == ForwardObserver(cfg).artifact else 'BINDING_MISMATCH' if stored else 'RUN_MISSING',
+      'read_only': True, 'database_writes': 0, 'broker_writes': 0,
+    }
+    print(json.dumps(report, sort_keys=True), flush=True)
+    raise SystemExit(0 if report['status'] == 'BINDING_MATCH' else 1)
+  continuation_binding_preflight.py: |
+    exec(open('/recovery/preflight.py').read(), globals())
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swing-position-20261104-r3-manifest
+  namespace: trading
+immutable: true
+data:
+  run.json: |
+    {"schema":"library-forward-observation.v1","execution_eligible":false,"run_id":"swing-position-20261104-r3","activation_time":1793802958,"keys":["h4_structure_pullback","daily_channel_breakout","daily_ema_pullback","weekly_range_break_retest","h4_momentum_continuation"],"symbols":{"BTCUSD":"BTCUSDm"},"history":320,"max_age_seconds":330,"prospective_max_delay":120,"max_retained_bars":10000,"entry_mode":"CONTEMPORANEOUS_CANDLE_OPEN","entry_quote_max_age_seconds":5,"transport":"JETSTREAM"}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: donchian-v2-20261104-r3-manifest
+  namespace: trading
+immutable: true
+data:
+  run.json: |
+    {"schema":"library-forward-observation.v1","execution_eligible":false,"run_id":"donchian-v2-20261104-r3","activation_time":1793803101,"keys":["donchian_breakout@V2"],"symbols":{"BTCUSD":"BTCUSDm","USDJPY":"USDJPYm","XAUUSD":"XAUUSDm"},"history":320,"max_age_seconds":330,"prospective_max_delay":120,"max_retained_bars":10000,"entry_mode":"CONTEMPORANEOUS_CANDLE_OPEN","entry_quote_max_age_seconds":null,"transport":"POLL"}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ict-smc-20261104-r3-manifest
+  namespace: trading
+immutable: true
+data:
+  run.json: |
+    {"schema":"library-forward-observation.v1","execution_eligible":false,"run_id":"ict-smc-20261104-r3","activation_time":1793803133,"keys":["judas_swing@V2","power_of_three@V1","order_block_retracement@V2"],"symbols":{"BTCUSD":"BTCUSDm","USDJPY":"USDJPYm","XAUUSD":"XAUUSDm"},"history":320,"max_age_seconds":330,"prospective_max_delay":120,"max_retained_bars":10000,"entry_mode":"CONTEMPORANEOUS_CANDLE_OPEN","entry_quote_max_age_seconds":null,"transport":"POLL"}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: library-canary-20261104-r3-manifest
+  namespace: trading
+immutable: true
+data:
+  run.json: |
+    {"schema":"library-forward-observation.v1","execution_eligible":false,"run_id":"library-canary-20261104-r3","activation_time":1793803144,"keys":["donchian_breakout","ema_pullback","fvg_retracement"],"symbols":{"BTCUSD":"BTCUSDm","USDJPY":"USDJPYm","XAUUSD":"XAUUSDm"},"history":320,"max_age_seconds":330,"prospective_max_delay":120,"max_retained_bars":10000,"entry_mode":"COMPLETED_CANDLE_RECONSTRUCTION","entry_quote_max_age_seconds":null,"transport":"POLL"}

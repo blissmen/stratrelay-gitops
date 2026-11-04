@@ -10,6 +10,7 @@ resources:
   - research-observer-diagnostics-20261031.json
   - research-continuations-20261031.json
   - swing-position-20261031-r2
+  - research-continuation-20261104.yaml
   - platform-api.yaml
   - platform-api-router.yaml
   - platform-realtime-api.yaml
@@ -67,6 +68,8 @@ patches:
   - path: research-continuation-0.patch.yaml
   - path: research-continuation-1.patch.yaml
   - path: research-continuation-2.patch.yaml
+  - path: swing-position-20261104-r3.patch.yaml
+  - path: research-continuation-20261104.patch.yaml
   - path: strategy-event-collector.patch.yaml
   - path: strategy-event-authority.patch.yaml
   - path: strategy-event-liquidity.patch.yaml

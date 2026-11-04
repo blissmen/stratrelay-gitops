@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strategy-library-canary-v1-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: verify-continuation-binding
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        volumeMounts:
+        - name: binding-preflight
+          mountPath: /recovery
+          readOnly: true
+      containers:
+      - name: observer
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+      volumes:
+      - name: manifest
+        configMap: {name: library-canary-20261104-r3-manifest}
+      - name: binding-preflight
+        configMap: {name: continuation-binding-preflight-20261104-r3}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ict-smc-forward-v1-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: verify-continuation-binding
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        volumeMounts:
+        - name: binding-preflight
+          mountPath: /recovery
+          readOnly: true
+      containers:
+      - name: observer
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+      volumes:
+      - name: manifest
+        configMap: {name: ict-smc-20261104-r3-manifest}
+      - name: binding-preflight
+        configMap: {name: continuation-binding-preflight-20261104-r3}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: donchian-breakout-v2-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: verify-research-registration
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        volumeMounts:
+        - name: binding-preflight
+          mountPath: /recovery
+          readOnly: true
+      containers:
+      - name: observer
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+      volumes:
+      - name: manifest
+        configMap: {name: donchian-v2-20261104-r3-manifest}
+      - name: binding-preflight
+        configMap: {name: continuation-binding-preflight-20261104-r3}
