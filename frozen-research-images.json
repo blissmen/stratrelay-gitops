@@ -59,7 +59,7 @@
       "run_id": "library-canary-20261031-r1",
       "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
       ],
       "reader_maintenance": {
         "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
@@ -76,7 +76,7 @@
       "run_id": "ict-smc-20261031-r1",
       "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
       ],
       "reader_maintenance": {
         "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
@@ -93,7 +93,7 @@
       "run_id": "donchian-v2-20261031-r1",
       "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
       ],
       "reader_maintenance": {
         "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",

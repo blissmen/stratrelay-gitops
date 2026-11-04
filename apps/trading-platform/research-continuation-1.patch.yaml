@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
       - name: observer
-        image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+        image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
       volumes:
       - name: manifest
         configMap:
@@ -18,7 +18,7 @@ spec:
           name: continuation-binding-preflight-20261031-r2
       initContainers:
       - name: verify-continuation-binding
-        image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:dcf3923ec73e2d0be25cf7cdecbc9105de16bdb6378da41c30bcfd98c8a112ff"
+        image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
         command:
         - python
         - /recovery/continuation_binding_preflight.py
