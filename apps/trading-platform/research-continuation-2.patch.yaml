@@ -20,7 +20,7 @@ spec:
             - name: binding-preflight
               mountPath: /recovery
               readOnly: true
-        image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+          image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
       volumes:
         - name: binding-preflight
           configMap:
