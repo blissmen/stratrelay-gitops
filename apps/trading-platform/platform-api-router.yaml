@@ -36,7 +36,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: router
-          image: ghcr.io/strat-relay/trading-platform-api-router@sha256:5282d37c901ae7ce2c11ceeb3424affecbd8161d5dd4849dcb0cf3dee81f2eda
+          image: ghcr.io/strat-relay/trading-platform-api-router@sha256:32088708783a5e0b7ffa17fc6deb34e60f066a8351bfc06d57389f30d339aec4
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -109,9 +109,16 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: client-service
+        # Payment service quotes use the same read-only catalog endpoint.
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: payment-service
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: control-api
+        - podSelector:
+            matchLabels:
+              app: trading-ops-console
       ports:
         - port: 22351
           protocol: TCP

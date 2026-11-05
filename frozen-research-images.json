@@ -2,6 +2,24 @@
   "schema": "stratrelay-frozen-research-images.v1",
   "workloads": [
     {
+      "path": "apps/trading-platform/swing-position-20261031-r2/workload.json",
+      "run_id": "swing-position-20261031-r2",
+      "binding": "8a897aa4853715673f5e31841ea02439cec1502c2253666dc5c3954c98a8f963",
+      "status": "FRESH_RUN_RESEARCH_ONLY",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807"
+      ]
+    },
+    {
+      "path": "apps/trading-platform/swing-position-20261031-r1/workload.json",
+      "run_id": "swing-position-20261031-r1",
+      "binding": "14e43642deb477650311c199bebf53d6fe0be2660411d8118681b8e593d676af",
+      "status": "FRESH_RUN_RESEARCH_ONLY",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:9945cf4185579d721c9de68af0aab34352aa674ac878d60a26c678c0143bbd19"
+      ]
+    },
+    {
       "path": "apps/trading-platform/ict-smc-forward-20261018-1845.yaml",
       "run_id": "ict-smc-forward-20261019-0226",
       "binding": "d7b4aaca5a90b8c36af548746b7161f3f64fb2a4ab4d34c0642418254b6fb873",
@@ -34,6 +52,66 @@
       "status": "PAUSED_NOT_ACTIVATED",
       "images": [
         "ghcr.io/strat-relay/trading-platform-runtime@sha256:35fc80be3dcb9a5062c43514395cce6772b3f004a95583d5a19fc9073f9da5fa"
+      ]
+    },
+    {
+      "path": "apps/trading-platform/research-continuation-0.patch.yaml",
+      "run_id": "library-canary-20261031-r1",
+      "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+      ],
+      "reader_maintenance": {
+        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
+        "source_commit": "7e23d514318777ee523b20add69fdab29557b4c4",
+        "base_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735",
+        "unchanged_strategy_artifact": "186dac674b285fc2e02c74c86692977a742daccf75b9ec3e846e179d30801f44",
+        "unchanged_forward_adapter_sha256": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+        "expected_checkpoint_binding": "0f289899efd2d282e014ada033e9413e34475a0e9920b224b5a132aa9577baed",
+        "checkpoint_reset": false
+      }
+    },
+    {
+      "path": "apps/trading-platform/research-continuation-1.patch.yaml",
+      "run_id": "ict-smc-20261031-r1",
+      "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+      ],
+      "reader_maintenance": {
+        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
+        "source_commit": "7e23d514318777ee523b20add69fdab29557b4c4",
+        "base_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735",
+        "unchanged_strategy_artifact": "186dac674b285fc2e02c74c86692977a742daccf75b9ec3e846e179d30801f44",
+        "unchanged_forward_adapter_sha256": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+        "expected_checkpoint_binding": "bcbab42db1b8469b6df80d5a34110666035bb6c3e1db77c68f508c0d4d602ef1",
+        "checkpoint_reset": false
+      }
+    },
+    {
+      "path": "apps/trading-platform/research-continuation-2.patch.yaml",
+      "run_id": "donchian-v2-20261031-r1",
+      "status": "RECOVERY_CANDIDATE_BINDING_CHECK_REQUIRED",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+      ],
+      "reader_maintenance": {
+        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/41369016064",
+        "source_commit": "7e23d514318777ee523b20add69fdab29557b4c4",
+        "base_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:6feabc4e2afb42944850a16eb19c616a13ed1c07421bee4305a815f696f0a735",
+        "unchanged_strategy_artifact": "186dac674b285fc2e02c74c86692977a742daccf75b9ec3e846e179d30801f44",
+        "unchanged_forward_adapter_sha256": "fe564432b3640181333659ad84ebcca2babcf28b792254e41f10b5fcd59fc079",
+        "expected_checkpoint_binding": "e5b4480c5d3d9cb17127af1268e79a05dc7295d3469aad9e5b587fb125937324",
+        "checkpoint_reset": false
+      }
+    },
+    {
+      "path": "apps/trading-platform/trendline-20261102t020642-47b08ed/workload.json",
+      "run_id": "trendline-20261102t020642-47b08ed",
+      "binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
+      "status": "FRESH_RUN_RESEARCH_ONLY",
+      "images": [
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c"
       ]
     }
   ]

@@ -1,0 +1,294 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "immutable": true,
+      "metadata": {
+        "name": "research-observer-diagnostics-20261031",
+        "namespace": "trading"
+      },
+      "data": {
+        "diagnostics.py": "\"\"\"One-shot read-only cache/checkpoint report. No broker or message operations.\"\"\"\nimport json\nimport math\nimport time\n\nSYMBOLS = ('BTCUSDm', 'XAUUSDm', 'USDJPYm', 'EURUSDm')\nKEYS = ('fvg_retracement', 'order_block_retracement', 'h4_structure_pullback',\n        'daily_channel_breakout', 'daily_ema_pullback', 'weekly_range_break_retest',\n        'h4_momentum_continuation')\n\n\ndef safe_error(exc):\n    # Driver exception text and environment values may contain credentials.\n    return {'error_type': type(exc).__name__, 'sqlstate': getattr(exc, 'sqlstate', None)}\n\n\ndef numeric(value):\n    return isinstance(value, (float, int)) and not isinstance(value, bool) and math.isfinite(value)\n\n\ndef cache_report(store, now):\n    from market_data_cache.session_calendar import classify_missing, gap_payload\n    from platform_api.library_market_schedule import weekend_window\n    result = []\n    for symbol in SYMBOLS:\n        try:\n            raw = store.snapshot(symbol) or {}\n            state = store.state(symbol) or {}\n            hot = store.quote(symbol) or {}\n            quote = hot.get('quote') or {}\n            stamp = raw.get('fetched_at')\n            item = {'symbol': symbol, 'snapshot_fetched_at': stamp if numeric(stamp) else None,\n                    'snapshot_age_seconds': now-stamp if numeric(stamp) else None,\n                    'state': {k: state.get(k) for k in ('health_state', 'healthy',\n                        'consecutive_failures', 'backfill_required', 'last_attempt_at')},\n                    'quote_ages': {k: now-v if numeric(v) else None for k, v in (\n                        ('provider_seconds', quote.get('time')), ('cache_seconds', hot.get('observed_at')))},\n                    'timeframes': {}}\n            asset = 'CRYPTO' if symbol == 'BTCUSDm' else 'METAL' if symbol == 'XAUUSDm' else 'FX'\n            window = weekend_window(asset, now)\n            item['closure_window'] = window\n            item['source_stale_before_closure'] = (\n                stamp < window['closure_start']-330 if window and numeric(stamp) else None)\n            for tf in ('M5', 'M15', 'H1', 'H4'):\n                bars = store.bars(symbol, tf)\n                expected, gaps = classify_missing(bars, tf, provider_symbol=symbol)\n                item['timeframes'][tf] = {\n                    'bars': len(bars), 'first_time': bars[0]['time'] if bars else None,\n                    'last_time': bars[-1]['time'] if bars else None,\n                    'expected_closure_count': len(expected), 'true_gap_count': len(gaps),\n                    'recent_true_gaps': [gap_payload(gap, tf) for gap in gaps[-3:]]}\n            result.append(item)\n        except Exception as exc:\n            result.append({'symbol': symbol, **safe_error(exc)})\n    return result\n\n\ndef db_report():\n    from postgres.db import connect\n    with connect(readonly=True) as conn:\n        with conn.cursor() as cur:\n            cur.execute('SET TRANSACTION READ ONLY')\n            cur.execute(\"SET LOCAL statement_timeout='10s'\")\n            cur.execute(\"SELECT current_database(),pg_is_in_recovery(),current_setting('transaction_read_only')\")\n            database, recovery, read_only = cur.fetchone()\n            if database != 'trading_platform' or recovery or read_only != 'on':\n                raise ValueError('verified read-only primary required')\n            cur.execute(\"SELECT version,checksum_sha256 FROM platform.schema_migrations WHERE version IN ('070','078') ORDER BY version\")\n            migrations = dict(cur.fetchall())\n            cur.execute('''SELECT id::text,online,execution_eligible,execution_mode,\n                                  attributes->>'library_key',attributes->>'orchestrator_run_id'\n                           FROM strategy_mgmt.strategy_instance_v2\n                           WHERE attributes->>'library_key'=ANY(%s) ORDER BY id''', (list(KEYS),))\n            instances = [dict(zip(('instance_id','online','execution_eligible','execution_mode',\n                                  'library_key','run_id'), row)) for row in cur.fetchall()]\n            runs = sorted({i['run_id'] for i in instances if i['run_id']} | {\n                'library-canary-20261016-v1','library-canary-20261031-r1',\n                'ict-smc-20261031-r1','donchian-v2-20261031-r1','swing-position-20261028-v1'})\n            cur.execute('''SELECT run_id,state->'health',state->'activation_attestation'->>'transport'\n                           FROM research.strategy_library_forward_state WHERE run_id=ANY(%s)''', (runs,))\n            checkpoints = []\n            for run_id, health, transport in cur.fetchall():\n                health = health or {}\n                checkpoints.append({'run_id': run_id, 'transport': transport,\n                    'health_status': health.get('status'), 'observed_at': health.get('observed_at'),\n                    'streams': [{k: s.get(k) for k in ('key','instrument','status','error_type',\n                        'last_finalized_close')} for s in health.get('streams', [])]})\n        conn.rollback()\n    return {'database': database, 'read_only': True, 'migrations': migrations,\n            'instances': instances, 'checkpoints': checkpoints}\n\n\ndef main():\n    report = {'report': 'research-observer-diagnostics', 'read_only': True,\n              'broker_writes': 0, 'message_publications': 0, 'errors': []}\n    try:\n        from market_data_cache.reader import default_store\n        store = default_store()\n        report['cache_samples'] = []\n        for index in range(3):\n            now = time.time()\n            report['cache_samples'].append({'observed_at': now, 'symbols': cache_report(store, now)})\n            if index < 2:\n                time.sleep(3)\n    except Exception as exc:\n        report['errors'].append({'section': 'cache', **safe_error(exc)})\n    try:\n        report['database'] = db_report()\n    except Exception as exc:\n        report['errors'].append({'section': 'database', **safe_error(exc)})\n    print(json.dumps(report, allow_nan=False), flush=True)\n    raise SystemExit(1 if report['errors'] else 0)\n\n\nif __name__ == '__main__':\n    main()\n"
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "research-observer-diagnostics-20261031",
+        "namespace": "trading",
+        "labels": {
+          "app.kubernetes.io/name": "research-observer-diagnostics-20261031"
+        }
+      },
+      "spec": {
+        "backoffLimit": 0,
+        "activeDeadlineSeconds": 180,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "research-observer-diagnostics-20261031"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "restartPolicy": "Never",
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "runAsGroup": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "diagnostics",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:9567ab3f31a84812d5a20953f1345c63396fc02a802f624f07ac31e4b962d0cf",
+                "command": [
+                  "python",
+                  "/config/diagnostics.py"
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "strategy-library-observer-db"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "PGOPTIONS",
+                    "value": "-c default_transaction_read_only=on -c statement_timeout=10000"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  },
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "300m",
+                    "memory": "256Mi"
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "research-observer-diagnostics-20261031"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "research-observer-diagnostics-20261031",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "research-observer-diagnostics-20261031"
+          }
+        },
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-postgres"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "trading-redis"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              },
+              {
+                "port": 53,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "research-observer-diagnostics-20261031-trading-postgres",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-postgres"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "research-observer-diagnostics-20261031"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 5432,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "research-observer-diagnostics-20261031-trading-redis",
+        "namespace": "trading"
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "trading-redis"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "research-observer-diagnostics-20261031"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

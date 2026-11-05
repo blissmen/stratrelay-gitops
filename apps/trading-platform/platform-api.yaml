@@ -35,13 +35,40 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:93ed0d68ca2b87adadc16c5fa9bf91ebcbdf226a286993b6e1f1ff79f71270f1
+          image: ghcr.io/strat-relay/trading-platform-control-api@sha256:88f7c3834a4910aea2e2cdef1635c765a0249649d3ba43c4c2360c00c19e7405
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 22350
               protocol: TCP
           env:
+            # Verify IAM tokens using the same source-of-truth signing key and
+            # issuer IAM itself uses. Do not clone or hardcode them independently.
+            # Operator permissions are asserted only by signed IAM roles.
+            - name: CONSOLE_IAM_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-secret
+                  optional: true
+            - name: CONSOLE_IAM_JWT_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: jwt-issuer
+                  optional: true
+            # Catalog writes require signed IAM OPS_ADMIN authorization and
+            # verified IAM actor attribution in platform-tools. This switch
+            # does not grant operator roles or bypass JWT verification.
+            # Deployment prerequisite: schema migration 089, catalog child
+            # tables and INSERT grants on strategy_catalog_admin_audit.
+            - name: STRATEGY_CATALOG_ADMIN_WRITES_ENABLED
+              value: "true"
+            # DO NOT PROMOTE until payment-service dynamic Stripe quote pricing
+            # and platform catalog capability PRs have deployed and passed
+            # test-mode checkout/upgrade/retry parity validation.
+            - name: CATALOG_DYNAMIC_STRIPE_PRICING_ENABLED
+              value: "true"
             - name: TRADING_POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
@@ -84,6 +111,12 @@ spec:
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
             - name: BROKER_VIEW_MAX_AGE_SECONDS
               value: "45"
+            # Recovery reads only PostgreSQL evidence and the existing Redis cache.
+            # This follows REDIS_PASSWORD so Kubernetes expands it before use.
+            - name: SIGNAL_ANALYSIS_CANDLE_RECOVERY
+              value: "true"
+            - name: SIGNAL_ANALYSIS_REDIS_URL
+              value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           volumeMounts:
             - name: platform-config
               mountPath: /etc/platform-config

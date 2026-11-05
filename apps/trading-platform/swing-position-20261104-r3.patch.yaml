@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swing-position-v1-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: verify-research-registration
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+          command: [python, -m, research.swing_position_forward, verify, --manifest, /config/run.json]
+          envFrom:
+            - secretRef:
+                name: library-event-observer
+            - secretRef:
+                name: strategy-library-observer-db
+          volumeMounts:
+            - name: binding-preflight
+              mountPath: /recovery
+              readOnly: true
+      containers:
+        - name: observer
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+      volumes:
+        - name: manifest
+          configMap:
+            name: swing-position-20261104-r5-manifest
+        - name: binding-preflight
+          configMap:
+            name: continuation-binding-preflight-20261104-r3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swing-position-v1-orchestrator
+  namespace: trading
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: verify-research-registration
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+          command: [python, -m, research.swing_position_forward, verify, --manifest, /config/run.json]
+          envFrom:
+            - secretRef:
+                name: library-event-orchestrator
+            - secretRef:
+                name: strategy-library-observer-db
+          volumeMounts:
+            - name: binding-preflight
+              mountPath: /recovery
+              readOnly: true
+      containers:
+        - name: orchestrator
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+      volumes:
+        - name: manifest
+          configMap:
+            name: swing-position-20261104-r5-manifest
+        - name: binding-preflight
+          configMap:
+            name: continuation-binding-preflight-20261104-r3

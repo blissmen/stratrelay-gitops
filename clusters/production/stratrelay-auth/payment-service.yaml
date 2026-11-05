@@ -28,7 +28,7 @@ spec:
         - name: ghcr-pull
       containers:
         - name: payment-service
-          image: ghcr.io/strat-relay/payment-service@sha256:ecf8b9d114fffcd1078320bf5315bb20cefc61140f2fe81f48d31baf5b2fbe3a
+          image: ghcr.io/strat-relay/payment-service@sha256:65e1df605200bc62ac371edb7d6b0a19c4f3cb1f5ad7b2c1e2f5f3a94c110950
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -61,6 +61,16 @@ spec:
                 secretKeyRef:
                   name: payment-service-secrets
                   key: stripe-secret-key
+            # Public Stripe.js bootstrap only. Optional during rollout to keep
+            # payment-service healthy; /api/public/stripe-config returns 503
+            # (without exposing a key) until this secret entry exists.
+            # Do not use a sk_* value here. Use matching Stripe account/mode.
+            - name: STRIPE_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payment-service-secrets
+                  key: stripe-publishable-key
+                  optional: true
             - name: STRIPE_WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
@@ -70,6 +80,10 @@ spec:
               value: https://stratrelay.app
             - name: CLIENT_SERVICE_BASE_URL
               value: http://client-service.trading.svc.cluster.local:8080
+            # CommercialCatalogClient reads authoritative prices and active
+            # symbols/tiers through the internal Platform API router.
+            - name: PLATFORM_API_URL
+              value: http://platform-api-router.trading.svc.cluster.local:22351
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -77,7 +91,7 @@ spec:
                   key: internal-api-key
           readinessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 20
             periodSeconds: 10
@@ -85,7 +99,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20

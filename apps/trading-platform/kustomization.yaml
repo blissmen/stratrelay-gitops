@@ -1,7 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - swing-position-20261028
+  - trendline-20261102t020642-47b08ed
+  - mt5-daily-20261031t181132-5ec8c13
+  - mt5-intraday-20261031t181132-5ec8c13
+  - continuation-binding-preflight-20261031-r2.json
+  - donchian-binding-preflight-20261031-r1.json
+  - research-observer-diagnostics-20261031-r2.json
+  - research-observer-diagnostics-20261031.json
+  - research-continuations-20261031.json
+  - swing-position-20261031-r2
+  - research-continuation-20261104.yaml
   - platform-api.yaml
   - platform-api-router.yaml
   - platform-realtime-api.yaml
@@ -59,8 +68,19 @@ resources:
 
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
+  - path: swing-position-20261031-r2/collector.patch.json
+  - path: swing-position-20261031-r2/relay.patch.json
+  - path: research-continuation-0.patch.yaml
+  - path: research-continuation-1.patch.yaml
+  - path: research-continuation-2.patch.yaml
+  - path: swing-position-20261104-r3.patch.yaml
+  - path: research-continuation-20261104.patch.yaml
   - path: strategy-event-collector.patch.yaml
   - path: strategy-event-authority.patch.yaml
   - path: strategy-event-liquidity.patch.yaml
   - path: strategy-event-canonical-relay.patch.yaml
   - path: strategy-event-context.patch.yaml
+
+
+  - path: mt5-intraday-20261031t181132-5ec8c13/collector-event-scope.patch.json
+  - path: trendline-20261102t020642-47b08ed/collector-event-scope.patch.json

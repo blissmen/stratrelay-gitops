@@ -1,5 +1,5 @@
 {
   "repository": "strat-relay/client-service",
-  "commit": "2315b01fd6fe43958ec07a0f72478ead1cda8d81",
-  "image": "ghcr.io/strat-relay/client-service@sha256:8799b668806365465d9f4fd0d29b089198ad9551b6ab4db3cedba0fbd07ec275"
+  "commit": "38521503d1333985ea2f7971e88a54947a308487",
+  "image": "ghcr.io/strat-relay/client-service@sha256:d5cbb4e87c91bca476c829fc8f3966ffc689ec06a53c8d418a9853ef118ec93c"
 }

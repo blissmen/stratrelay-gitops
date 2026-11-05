@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: donchian-breakout-v2-observer
+  namespace: trading
+spec:
+  template:
+    spec:
+      containers:
+        - name: observer
+          image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+      initContainers:
+        - name: verify-research-registration
+          command: [python, /recovery/preflight.py]
+          env:
+            - {name: PYTHONPATH, value: /app}
+            - {name: PYTHONDONTWRITEBYTECODE, value: "1"}
+            - {name: PGOPTIONS, value: "-c default_transaction_read_only=on -c statement_timeout=10000"}
+          volumeMounts:
+            - name: binding-preflight
+              mountPath: /recovery
+              readOnly: true
+          image: "ghcr.io/strat-relay/trading-platform-reader-compat@sha256:96311b2883dd121b2175c71965bce8d9d1df2e35469f59d1bed0810cb58a6bdf"
+      volumes:
+        - name: binding-preflight
+          configMap:
+            name: donchian-binding-preflight-20261031-r1
+        - name: manifest
+          configMap:
+            name: donchian-v2-20261031-r1-manifest
+
+# stratrelay-release: frozen
+# Checkpoint-bound continuation: no bulk release image changes.

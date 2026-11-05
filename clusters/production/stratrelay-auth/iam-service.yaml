@@ -28,7 +28,7 @@ spec:
         - name: ghcr-pull
       containers:
         - name: iam-service
-          image: ghcr.io/strat-relay/iam-service@sha256:28e0c331fea42fda046cc431e76620ee7a86bf95cdfc8538b055b65cd891494d
+          image: ghcr.io/strat-relay/iam-service@sha256:89927404e15dc472fa924aa07653ccd6fab5cf0763b9501485a30ec535a9fcd9
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -69,6 +69,14 @@ spec:
                 secretKeyRef:
                   name: stratrelay-auth-secrets
                   key: jwt-issuer
+            # Independent server-only credential for privileged IAM role CRUD.
+            # Missing key disables grants/revocations (role login remains available).
+            - name: IAM_ROLE_ADMIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stratrelay-auth-secrets
+                  key: role-admin-api-key
+                  optional: true
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -95,7 +103,7 @@ spec:
               value: support@stratrelay.app
           readinessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 20
             periodSeconds: 10
@@ -103,7 +111,7 @@ spec:
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20

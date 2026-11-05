@@ -1,0 +1,24 @@
+{
+  "status": "PREPARED_NOT_ACTIVATED",
+  "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+  "run_id": "trendline-20261102t020642-47b08ed",
+  "activation_time": 1793587020,
+  "binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
+  "keys": [
+    "trendline_break_retest"
+  ],
+  "execution_eligible": false,
+  "broker_writes": 0,
+  "prerequisites": [
+    "migration 070",
+    "dedicated credentials/ACLs",
+    "provisioned bounded streams",
+    "legacy orchestrator skip guard deployed",
+    "old run consumers quiesced",
+    "existing frozen research registrations and memberships",
+    "future T0 activation transaction"
+  ],
+  "family_assignments": {
+    "trendline_break_retest": "Trend Following"
+  }
+}

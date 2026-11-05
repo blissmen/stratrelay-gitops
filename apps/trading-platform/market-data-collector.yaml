@@ -38,7 +38,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: collector
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:d34c26eb6c04b224100ca89d7eeadbf2843636238c3c7ca150b0dbc7b8284d56
+          # platform-tools #277, source d52770262ae56fc106d9d8fdbe284f7759831146.
+          # Independent hot-quote lifecycles; event production remains OFF.
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:738d25e5b20db816904e2a06ca513dfe527fa9f0059b7bdcb8c5093fae65257a
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "market_data_cache.service"]
           envFrom:
@@ -47,6 +49,10 @@ spec:
             - configMapRef:
                 name: trading-db-primary-prepared
           env:
+            # Phase 1 preflight passed against this collector's actual primary
+            # target and privileges. Existing immutable runtime already supports
+            # commit-before-cache archival; do not repin frozen strategy images.
+            - {name: MARKET_DATA_ARCHIVE_ENABLED, value: 'true'}
             - {name: MARKET_DATA_EVENT_MODE, value: 'OFF'}
             # Optional native UTC daily data for the five Swing research definitions.
             # No observer activation, publication-mode change or execution permission.
@@ -64,11 +70,15 @@ spec:
               value: "2"
             - name: MARKET_QUOTES_PER_PASS
               value: "10"
-            # Keep all due symbols inside the candle boundary. The collector's bridge gate
-            # remains the hard concurrency limit; this only enables independent snapshots to
-            # overlap instead of serializing several seconds of bridge latency per symbol.
+            # 3 concurrent workers allow BTC/XAU/USDJPY to progress in parallel.
+            # Circuit breaker trips only on EA_UNAVAILABLE (transport errors), not
+            # on TRUE_BAR_GAP (data-level); with a healthy bridge this is safe.
             - name: MARKET_DATA_BAR_WORKERS
-              value: "4"
+              value: "3"
+            - name: MARKET_DATA_BRIDGE_MAX_INFLIGHT
+              value: "3"
+            - name: MARKET_DATA_PRIORITY_SYMBOLS
+              value: "USDJPYm"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
