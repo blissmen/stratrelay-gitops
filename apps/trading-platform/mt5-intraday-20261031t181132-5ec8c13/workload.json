@@ -346,7 +346,7 @@
             "containers": [
               {
                 "name": "orchestrator",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:0b18f987c14e92b17b25a7a6a3beaaccf76fdfe41f90210f4a7a3ee92f0a05b5",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:f8674b42cf27ca661a73067167f060f914afdc5201402be216a8b9c233e4ae8c",
                 "command": [
                   "python",
                   "-m",
