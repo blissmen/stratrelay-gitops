@@ -52,6 +52,11 @@ resources:
   # Relay prerequisite passed; strategy event producers/consumers remain unchanged.
   - strategy-runtime-event-relay
 
+  # MT5 intraday counterpart observers (rsi_reversion, bollinger_reversion, ema_20_50,
+  # ema_pullback, donchian_breakout @V2/V3 on BTCUSD/USDJPY/XAUUSD). Activation job
+  # ran 2026-10-31; this adds the persistent observer Deployment that was missing.
+  - mt5-intraday-20261031t181132-5ec8c13
+
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
   - path: strategy-event-collector.patch.yaml
