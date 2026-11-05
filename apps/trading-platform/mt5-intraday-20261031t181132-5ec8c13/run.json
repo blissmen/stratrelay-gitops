@@ -1,0 +1,25 @@
+{
+  "schema": "library-forward-observation.v1",
+  "execution_eligible": false,
+  "run_id": "mt5-intraday-20261031t181132-5ec8c13",
+  "activation_time": 1793471220,
+  "keys": [
+    "ema_20_50@V2",
+    "ema_pullback@V2",
+    "rsi_reversion@V2",
+    "bollinger_reversion@V2",
+    "donchian_breakout@V3"
+  ],
+  "symbols": {
+    "BTCUSD": "BTCUSDm",
+    "XAUUSD": "XAUUSDm",
+    "USDJPY": "USDJPYm"
+  },
+  "history": 320,
+  "max_age_seconds": 330,
+  "prospective_max_delay": 120,
+  "max_retained_bars": 10000,
+  "entry_mode": "CONTEMPORANEOUS_CANDLE_OPEN",
+  "entry_quote_max_age_seconds": 5,
+  "transport": "JETSTREAM"
+}
