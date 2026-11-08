@@ -28,7 +28,7 @@ spec:
         - name: ghcr-pull
       containers:
         - name: payment-service
-          image: ghcr.io/strat-relay/payment-service@sha256:65e1df605200bc62ac371edb7d6b0a19c4f3cb1f5ad7b2c1e2f5f3a94c110950
+          image: ghcr.io/strat-relay/payment-service@sha256:296d6af55f53ed489a75e8bef67f4fd370f31fc3344161d5977d9c40e394b987
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

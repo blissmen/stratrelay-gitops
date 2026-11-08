@@ -1,5 +1,5 @@
 {
   "repository": "strat-relay/payment-service",
-  "commit": "d6e15d0a7d716bdb2c5c3897265ee486dcd148f1",
-  "image": "ghcr.io/strat-relay/payment-service@sha256:65e1df605200bc62ac371edb7d6b0a19c4f3cb1f5ad7b2c1e2f5f3a94c110950"
+  "commit": "efb2021da35be2add328c16a3b584e359f25485f",
+  "image": "ghcr.io/strat-relay/payment-service@sha256:296d6af55f53ed489a75e8bef67f4fd370f31fc3344161d5977d9c40e394b987"
 }
