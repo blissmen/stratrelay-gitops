@@ -61,6 +61,9 @@ resources:
   # Relay prerequisite passed; strategy event producers/consumers remain unchanged.
   - strategy-runtime-event-relay
 
+  # Unified orchestrator; replaces 4 per-run orchestrator Deployments.
+  - library-orchestrator-unified
+
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
   - path: swing-position-20261031-r2/collector.patch.json
