@@ -28,7 +28,7 @@ spec:
         - name: ghcr-pull
       initContainers:
         - name: migrate
-          image: ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076
+          image: ghcr.io/strat-relay/gonotification-service@sha256:57e2f0fbf9b7140c68c6c7bea0175abab60c8c0ccf5260e0ec4520f97a660aa5
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
@@ -46,7 +46,7 @@ spec:
                   key: notification-database-url
       containers:
         - name: notification-service
-          image: ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076
+          image: ghcr.io/strat-relay/gonotification-service@sha256:57e2f0fbf9b7140c68c6c7bea0175abab60c8c0ccf5260e0ec4520f97a660aa5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -1,5 +1,5 @@
 {
   "repository": "strat-relay/gonotification-service",
-  "commit": "280193dec93ba7fec1ebc770c8e106eb3027b780",
-  "image": "ghcr.io/strat-relay/gonotification-service@sha256:cf610cce843bad446db4990e152979b88ba667dad29e8b2460e9bdff6c599076"
+  "commit": "5f9f9c3c3a5f79cb1c14abb007716d6c8edcd351",
+  "image": "ghcr.io/strat-relay/gonotification-service@sha256:57e2f0fbf9b7140c68c6c7bea0175abab60c8c0ccf5260e0ec4520f97a660aa5"
 }
