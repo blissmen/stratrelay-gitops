@@ -1,0 +1,34 @@
+# Apply ONLY after library-orchestrator-unified reaches 1/1 Running.
+# Scales the 4 individual orchestrators to 0; their observers are unaffected.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mt5-counterpart-intraday-orchestrator
+  namespace: trading
+spec:
+  replicas: 0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mt5-counterpart-daily-orchestrator
+  namespace: trading
+spec:
+  replicas: 0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swing-position-v1-orchestrator
+  namespace: trading
+spec:
+  replicas: 0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendline-break-retest-v1-orchestrator
+  namespace: trading
+spec:
+  replicas: 0
