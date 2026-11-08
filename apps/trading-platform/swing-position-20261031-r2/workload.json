@@ -64,7 +64,7 @@
             "containers": [
               {
                 "name": "observer",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:1de78fb30a3bf3ac95dd54e95b5bfb4d5ec163adc52f2af26a380edc4528100a",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5",
                 "command": [
                   "python",
                   "-m",
@@ -195,7 +195,7 @@
             "initContainers": [
               {
                 "name": "verify-research-registration",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:1de78fb30a3bf3ac95dd54e95b5bfb4d5ec163adc52f2af26a380edc4528100a",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5",
                 "command": [
                   "python",
                   "-m",
@@ -346,7 +346,7 @@
             "containers": [
               {
                 "name": "orchestrator",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:1de78fb30a3bf3ac95dd54e95b5bfb4d5ec163adc52f2af26a380edc4528100a",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5",
                 "command": [
                   "python",
                   "-m",
@@ -482,7 +482,7 @@
             "initContainers": [
               {
                 "name": "verify-research-registration",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:1de78fb30a3bf3ac95dd54e95b5bfb4d5ec163adc52f2af26a380edc4528100a",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5",
                 "command": [
                   "python",
                   "-c",
