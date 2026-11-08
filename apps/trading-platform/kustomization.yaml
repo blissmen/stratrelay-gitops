@@ -82,3 +82,6 @@ patches:
 
   - path: mt5-intraday-20261031t181132-5ec8c13/collector-event-scope.patch.json
   - path: trendline-20261102t020642-47b08ed/collector-event-scope.patch.json
+
+  # library-orchestrator-unified is running; scale the individual orchestrators to 0.
+  - path: library-orchestrator-unified/scale-down.patch.yaml
