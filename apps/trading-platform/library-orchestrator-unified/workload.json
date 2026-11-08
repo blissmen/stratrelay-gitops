@@ -30,7 +30,8 @@
         "template": {
           "metadata": {
             "labels": {
-              "app": "library-orchestrator-unified"
+              "app": "library-orchestrator-unified",
+              "stratrelay.app/library-events": "true"
             }
           },
           "spec": {
