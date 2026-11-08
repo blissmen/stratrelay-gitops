@@ -108,17 +108,20 @@
     {
       "path": "apps/trading-platform/trendline-20261102t020642-47b08ed/workload.json",
       "run_id": "trendline-20261102t020642-47b08ed",
-      "binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
+      "binding": "8751decc60e7cc118c3b6d5cfbbac466b80ffcbb7f45377a517eefce4fb742ab",
+      "artifact": "869923ca02368cccc6abf7b325685a5c6ae13426bd3f27ce9fcf4229c91b2c72",
       "status": "FRESH_RUN_RESEARCH_ONLY",
       "images": [
         "ghcr.io/strat-relay/trading-platform-runtime@sha256:93162d0deadb4b13bebb5880d355c3818b853058bb95659d6f7ab3525eecb2ff"
       ],
       "image_maintenance": {
         "previous_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
+        "previous_binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
         "source_commit": "80b12d48976e3a88f818a9428870a9f4ab637332",
         "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/42434943697",
         "reason": "FP ceiling bug in signal_emitted_at (int()+1 fix) — blocked all 10 trendline entries since run start; strategy semantics, parameters and entry/stop/target logic unchanged",
-        "platform_tools_pr": 330
+        "platform_tools_pr": 330,
+        "db_binding_updated": "2026-11-07"
       }
     }
   ]
