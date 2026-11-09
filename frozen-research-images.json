@@ -4,11 +4,22 @@
     {
       "path": "apps/trading-platform/swing-position-20261031-r2/workload.json",
       "run_id": "swing-position-20261031-r2",
-      "binding": "8a897aa4853715673f5e31841ea02439cec1502c2253666dc5c3954c98a8f963",
+      "binding": "cb1fcb9007f9bbc47eb5c190835602af5b121d8ea9c741643835e570584bdfbf",
       "status": "FRESH_RUN_RESEARCH_ONLY",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807"
-      ]
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5"
+      ],
+      "image_maintenance": {
+        "previous_images": [
+          "ghcr.io/strat-relay/trading-platform-runtime@sha256:292ae470702ab9720eb19aa8d05e89922a004d930d44ded1d81cec6783682807"
+        ],
+        "previous_binding": "8a897aa4853715673f5e31841ea02439cec1502c2253666dc5c3954c98a8f963",
+        "note": "aca78964 is the scaled-to-0 per-run orchestrator (superseded by library-orchestrator-unified); observer upgraded to 12485d51",
+        "platform_tools_prs": [335, 337],
+        "reason": "Observer candle-revision deadlock fix: library_event_consumer.py::transition() now catches both 'conflicting completed candle revision' (_merge) and 'conflicting candle revision' (runtime.py:187) and ACKs rather than NAK-looping",
+        "db_binding_updated": "2026-11-09"
+      }
     },
     {
       "path": "apps/trading-platform/swing-position-20261031-r1/workload.json",
@@ -108,20 +119,23 @@
     {
       "path": "apps/trading-platform/trendline-20261102t020642-47b08ed/workload.json",
       "run_id": "trendline-20261102t020642-47b08ed",
-      "binding": "8751decc60e7cc118c3b6d5cfbbac466b80ffcbb7f45377a517eefce4fb742ab",
-      "artifact": "869923ca02368cccc6abf7b325685a5c6ae13426bd3f27ce9fcf4229c91b2c72",
+      "binding": "bff9ae4adf13afe18299b6d69dcc4938678855257741e7f1b1ae078c49d1c0a7",
+      "artifact": "dc963c6ccba2d6937630429ab17eedc952127bf12f159cf412b6a253dad2db61",
       "status": "FRESH_RUN_RESEARCH_ONLY",
       "images": [
-        "ghcr.io/strat-relay/trading-platform-runtime@sha256:93162d0deadb4b13bebb5880d355c3818b853058bb95659d6f7ab3525eecb2ff"
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
+        "ghcr.io/strat-relay/trading-platform-runtime@sha256:aca78964e63a2565d047baf3c4cb954ee942e26883a756376558b04ba39573c5"
       ],
       "image_maintenance": {
-        "previous_image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:d70d223e8dca5b7ca7c9c553fa41cd5ef363611b04fcf5250cfae84e8314848c",
-        "previous_binding": "33270161efe81d5af0c0d3b6180583a5f7f5794278fa461299927d953b1621a8",
-        "source_commit": "80b12d48976e3a88f818a9428870a9f4ab637332",
-        "build_run": "https://github.com/strat-relay/platform-tools/actions/runs/42434943697",
-        "reason": "FP ceiling bug in signal_emitted_at (int()+1 fix) — blocked all 10 trendline entries since run start; strategy semantics, parameters and entry/stop/target logic unchanged",
-        "platform_tools_pr": 330,
-        "db_binding_updated": "2026-11-07"
+        "previous_images": [
+          "ghcr.io/strat-relay/trading-platform-runtime@sha256:93162d0deadb4b13bebb5880d355c3818b853058bb95659d6f7ab3525eecb2ff"
+        ],
+        "previous_binding": "8751decc60e7cc118c3b6d5cfbbac466b80ffcbb7f45377a517eefce4fb742ab",
+        "previous_artifact": "869923ca02368cccc6abf7b325685a5c6ae13426bd3f27ce9fcf4229c91b2c72",
+        "note": "aca78964 is the scaled-to-0 per-run orchestrator (superseded by library-orchestrator-unified); observer upgraded to 12485d51",
+        "platform_tools_prs": [335, 337],
+        "reason": "Observer candle-revision deadlock fix: library_event_consumer.py::transition() now catches both 'conflicting completed candle revision' (_merge) and 'conflicting candle revision' (runtime.py:187) and ACKs rather than NAK-looping",
+        "db_binding_updated": "2026-11-09"
       }
     }
   ]

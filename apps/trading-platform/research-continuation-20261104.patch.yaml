@@ -8,7 +8,7 @@ spec:
     spec:
       initContainers:
       - name: verify-continuation-binding
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
         command: [python, /recovery/continuation_binding_preflight.py]
         volumeMounts:
         - name: binding-preflight
@@ -16,7 +16,7 @@ spec:
           readOnly: true
       containers:
       - name: observer
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
       volumes:
       - name: manifest
         configMap: {name: library-canary-20261104-r4-manifest}
@@ -33,7 +33,7 @@ spec:
     spec:
       initContainers:
       - name: verify-continuation-binding
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
         command: [python, /recovery/continuation_binding_preflight.py]
         volumeMounts:
         - name: binding-preflight
@@ -41,7 +41,7 @@ spec:
           readOnly: true
       containers:
       - name: observer
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
       volumes:
       - name: manifest
         configMap: {name: ict-smc-20261104-r4-manifest}
@@ -58,7 +58,7 @@ spec:
     spec:
       initContainers:
       - name: verify-research-registration
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
         command: [python, /recovery/preflight.py]
         volumeMounts:
         - name: binding-preflight
@@ -66,7 +66,7 @@ spec:
           readOnly: true
       containers:
       - name: observer
-        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8ea471deb89ee3f8579dd59258aa12ae4caf5a742a30b8250405ad3eab0a53d6
+        image: ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d
       volumes:
       - name: manifest
         configMap: {name: donchian-v2-20261104-r4-manifest}
