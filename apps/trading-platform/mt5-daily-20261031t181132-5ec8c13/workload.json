@@ -64,7 +64,7 @@
             "containers": [
               {
                 "name": "observer",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:3fe35047ed7af9e116d91b6dcbbba2d357247cfd61ea5635b506f3f50e02e5d3",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
                 "command": [
                   "python",
                   "-m",
@@ -195,7 +195,7 @@
             "initContainers": [
               {
                 "name": "verify-research-registration",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:3fe35047ed7af9e116d91b6dcbbba2d357247cfd61ea5635b506f3f50e02e5d3",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
                 "command": [
                   "python",
                   "-m",
