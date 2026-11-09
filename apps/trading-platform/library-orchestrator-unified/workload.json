@@ -2,7 +2,7 @@
   "apiVersion": "v1",
   "kind": "List",
   "metadata": {
-    "_comment": "Unified JETSTREAM orchestrator for all library research runs. Replaces the 4 per-run orchestrator Deployments (intraday, daily, swing-r2, trendline). Runs all 4 as concurrent asyncio consumers in one pod. No membership check in init — symbol availability is managed by the observer layer. Apply scale-down.patch.yaml only AFTER this Deployment reaches 1/1 Running.",
+    "_comment": "Unified JETSTREAM orchestrator for all library research runs. Replaces the 4 per-run orchestrator Deployments (intraday, daily, swing-r2, trendline). Runs all 4 as concurrent asyncio consumers in one pod. No membership check in init \u2014 symbol availability is managed by the observer layer. Apply scale-down.patch.yaml only AFTER this Deployment reaches 1/1 Running.",
     "_image_note": "Main container requires an image built after platform-tools multi-orchestrator addition. Update image digest after CI build."
   },
   "items": [
@@ -35,96 +35,291 @@
             }
           },
           "spec": {
-            "imagePullSecrets": [{"name": "ghcr-pull"}],
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ],
             "initContainers": [
               {
                 "name": "verify-research-registrations",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:40dda676bec1f6517731d7a28d2ea58edbcca954cdf63b496c900c6ed2cdafc4",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
                 "command": [
-                  "python", "-c",
+                  "python",
+                  "-c",
                   "import os, json\nfrom migration.flags import SignalAuthorityFlags, SignalAuthorityMode\nfrom orchestration.canonical_signal_publisher import CanonicalSignalPublisher\nfrom research.library_event_store import open_connection\nfrom research.strategy_library_forward import RunConfig\n\nif SignalAuthorityFlags.mode_from_env() is not SignalAuthorityMode.DB_PRIMARY:\n    raise ValueError('canonical research orchestrator requires DB_PRIMARY')\nif os.environ.get('EXECUTION_AUTHORITY_MODE') != 'DISABLED':\n    raise ValueError('research execution authority must remain disabled')\n\nmanifests = [\n    '/config/intraday/run.json',\n    '/config/daily/run.json',\n    '/config/swing/run.json',\n    '/config/trendline/run.json',\n]\n\nwith open_connection() as conn:\n    CanonicalSignalPublisher(conn,\n        cutoff_id=os.environ['SIGNAL_CUTOFF_ID'],\n        cutoff_utc=os.environ['SIGNAL_CUTOFF_UTC'],\n        restricted_research=True).require_schema()\n    with conn.cursor() as cur:\n        cur.execute('SELECT current_database(), pg_is_in_recovery()')\n        db, recovery = cur.fetchone()\n        if db != 'trading_platform' or recovery:\n            raise ValueError('writable trading_platform primary required')\n    for m in manifests:\n        config = RunConfig.load(m)\n        with conn.cursor() as cur:\n            cur.execute('SELECT state FROM research.strategy_library_forward_state WHERE run_id=%s', (config.run_id,))\n            row = cur.fetchone()\n            if not row:\n                raise ValueError(f'activation missing for {config.run_id}')\n            state = row[0]\n            a = state.get('activation_attestation', {})\n            if (not state.get('binding') or a.get('binding') != state.get('binding')\n                    or a.get('run_id') != config.run_id\n                    or a.get('execution_eligible') is not False\n                    or a.get('transport') != 'JETSTREAM'\n                    or a.get('schema') != 'library-event-stream.v1'):\n                raise ValueError(f'activation binding mismatch for {config.run_id}')\nprint(json.dumps({'status': 'VERIFIED_MULTI_ORCHESTRATOR', 'runs': [RunConfig.load(m).run_id for m in manifests]}))\n"
                 ],
                 "envFrom": [
-                  {"secretRef": {"name": "library-event-orchestrator"}},
-                  {"secretRef": {"name": "trading-signal-cutoff"}}
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
                 ],
                 "env": [
-                  {"name": "REDIS_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "trading-redis-auth", "key": "password"}}},
-                  {"name": "MARKET_DATA_REDIS_URL", "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"},
-                  {"name": "PGCONNECT_TIMEOUT", "value": "10"},
-                  {"name": "EXECUTION_AUTHORITY_MODE", "value": "DISABLED"},
-                  {"name": "SIGNAL_AUTHORITY_MODE", "value": "DB_PRIMARY"},
-                  {"name": "LIBRARY_EVENT_TRANSPORT", "value": "JETSTREAM"},
-                  {"name": "LIBRARY_EVENT_DATABASE", "value": "trading_platform"},
-                  {"name": "SIGNAL_DB_PRIMARY_ENABLED", "value": "true"},
-                  {"name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED", "value": "true"},
-                  {"name": "PYTHONDONTWRITEBYTECODE", "value": "1"},
-                  {"name": "PYTHONPATH", "value": "/app"}
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  }
                 ],
                 "volumeMounts": [
-                  {"name": "intraday-manifest", "mountPath": "/config/intraday", "readOnly": true},
-                  {"name": "daily-manifest",    "mountPath": "/config/daily",    "readOnly": true},
-                  {"name": "swing-manifest",    "mountPath": "/config/swing",    "readOnly": true},
-                  {"name": "trendline-manifest","mountPath": "/config/trendline","readOnly": true},
-                  {"name": "tmp", "mountPath": "/tmp"}
+                  {
+                    "name": "intraday-manifest",
+                    "mountPath": "/config/intraday",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "daily-manifest",
+                    "mountPath": "/config/daily",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "swing-manifest",
+                    "mountPath": "/config/swing",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "trendline-manifest",
+                    "mountPath": "/config/trendline",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
                 ],
                 "resources": {
-                  "limits":   {"cpu": "1", "memory": "512Mi"},
-                  "requests": {"cpu": "25m", "memory": "128Mi"}
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "512Mi"
+                  },
+                  "requests": {
+                    "cpu": "25m",
+                    "memory": "128Mi"
+                  }
                 }
               }
             ],
             "containers": [
               {
                 "name": "orchestrator",
-                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:40dda676bec1f6517731d7a28d2ea58edbcca954cdf63b496c900c6ed2cdafc4",
+                "image": "ghcr.io/strat-relay/trading-platform-runtime@sha256:12485d51200ad3e719e8b6cb5c70c520d71ec4f871ae8098d307a57d3418199d",
                 "command": [
-                  "python", "-m", "research.library_event_service",
+                  "python",
+                  "-m",
+                  "research.library_event_service",
                   "multi-orchestrator",
-                  "--manifest", "/config/intraday/run.json",
-                  "--manifest", "/config/daily/run.json",
-                  "--manifest", "/config/swing/run.json",
-                  "--manifest", "/config/trendline/run.json"
+                  "--manifest",
+                  "/config/intraday/run.json",
+                  "--manifest",
+                  "/config/daily/run.json",
+                  "--manifest",
+                  "/config/swing/run.json",
+                  "--manifest",
+                  "/config/trendline/run.json"
                 ],
                 "envFrom": [
-                  {"secretRef": {"name": "library-event-orchestrator"}},
-                  {"secretRef": {"name": "trading-signal-cutoff"}}
+                  {
+                    "secretRef": {
+                      "name": "library-event-orchestrator"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "trading-signal-cutoff"
+                    }
+                  }
                 ],
                 "env": [
-                  {"name": "REDIS_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "trading-redis-auth", "key": "password"}}},
-                  {"name": "MARKET_DATA_REDIS_URL", "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"},
-                  {"name": "PGCONNECT_TIMEOUT", "value": "10"},
-                  {"name": "EXECUTION_AUTHORITY_MODE", "value": "DISABLED"},
-                  {"name": "SIGNAL_AUTHORITY_MODE", "value": "DB_PRIMARY"},
-                  {"name": "LIBRARY_EVENT_TRANSPORT", "value": "JETSTREAM"},
-                  {"name": "LIBRARY_EVENT_DATABASE", "value": "trading_platform"},
-                  {"name": "SIGNAL_DB_PRIMARY_ENABLED", "value": "true"},
-                  {"name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED", "value": "true"},
-                  {"name": "PYTHONDONTWRITEBYTECODE", "value": "1"},
-                  {"name": "PYTHONPATH", "value": "/app"},
-                  {"name": "NATS_URL", "value": "nats://trading-nats.trading.svc.cluster.local:4222"},
-                  {"name": "P2_NATS_USER",     "valueFrom": {"secretKeyRef": {"name": "trading-nats-auth", "key": "NATS_USER"}}},
-                  {"name": "P2_NATS_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "trading-nats-auth", "key": "NATS_PASSWORD"}}}
+                  {
+                    "name": "REDIS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-redis-auth",
+                        "key": "password"
+                      }
+                    }
+                  },
+                  {
+                    "name": "MARKET_DATA_REDIS_URL",
+                    "value": "redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0"
+                  },
+                  {
+                    "name": "PGCONNECT_TIMEOUT",
+                    "value": "10"
+                  },
+                  {
+                    "name": "EXECUTION_AUTHORITY_MODE",
+                    "value": "DISABLED"
+                  },
+                  {
+                    "name": "SIGNAL_AUTHORITY_MODE",
+                    "value": "DB_PRIMARY"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_TRANSPORT",
+                    "value": "JETSTREAM"
+                  },
+                  {
+                    "name": "LIBRARY_EVENT_DATABASE",
+                    "value": "trading_platform"
+                  },
+                  {
+                    "name": "SIGNAL_DB_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "SIGNAL_JETSTREAM_PRIMARY_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "PYTHONDONTWRITEBYTECODE",
+                    "value": "1"
+                  },
+                  {
+                    "name": "PYTHONPATH",
+                    "value": "/app"
+                  },
+                  {
+                    "name": "NATS_URL",
+                    "value": "nats://trading-nats.trading.svc.cluster.local:4222"
+                  },
+                  {
+                    "name": "P2_NATS_USER",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-nats-auth",
+                        "key": "NATS_USER"
+                      }
+                    }
+                  },
+                  {
+                    "name": "P2_NATS_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "trading-nats-auth",
+                        "key": "NATS_PASSWORD"
+                      }
+                    }
+                  }
                 ],
                 "volumeMounts": [
-                  {"name": "intraday-manifest", "mountPath": "/config/intraday", "readOnly": true},
-                  {"name": "daily-manifest",    "mountPath": "/config/daily",    "readOnly": true},
-                  {"name": "swing-manifest",    "mountPath": "/config/swing",    "readOnly": true},
-                  {"name": "trendline-manifest","mountPath": "/config/trendline","readOnly": true},
-                  {"name": "tmp", "mountPath": "/tmp"}
+                  {
+                    "name": "intraday-manifest",
+                    "mountPath": "/config/intraday",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "daily-manifest",
+                    "mountPath": "/config/daily",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "swing-manifest",
+                    "mountPath": "/config/swing",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "trendline-manifest",
+                    "mountPath": "/config/trendline",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  }
                 ],
                 "resources": {
-                  "limits":   {"cpu": "2", "memory": "1Gi"},
-                  "requests": {"cpu": "100m", "memory": "256Mi"}
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  }
                 }
               }
             ],
             "volumes": [
-              {"name": "intraday-manifest", "configMap": {"name": "mt5-intraday-20261031t181132-5ec8c13-manifest"}},
-              {"name": "daily-manifest",    "configMap": {"name": "mt5-daily-20261031t181132-5ec8c13-manifest"}},
-              {"name": "swing-manifest",    "configMap": {"name": "swing-position-20261031-r2-manifest"}},
-              {"name": "trendline-manifest","configMap": {"name": "trendline-20261102t020642-47b08ed-manifest"}},
-              {"name": "tmp", "emptyDir": {}}
+              {
+                "name": "intraday-manifest",
+                "configMap": {
+                  "name": "mt5-intraday-20261031t181132-5ec8c13-manifest"
+                }
+              },
+              {
+                "name": "daily-manifest",
+                "configMap": {
+                  "name": "mt5-daily-20261031t181132-5ec8c13-manifest"
+                }
+              },
+              {
+                "name": "swing-manifest",
+                "configMap": {
+                  "name": "swing-position-20261031-r2-manifest"
+                }
+              },
+              {
+                "name": "trendline-manifest",
+                "configMap": {
+                  "name": "trendline-20261102t020642-47b08ed-manifest"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {}
+              }
             ]
           }
         }
