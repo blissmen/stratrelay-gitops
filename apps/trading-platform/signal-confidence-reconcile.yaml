@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: signal-confidence-reconcile
+  namespace: trading
+  labels:
+    app.kubernetes.io/name: signal-confidence-reconcile
+    app.kubernetes.io/part-of: trading-platform
+spec:
+  schedule: '* * * * *'
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 240
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: signal-confidence-reconcile
+            app.kubernetes.io/part-of: trading-platform
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          imagePullSecrets:
+            - name: ghcr-pull
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: reconcile
+              # Replaced by the main V1 runtime's promoted immutable digest.
+              image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8355c78603fcfec31caa638f893c7adabbeb2cb0cd29fa6f1fccb440e33edfff
+              imagePullPolicy: IfNotPresent
+              command: [python, -m, platform_api.signal_quality.backfill_confidence]
+              args: [--limit, '100']
+              env:
+                - name: TRADING_POSTGRES_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: trading-runtime-endpoints
+                      key: TRADING_POSTGRES_DSN
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: 300m, memory: 256Mi}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: signal-confidence-reconcile-egress
+  namespace: trading
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: signal-confidence-reconcile
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: trading}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: trading-postgres}
+      ports: [{port: 5432, protocol: TCP}]
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: signal-confidence-reconcile-postgres-ingress
+  namespace: trading
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: trading-postgres
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: signal-confidence-reconcile}
+      ports: [{port: 5432, protocol: TCP}]

@@ -1,0 +1,99 @@
+# Requires platform-tools PR #344's main release before this change is merged.
+# Kustomize copies the promoted context-paper digest to both init containers.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mt5-native-bridge-main-runtime
+  namespace: trading
+spec:
+  # Stop every old source container before opening the shared checkpoint/PVC.
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      initContainers:
+        - name: context-v1-schema
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8355c78603fcfec31caa638f893c7adabbeb2cb0cd29fa6f1fccb440e33edfff
+          imagePullPolicy: IfNotPresent
+          command: [python, -c]
+          args:
+            - |
+              # Import the new capability before applying any schema changes.
+              from context_structure_retrace.runtime_store import RuntimeStore
+              from postgres.db import connect, apply_migrations
+              with connect() as conn:
+                  applied = apply_migrations(conn)
+                  with conn.cursor() as cur:
+                      cur.execute("SELECT 1 FROM platform.schema_migrations WHERE version='098'")
+                      if cur.fetchone() is None:
+                          raise RuntimeError('shared runtime migration 098 is missing')
+              print({'schema_ready': '098', 'applied': applied})
+          env:
+            - name: TRADING_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: trading-runtime-endpoints
+                  key: TRADING_POSTGRES_DSN
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 300m, memory: 256Mi}
+        - name: context-v1-import
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:8355c78603fcfec31caa638f893c7adabbeb2cb0cd29fa6f1fccb440e33edfff
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, context_structure_retrace.bootstrap_runtime]
+          args: [--offline]
+          env:
+            - name: TRADING_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: trading-runtime-endpoints
+                  key: TRADING_POSTGRES_DSN
+            - name: CONTEXT_RUNNER_STATE_DIR
+              value: /work
+            - name: CONTEXT_V1_RUNTIME_STREAM
+              value: context-v1:phase6
+            - name: CONTEXT_V1_RUNTIME_INSTANCE
+              value: phase6
+          volumeMounts:
+            - name: runtime
+              mountPath: /work
+              readOnly: true
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+      containers:
+        - name: context-paper
+          env:
+            - {name: CONTEXT_V1_STORAGE_MODE, value: POSTGRES}
+            - {name: CONTEXT_V1_RUNTIME_STREAM, value: 'context-v1:phase6'}
+            - {name: CONTEXT_V1_RUNTIME_INSTANCE, value: phase6}
+        - name: orchestrator-shadow
+          env:
+            - {name: CONTEXT_V1_STORAGE_MODE, value: POSTGRES}
+            - {name: CONTEXT_V1_RUNTIME_STREAM, value: 'context-v1:phase6'}
+            - {name: CONTEXT_V1_RUNTIME_INSTANCE, value: phase6}
+            - {name: SIGNAL_CONFIDENCE_CAPTURE, value: 'true'}
+        - name: context-post-exit-observer
+          env:
+            - {name: CONTEXT_V1_STORAGE_MODE, value: POSTGRES}
+            - {name: CONTEXT_V1_RUNTIME_STREAM, value: 'context-v1:phase6'}
+            - {name: CONTEXT_V1_RUNTIME_INSTANCE, value: phase6}
+            - name: TRADING_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: trading-runtime-endpoints
+                  key: TRADING_POSTGRES_DSN

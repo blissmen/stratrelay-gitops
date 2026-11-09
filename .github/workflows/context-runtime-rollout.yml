@@ -1,0 +1,38 @@
+name: Context V1 runtime rollout
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/trading-platform/**
+      - scripts/check_context_v1_runtime_rollout.py
+      - scripts/test_context_v1_runtime_rollout.py
+      - .github/workflows/context-runtime-rollout.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/trading-platform/**
+      - scripts/check_context_v1_runtime_rollout.py
+      - scripts/test_context_v1_runtime_rollout.py
+      - .github/workflows/context-runtime-rollout.yml
+permissions:
+  contents: read
+jobs:
+  render-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install PyYAML==6.0.3
+      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+        with:
+          version: v1.31.4
+      - name: Render production trading workloads
+        run: kubectl kustomize apps/trading-platform > "$RUNNER_TEMP/context-runtime.yaml"
+      - name: Check coordinated database activation
+        run: python3 scripts/check_context_v1_runtime_rollout.py "$RUNNER_TEMP/context-runtime.yaml" --release apps/trading-platform/release.json
+      - name: Exercise rollout guard regressions
+        env:
+          CONTEXT_V1_RENDERED_MANIFEST: ${{ runner.temp }}/context-runtime.yaml
+        run: python3 -m unittest discover -s scripts -p test_context_v1_runtime_rollout.py -v
