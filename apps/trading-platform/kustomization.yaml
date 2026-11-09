@@ -25,6 +25,7 @@ resources:
   - risk-state-collector.yaml
   - risk-state-collector-network.yaml
   - runtimes.yaml
+  - signal-confidence-reconcile.yaml
   - runtimes-network.yaml
   - liquidity-live-runtime.yaml
   - price-action-observers.yaml
@@ -66,6 +67,7 @@ resources:
 
 # Credential verified before enrollment; strategies remain in their existing modes.
 patches:
+  - path: context-v1-postgres-runtime.patch.yaml
   - path: swing-position-20261031-r2/collector.patch.json
   - path: swing-position-20261031-r2/relay.patch.json
   - path: research-continuation-0.patch.yaml
@@ -85,3 +87,24 @@ patches:
 
   # library-orchestrator-unified is running; scale the individual orchestrators to 0.
   - path: library-orchestrator-unified/scale-down.patch.yaml
+
+# All cutover containers consume the same promoted main-release digest. The
+# backend PR must be merged/released and its normal image promotion merged first.
+replacements:
+  - source:
+      kind: Deployment
+      name: mt5-native-bridge-main-runtime
+      fieldPath: spec.template.spec.containers.[name=context-paper].image
+    targets:
+      - select:
+          kind: Deployment
+          name: mt5-native-bridge-main-runtime
+        fieldPaths:
+          - spec.template.spec.initContainers.[name=context-v1-schema].image
+          - spec.template.spec.initContainers.[name=context-v1-import].image
+      - select:
+          kind: CronJob
+          name: signal-confidence-reconcile
+        fieldPaths:
+          - spec.jobTemplate.spec.template.spec.containers.[name=reconcile].image
+
