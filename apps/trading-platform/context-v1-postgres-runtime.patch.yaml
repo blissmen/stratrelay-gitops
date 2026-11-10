@@ -13,7 +13,7 @@ spec:
     spec:
       initContainers:
         - name: context-v1-schema
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:df7d0b5b86bfae8ed3d691d4879999f4e22c62dc3f55725b62f153bc464e06c7
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:b2782e9a611c54b548cc537b7851eb61f1c0056ebc12e7c3b862b067e7846717
           imagePullPolicy: IfNotPresent
           command: [python, -c]
           args:
@@ -45,7 +45,7 @@ spec:
             requests: {cpu: 50m, memory: 64Mi}
             limits: {cpu: 300m, memory: 256Mi}
         - name: context-v1-import
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:df7d0b5b86bfae8ed3d691d4879999f4e22c62dc3f55725b62f153bc464e06c7
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:b2782e9a611c54b548cc537b7851eb61f1c0056ebc12e7c3b862b067e7846717
           imagePullPolicy: IfNotPresent
           command: [python, -m, context_structure_retrace.bootstrap_runtime]
           args: [--offline]
