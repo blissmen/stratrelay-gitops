@@ -115,6 +115,8 @@ spec:
             # This follows REDIS_PASSWORD so Kubernetes expands it before use.
             - name: SIGNAL_ANALYSIS_CANDLE_RECOVERY
               value: "true"
+            - name: SIGNAL_ANALYSIS_STRATEGY_OVERLAYS
+              value: "true"
             - name: SIGNAL_ANALYSIS_REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@trading-redis.trading.svc:6379/0
           volumeMounts:
