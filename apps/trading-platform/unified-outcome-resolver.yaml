@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: resolver
-          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:25dd695f57230d402eeb992ebce111b9e6513ca0715a59bb4b61359e80f1658d
+          image: ghcr.io/strat-relay/trading-platform-runtime@sha256:439f65d1c27d3b82083644c9841be3a12f540b6ee387e200474e23b6d5f40d5f
           imagePullPolicy: IfNotPresent
           command:
             - sh
