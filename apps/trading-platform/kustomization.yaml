@@ -93,6 +93,7 @@ patches:
 
 configMapGenerator:
   - name: platform-api-router-nginx
+    namespace: trading
     files:
       - router-nginx/nginx.conf
 
