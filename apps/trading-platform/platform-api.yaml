@@ -190,7 +190,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app.kubernetes.io/name: platform-signals-api
+    app.kubernetes.io/name: control-api
   ports:
     - name: http
       port: 22350
