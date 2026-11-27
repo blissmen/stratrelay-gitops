@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-api-router
+  namespace: trading
+spec:
+  template:
+    spec:
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: platform-api-router-nginx
+      containers:
+        - name: router
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true

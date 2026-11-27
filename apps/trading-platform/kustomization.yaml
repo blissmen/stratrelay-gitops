@@ -88,6 +88,14 @@ patches:
   # library-orchestrator-unified is running; scale the individual orchestrators to 0.
   - path: library-orchestrator-unified/scale-down.patch.yaml
 
+  # Route /api/v1/console/ to platform-signals-api which owns the auth endpoint.
+  - path: router-nginx-volume.patch.yaml
+
+configMapGenerator:
+  - name: platform-api-router-nginx
+    files:
+      - router-nginx/nginx.conf
+
 # All cutover containers consume the same promoted main-release digest. The
 # backend PR must be merged/released and its normal image promotion merged first.
 replacements:
