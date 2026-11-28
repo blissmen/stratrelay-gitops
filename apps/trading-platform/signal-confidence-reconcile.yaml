@@ -35,7 +35,7 @@ spec:
           containers:
             - name: reconcile
               # Replaced by the main V1 runtime's promoted immutable digest.
-              image: ghcr.io/strat-relay/trading-platform-runtime@sha256:099b917a192f234aecdf24c322a05abb0b7b2ff701021b0b6c20df7836f05c70
+              image: ghcr.io/strat-relay/trading-platform-runtime@sha256:e8c661df236aba56f09498f809173834a5ebf44b82a50df03798ad88ad784a95
               imagePullPolicy: IfNotPresent
               command: [python, -m, platform_api.signal_quality.backfill_confidence]
               args: [--limit, '100']
